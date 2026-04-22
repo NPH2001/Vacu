@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { categories } from '@/db/schema';
 import { categorySchema } from '@/lib/validators';
@@ -50,6 +50,23 @@ export async function deleteCategory(id: string): Promise<void> {
     const msg = (e as Error).message;
     if (/violates foreign key|restrict/i.test(msg)) {
       throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng.');
+    }
+    throw e;
+  }
+  revalidatePath('/admin/categories');
+  redirect('/admin/categories');
+}
+
+export async function bulkDeleteCategories(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const ids = fd.getAll('ids').map(String).filter(Boolean);
+  if (ids.length === 0) { redirect('/admin/categories'); }
+  try {
+    await db.delete(categories).where(inArray(categories.id, ids));
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (/violates foreign key|restrict/i.test(msg)) {
+      throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng.');
     }
     throw e;
   }

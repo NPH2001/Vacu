@@ -3,6 +3,8 @@ import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders } from '@/db/schema';
 import { formatPrice } from '@/lib/format';
+import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
+import { bulkDeleteOrders } from '@/app/admin/actions/orders';
 
 type OrderStatus = 'pending' | 'preparing' | 'delivering' | 'delivered' | 'cancelled';
 
@@ -46,42 +48,46 @@ export default async function OrdersAdminPage({
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
-        {rows.length === 0 ? (
-          <div className="p-6 text-sm text-green-900/70">Không có đơn hàng.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-green-900/70 bg-green-50/60">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">Mã</th>
-                <th className="px-4 py-2.5 font-medium">Khách</th>
-                <th className="px-4 py-2.5 font-medium">Điện thoại</th>
-                <th className="px-4 py-2.5 font-medium">Tổng</th>
-                <th className="px-4 py-2.5 font-medium">Trạng thái</th>
-                <th className="px-4 py-2.5 font-medium">Ngày</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-green-50 hover:bg-green-50/40">
-                  <td className="px-4 py-2">
-                    <Link href={`/admin/orders/${r.id}`} className="font-mono text-green-800 hover:underline">{r.id}</Link>
-                  </td>
-                  <td className="px-4 py-2">{r.customerName}</td>
-                  <td className="px-4 py-2">{r.phone}</td>
-                  <td className="px-4 py-2">{formatPrice(r.total)}</td>
-                  <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[r.status] ?? 'bg-green-50 text-green-800'}`}>
-                      {STATUS_LABEL[r.status] ?? r.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-green-900/70">{r.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
+      {rows.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">Không có đơn hàng.</div>
+      ) : (
+        <BulkDeleteForm action={bulkDeleteOrders}>
+          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="text-left text-green-900/70 bg-green-50/60">
+                <tr>
+                  <th className="px-4 py-2.5 w-10"></th>
+                  <th className="px-4 py-2.5 font-medium">Mã</th>
+                  <th className="px-4 py-2.5 font-medium">Khách</th>
+                  <th className="px-4 py-2.5 font-medium">Điện thoại</th>
+                  <th className="px-4 py-2.5 font-medium">Tổng</th>
+                  <th className="px-4 py-2.5 font-medium">Trạng thái</th>
+                  <th className="px-4 py-2.5 font-medium">Ngày</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-green-50 hover:bg-green-50/40">
+                    <td className="px-4 py-2"><input type="checkbox" name="ids" value={r.id} /></td>
+                    <td className="px-4 py-2">
+                      <Link href={`/admin/orders/${r.id}`} className="font-mono text-green-800 hover:underline">{r.id}</Link>
+                    </td>
+                    <td className="px-4 py-2">{r.customerName}</td>
+                    <td className="px-4 py-2">{r.phone}</td>
+                    <td className="px-4 py-2">{formatPrice(r.total)}</td>
+                    <td className="px-4 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[r.status] ?? 'bg-green-50 text-green-800'}`}>
+                        {STATUS_LABEL[r.status] ?? r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-green-900/70">{r.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </BulkDeleteForm>
+      )}
     </div>
   );
 }

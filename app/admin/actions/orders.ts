@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders } from '@/db/schema';
 import { orderStatusSchema } from '@/lib/validators';
@@ -19,6 +19,15 @@ export async function updateOrderStatus(id: string, fd: FormData): Promise<void>
 export async function deleteOrder(id: string): Promise<void> {
   await requireAdmin();
   await db.delete(orders).where(eq(orders.id, id));
+  revalidatePath('/admin/orders');
+  redirect('/admin/orders');
+}
+
+export async function bulkDeleteOrders(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const ids = fd.getAll('ids').map(String).filter(Boolean);
+  if (ids.length === 0) { redirect('/admin/orders'); }
+  await db.delete(orders).where(inArray(orders.id, ids));
   revalidatePath('/admin/orders');
   redirect('/admin/orders');
 }
