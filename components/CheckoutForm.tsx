@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
-import { useOrders } from "./OrdersProvider";
 import { formatPrice } from "@/lib/format";
+import { placeOrder } from "@/app/(public)/checkout/actions";
 
 const SLOTS = [
   "Sáng mai (7:00 - 11:00)",
@@ -17,7 +17,8 @@ const SLOTS = [
 export default function CheckoutForm() {
   const router = useRouter();
   const { items, total, clear } = useCart();
-  const { addOrder } = useOrders();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -27,23 +28,24 @@ export default function CheckoutForm() {
     payment: "cod",
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const id = addOrder({
-      items: items.map((i) => ({
-        id: i.id,
-        name: i.name,
-        price: i.price,
-        qty: i.qty,
-        image: i.image,
-        unit: i.unit,
-      })),
-      total,
-      address: form.address,
-      deliverySlot: form.slot,
+    setError(null);
+    const fd = new FormData();
+    fd.set('customerName', form.name);
+    fd.set('phone', form.phone);
+    fd.set('address', form.address);
+    fd.set('deliverySlot', form.slot);
+    if (form.note) fd.set('note', form.note);
+    fd.set('cart', JSON.stringify(items.map((i) => ({
+      id: i.id, name: i.name, price: i.price, qty: i.qty, unit: i.unit, image: i.image,
+    }))));
+    startTransition(async () => {
+      const res = await placeOrder(fd);
+      if (!res.ok) { setError(res.error); return; }
+      clear();
+      router.push(`/orders?new=${res.orderId}`);
     });
-    clear();
-    router.push(`/orders?new=${id}`);
   }
 
   if (items.length === 0) {
@@ -129,9 +131,11 @@ export default function CheckoutForm() {
             </div>
           </div>
 
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition text-lg"
+            disabled={pending}
+            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition text-lg disabled:opacity-60"
           >
             Đặt hàng · {formatPrice(total)}
           </button>
