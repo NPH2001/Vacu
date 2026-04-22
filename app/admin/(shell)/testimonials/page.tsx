@@ -1,25 +1,69 @@
 import Link from 'next/link';
-import { asc } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { testimonials } from '@/db/schema';
 import DeleteButton from '@/components/admin/DeleteButton';
 import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
 import { deleteTestimonial, bulkDeleteTestimonials } from '@/app/admin/actions/testimonials';
+import SearchInput from '@/components/admin/list/SearchInput';
+import SortableTh from '@/components/admin/list/SortableTh';
+import Pagination from '@/components/admin/list/Pagination';
+import PageSizeSelect from '@/components/admin/list/PageSizeSelect';
+import ClearFiltersLink from '@/components/admin/list/ClearFiltersLink';
+import {
+  parseListParams, buildWhere, buildOrderBy, buildPagination,
+  type ListSchema,
+} from '@/lib/admin/list-params';
 
-export default async function TestimonialsAdminPage() {
-  const rows = await db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.id));
+const BASE = '/admin/testimonials';
+
+export default async function TestimonialsAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+
+  const schema: ListSchema = {
+    searchFields: [testimonials.name, testimonials.content],
+    sortable: {
+      name: testimonials.name,
+      sortOrder: testimonials.sortOrder,
+    },
+    defaultSort: 'sortOrder',
+  };
+
+  const parsed = parseListParams(sp, schema);
+  const where = buildWhere(parsed, schema);
+  const orderBy = buildOrderBy(parsed, schema);
+  const { limit, offset } = buildPagination(parsed);
+
+  const [rows, totalRows] = await Promise.all([
+    db.select().from(testimonials).where(where).orderBy(orderBy).limit(limit).offset(offset),
+    db.select({ total: sql<number>`count(*)::int` }).from(testimonials).where(where),
+  ]);
+  const total = totalRows[0]?.total ?? 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold font-display text-green-950">Cảm nhận khách hàng</h1>
-        <Link href="/admin/testimonials/new"
+        <Link
+          href="/admin/testimonials/new"
           className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-full text-sm">
           + Thêm cảm nhận
         </Link>
       </div>
-      {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">Chưa có cảm nhận.</div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchInput placeholder="Tìm theo tên / nội dung…" />
+        <div className="ml-auto"><ClearFiltersLink basePath={BASE} parsed={parsed} /></div>
+      </div>
+
+      {total === 0 ? (
+        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+          {parsed.q ? 'Không có kết quả phù hợp.' : 'Chưa có cảm nhận.'}
+        </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteTestimonials}>
           <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
@@ -28,9 +72,9 @@ export default async function TestimonialsAdminPage() {
                 <tr>
                   <th className="px-4 py-2.5 w-10"></th>
                   <th className="px-4 py-2.5 font-medium w-14">Ảnh</th>
-                  <th className="px-4 py-2.5 font-medium">Tên / Vai trò</th>
+                  <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="name">Tên / Vai trò</SortableTh>
                   <th className="px-4 py-2.5 font-medium">Nội dung</th>
-                  <th className="px-4 py-2.5 font-medium w-16">Thứ tự</th>
+                  <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="sortOrder" className="px-4 py-2.5 font-medium w-16">Thứ tự</SortableTh>
                   <th className="px-4 py-2.5 font-medium text-right">Thao tác</th>
                 </tr>
               </thead>
@@ -59,6 +103,11 @@ export default async function TestimonialsAdminPage() {
           </div>
         </BulkDeleteForm>
       )}
+
+      <div className="flex items-center justify-between">
+        <Pagination basePath={BASE} parsed={parsed} schema={schema} total={total} />
+        <PageSizeSelect />
+      </div>
     </div>
   );
 }

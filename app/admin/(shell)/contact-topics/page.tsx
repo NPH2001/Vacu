@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { faqItems } from '@/db/schema';
+import { contactTopics } from '@/db/schema';
 import DeleteButton from '@/components/admin/DeleteButton';
 import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
-import { deleteFaq, bulkDeleteFaq } from '@/app/admin/actions/faq';
+import { deleteContactTopic, bulkDeleteContactTopics } from '@/app/admin/actions/contact-topics';
 import SearchInput from '@/components/admin/list/SearchInput';
 import Pagination from '@/components/admin/list/Pagination';
 import PageSizeSelect from '@/components/admin/list/PageSizeSelect';
@@ -14,9 +14,9 @@ import {
   type ListSchema,
 } from '@/lib/admin/list-params';
 
-const BASE = '/admin/faq';
+const BASE = '/admin/contact-topics';
 
-export default async function FaqAdminPage({
+export default async function ContactTopicsAdminPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,10 +24,10 @@ export default async function FaqAdminPage({
   const sp = await searchParams;
 
   const schema: ListSchema = {
-    searchFields: [faqItems.question, faqItems.answer],
+    searchFields: [contactTopics.label],
     sortable: {
-      sortOrder: faqItems.sortOrder,
-      question: faqItems.question,
+      label: contactTopics.label,
+      sortOrder: contactTopics.sortOrder,
     },
     defaultSort: 'sortOrder',
   };
@@ -38,46 +38,45 @@ export default async function FaqAdminPage({
   const { limit, offset } = buildPagination(parsed);
 
   const [rows, totalRows] = await Promise.all([
-    db.select().from(faqItems).where(where).orderBy(orderBy).limit(limit).offset(offset),
-    db.select({ total: sql<number>`count(*)::int` }).from(faqItems).where(where),
+    db.select().from(contactTopics).where(where).orderBy(orderBy).limit(limit).offset(offset),
+    db.select({ total: sql<number>`count(*)::int` }).from(contactTopics).where(where),
   ]);
   const total = totalRows[0]?.total ?? 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-display text-green-950">Câu hỏi thường gặp</h1>
+        <h1 className="text-2xl font-bold font-display text-green-950">Chủ đề liên hệ</h1>
         <Link
-          href="/admin/faq/new"
+          href="/admin/contact-topics/new"
           className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-full text-sm">
-          + Thêm FAQ
+          + Thêm
         </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <SearchInput placeholder="Tìm câu hỏi…" />
+        <SearchInput placeholder="Tìm chủ đề…" />
         <div className="ml-auto"><ClearFiltersLink basePath={BASE} parsed={parsed} /></div>
       </div>
 
       {total === 0 ? (
         <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
-          {parsed.q ? 'Không có kết quả phù hợp.' : 'Chưa có câu hỏi nào.'}
+          {parsed.q ? 'Không có kết quả phù hợp.' : 'Chưa có chủ đề nào.'}
         </div>
       ) : (
-        <BulkDeleteForm action={bulkDeleteFaq}>
+        <BulkDeleteForm action={bulkDeleteContactTopics}>
           <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
             <ul className="divide-y divide-green-50">
               {rows.map((r) => (
-                <li key={r.id} className="p-5 flex gap-4 items-start">
-                  <input type="checkbox" name="ids" value={r.id} className="mt-1" />
+                <li key={r.id} className="p-5 flex gap-4 items-center">
+                  <input type="checkbox" name="ids" value={r.id} />
                   <div className="flex-1">
-                    <Link href={`/admin/faq/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.question}</Link>
-                    <div className="text-sm text-green-900/70 mt-1 line-clamp-2">{r.answer}</div>
-                    <div className="text-xs text-green-900/50 mt-1">Thứ tự: {r.sortOrder}</div>
+                    <Link href={`/admin/contact-topics/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.label}</Link>
+                    <div className="text-xs text-green-900/50 mt-0.5">Thứ tự: {r.sortOrder}</div>
                   </div>
                   <div className="space-x-3 text-sm shrink-0">
-                    <Link href={`/admin/faq/${r.id}`} className="text-green-700 hover:underline">Sửa</Link>
-                    <DeleteButton action={deleteFaq.bind(null, r.id)} confirmText={`Xóa câu hỏi này?`} />
+                    <Link href={`/admin/contact-topics/${r.id}`} className="text-green-700 hover:underline">Sửa</Link>
+                    <DeleteButton action={deleteContactTopic.bind(null, r.id)} confirmText="Xóa chủ đề này?" />
                   </div>
                 </li>
               ))}
