@@ -1,55 +1,117 @@
 import Link from 'next/link';
-import { desc, eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders } from '@/db/schema';
 import { formatPrice } from '@/lib/format';
 import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
 import { bulkDeleteOrders } from '@/app/admin/actions/orders';
+import { getAllOrderStatuses } from '@/lib/data';
+import SearchInput from '@/components/admin/list/SearchInput';
+import FilterChips from '@/components/admin/list/FilterChips';
+import SortableTh from '@/components/admin/list/SortableTh';
+import Pagination from '@/components/admin/list/Pagination';
+import PageSizeSelect from '@/components/admin/list/PageSizeSelect';
+import ClearFiltersLink from '@/components/admin/list/ClearFiltersLink';
+import {
+  parseListParams, buildWhere, buildOrderBy, buildPagination,
+  type ListSchema,
+} from '@/lib/admin/list-params';
 
-type OrderStatus = 'pending' | 'preparing' | 'delivering' | 'delivered' | 'cancelled';
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: 'Chờ xử lý',
-  preparing: 'Đang chuẩn bị',
-  delivering: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Đã hủy',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  preparing: 'bg-sky-100 text-sky-800',
-  delivering: 'bg-indigo-100 text-indigo-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
+const BASE = '/admin/orders';
 
 export default async function OrdersAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { status } = await searchParams;
-  const statusFilter: OrderStatus | null = status && status in STATUS_LABEL ? (status as OrderStatus) : null;
+  const sp = await searchParams;
+  const statusRows = await getAllOrderStatuses();
+  const statusMap = Object.fromEntries(statusRows.map((s) => [s.key, s]));
 
-  const baseQuery = db.select().from(orders);
-  const rows = await (statusFilter
-    ? baseQuery.where(eq(orders.status, statusFilter)).orderBy(desc(orders.createdAt))
-    : baseQuery.orderBy(desc(orders.createdAt)));
+  const schema: ListSchema = {
+    searchFields: [orders.id, orders.customerName, orders.phone, orders.customerEmail],
+    sortable: {
+      createdAt: orders.createdAt,
+      total: orders.total,
+      status: orders.status,
+    },
+    defaultSort: '-createdAt',
+    filters: {
+      status: {
+        type: 'equals',
+        column: orders.status,
+        values: statusRows.map((s) => s.key),
+      },
+      paymentMethod: {
+        type: 'equals',
+        column: orders.paymentMethod,
+        values: ['cod', 'bank'],
+      },
+      paymentStatus: {
+        type: 'equals',
+        column: orders.paymentStatus,
+        values: ['unpaid', 'paid'],
+      },
+    },
+  };
+
+  const parsed = parseListParams(sp, schema);
+  const where = buildWhere(parsed, schema);
+  const orderBy = buildOrderBy(parsed, schema);
+  const { limit, offset } = buildPagination(parsed);
+
+  const [rows, totalRows] = await Promise.all([
+    db.select().from(orders).where(where).orderBy(orderBy).limit(limit).offset(offset),
+    db.select({ total: sql<number>`count(*)::int` }).from(orders).where(where),
+  ]);
+  const total = totalRows[0]?.total ?? 0;
+  const hasFilter = parsed.q !== '' || Object.keys(parsed.filters).length > 0;
+
+  const statusOptions = [
+    { value: null, label: 'Tất cả' },
+    ...statusRows.map((s) => ({ value: s.key, label: s.label })),
+  ];
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Đơn hàng</h1>
-
-      <div className="flex gap-2 flex-wrap">
-        <FilterPill href="/admin/orders" active={!statusFilter}>Tất cả</FilterPill>
-        {Object.entries(STATUS_LABEL).map(([k, label]) => (
-          <FilterPill key={k} href={`/admin/orders?status=${k}`} active={statusFilter === k}>{label}</FilterPill>
-        ))}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold font-display text-green-950">Đơn hàng</h1>
+        <ClearFiltersLink basePath={BASE} parsed={parsed} />
       </div>
 
-      {rows.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">Không có đơn hàng.</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchInput placeholder="Tìm theo mã / tên / SĐT / email…" />
+      </div>
+
+      <FilterChips basePath={BASE} parsed={parsed} filterKey="status" options={statusOptions} />
+
+      <div className="flex flex-wrap gap-2">
+        <FilterChips
+          basePath={BASE}
+          parsed={parsed}
+          filterKey="paymentMethod"
+          options={[
+            { value: null, label: 'Mọi hình thức' },
+            { value: 'cod', label: '💵 COD' },
+            { value: 'bank', label: '🏦 CK' },
+          ]}
+        />
+        <FilterChips
+          basePath={BASE}
+          parsed={parsed}
+          filterKey="paymentStatus"
+          options={[
+            { value: null, label: 'Mọi thanh toán' },
+            { value: 'unpaid', label: 'Chưa trả' },
+            { value: 'paid', label: 'Đã trả' },
+          ]}
+        />
+      </div>
+
+      {total === 0 ? (
+        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+          {hasFilter ? 'Không có kết quả phù hợp.' : 'Không có đơn hàng.'}
+        </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteOrders}>
           <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
@@ -60,9 +122,10 @@ export default async function OrdersAdminPage({
                   <th className="px-4 py-2.5 font-medium">Mã</th>
                   <th className="px-4 py-2.5 font-medium">Khách</th>
                   <th className="px-4 py-2.5 font-medium">Điện thoại</th>
-                  <th className="px-4 py-2.5 font-medium">Tổng</th>
-                  <th className="px-4 py-2.5 font-medium">Trạng thái</th>
-                  <th className="px-4 py-2.5 font-medium">Ngày</th>
+                  <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="total">Tổng</SortableTh>
+                  <th className="px-4 py-2.5 font-medium">Thanh toán</th>
+                  <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="status">Trạng thái</SortableTh>
+                  <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="createdAt">Ngày</SortableTh>
                 </tr>
               </thead>
               <tbody>
@@ -75,10 +138,21 @@ export default async function OrdersAdminPage({
                     <td className="px-4 py-2">{r.customerName}</td>
                     <td className="px-4 py-2">{r.phone}</td>
                     <td className="px-4 py-2">{formatPrice(r.total)}</td>
+                    <td className="px-4 py-2 text-xs">
+                      <div>{r.paymentMethod === 'bank' ? '🏦 CK' : '💵 COD'}</div>
+                      <div className={r.paymentStatus === 'paid' ? 'text-green-700 font-semibold' : 'text-amber-700'}>
+                        {r.paymentStatus === 'paid' ? 'Đã trả' : 'Chưa trả'}
+                      </div>
+                    </td>
                     <td className="px-4 py-2">
-                      <span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[r.status] ?? 'bg-green-50 text-green-800'}`}>
-                        {STATUS_LABEL[r.status] ?? r.status}
-                      </span>
+                      {(() => {
+                        const s = statusMap[r.status];
+                        return (
+                          <span className={`text-xs px-2 py-0.5 rounded ${s?.color ?? 'bg-green-50 text-green-800'}`}>
+                            {s?.label ?? r.status}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-2 text-green-900/70">{r.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
                   </tr>
@@ -88,17 +162,11 @@ export default async function OrdersAdminPage({
           </div>
         </BulkDeleteForm>
       )}
-    </div>
-  );
-}
 
-function FilterPill({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link href={href}
-      className={`px-3 py-1.5 rounded-full text-sm border ${
-        active ? 'bg-green-700 text-white border-green-700' : 'bg-white text-green-900 border-green-200 hover:border-green-400'
-      }`}>
-      {children}
-    </Link>
+      <div className="flex items-center justify-between">
+        <Pagination basePath={BASE} parsed={parsed} schema={schema} total={total} />
+        <PageSizeSelect />
+      </div>
+    </div>
   );
 }
