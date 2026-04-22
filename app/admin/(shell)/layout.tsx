@@ -5,7 +5,7 @@ import Topbar from '@/components/admin/Topbar';
 export default async function ShellLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
   return (
-    <div className="admin-shell min-h-screen flex">
+    <div className="admin-shell h-screen flex overflow-hidden">
       <Sidebar role={user.role as 'admin' | 'staff'} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar email={user.email} />
