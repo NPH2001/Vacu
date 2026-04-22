@@ -3,8 +3,8 @@ import type { Product } from "@/lib/data";
 import { formatPrice, getFarmer } from "@/lib/data";
 import AddToCartButton from "./AddToCartButton";
 
-export default function ProductCard({ p }: { p: Product }) {
-  const farmer = getFarmer(p.farmerId);
+export default async function ProductCard({ p }: { p: Product }) {
+  const farmer = await getFarmer(p.farmerId);
   const discount =
     p.oldPrice && p.oldPrice > p.price
       ? Math.round((1 - p.price / p.oldPrice) * 100)

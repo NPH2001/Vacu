@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { info } from "@/lib/data";
+import type { SiteInfoRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 
 const links = [
@@ -14,7 +14,7 @@ const links = [
   { href: "/contact", label: "Liên hệ" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ info }: { info: SiteInfoRow }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
 

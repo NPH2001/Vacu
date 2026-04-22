@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { farmers, getProductsByFarmer } from "@/lib/data";
+import { getFarmer, getProductsByFarmer } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 
 type Params = Promise<{ id: string }>;
 
 export default async function FarmerDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const f = farmers.find((x) => x.id === id);
+  const f = await getFarmer(id);
   if (!f) notFound();
 
-  const products = getProductsByFarmer(f.id);
+  const products = await getProductsByFarmer(f.id);
 
   return (
     <div>

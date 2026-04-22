@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import { useOrders } from "./OrdersProvider";
-import { formatPrice } from "@/lib/data";
+import { formatPrice } from "@/lib/format";
 
 const SLOTS = [
   "Sáng mai (7:00 - 11:00)",

@@ -1,91 +1,60 @@
-import productsJson from "@/data/products.json";
-import categoriesJson from "@/data/categories.json";
-import farmersJson from "@/data/farmers.json";
-import testimonialsJson from "@/data/testimonials.json";
-import faqJson from "@/data/faq.json";
-import infoJson from "@/data/info.json";
+import 'server-only';
+import { eq, asc } from 'drizzle-orm';
+import { db } from '@/db/client';
+import {
+  products, categories, farmers, testimonials, faqItems, siteInfo,
+  type ProductRow, type CategoryRow, type FarmerRow,
+  type TestimonialRow, type FaqRow, type SiteInfoRow,
+} from '@/db/schema';
 
-export type Product = {
-  id: string;
-  name: string;
-  category: string;
-  unit: string;
-  price: number;
-  oldPrice?: number;
-  image: string;
-  farmerId: string | null;
-  description: string;
-  tags: string[];
-  featured: boolean;
-  inStock: boolean;
-};
+export type Product = ProductRow;
+export type Category = CategoryRow;
+export type Farmer = FarmerRow;
+export type Testimonial = TestimonialRow;
+export type FAQItem = FaqRow;
+export type SiteInfo = SiteInfoRow;
 
-export type Category = {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-};
-
-export type Farmer = {
-  id: string;
-  name: string;
-  farm: string;
-  location: string;
-  years: number;
-  specialty: string;
-  avatar: string;
-  cover: string;
-  story: string;
-  certifications: string[];
-};
-
-export type Testimonial = {
-  name: string;
-  role: string;
-  avatar: string;
-  content: string;
-};
-
-export type FAQItem = { q: string; a: string };
-export type Info = typeof infoJson;
-
-export const products: Product[] = productsJson as Product[];
-export const categories: Category[] = categoriesJson as Category[];
-export const farmers: Farmer[] = farmersJson as Farmer[];
-export const testimonials: Testimonial[] = testimonialsJson as Testimonial[];
-export const faqItems: FAQItem[] = faqJson as FAQItem[];
-export const info: Info = infoJson;
-
-export function getProduct(id: string) {
-  return products.find((p) => p.id === id);
+export async function getAllProducts() {
+  return db.select().from(products).orderBy(asc(products.name));
 }
-
-export function getProductsByCategory(categoryId: string) {
-  return products.filter((p) => p.category === categoryId);
+export async function getProduct(id: string) {
+  const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  return rows[0] ?? null;
 }
-
-export function getFeaturedProducts(limit = 8) {
-  return products.filter((p) => p.featured).slice(0, limit);
+export async function getProductsByCategory(categoryId: string) {
+  return db.select().from(products).where(eq(products.categoryId, categoryId)).orderBy(asc(products.name));
 }
-
-export function getCategory(id: string) {
-  return categories.find((c) => c.id === id);
+export async function getFeaturedProducts(limit = 8) {
+  return db.select().from(products).where(eq(products.featured, true)).limit(limit);
 }
-
-export function getFarmer(id: string | null) {
+export async function getAllCategories() {
+  return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+}
+export async function getCategory(id: string) {
+  const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function getAllFarmers() {
+  return db.select().from(farmers).orderBy(asc(farmers.name));
+}
+export async function getFarmer(id: string | null) {
   if (!id) return null;
-  return farmers.find((f) => f.id === id) ?? null;
+  const rows = await db.select().from(farmers).where(eq(farmers.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+export async function getProductsByFarmer(farmerId: string) {
+  return db.select().from(products).where(eq(products.farmerId, farmerId)).orderBy(asc(products.name));
+}
+export async function getAllTestimonials() {
+  return db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.id));
+}
+export async function getAllFaqItems() {
+  return db.select().from(faqItems).orderBy(asc(faqItems.sortOrder), asc(faqItems.id));
+}
+export async function getSiteInfo(): Promise<SiteInfoRow> {
+  const rows = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
+  if (!rows[0]) throw new Error('site_info row missing — run npm run db:seed');
+  return rows[0];
 }
 
-export function getProductsByFarmer(farmerId: string) {
-  return products.filter((p) => p.farmerId === farmerId);
-}
-
-export function formatPrice(v: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(v);
-}
+export { formatPrice } from './format';

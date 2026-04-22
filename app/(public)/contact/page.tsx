@@ -1,6 +1,7 @@
-import { info } from "@/lib/data";
+import { getSiteInfo } from "@/lib/data";
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const info = await getSiteInfo();
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
       <div className="text-center mb-12">

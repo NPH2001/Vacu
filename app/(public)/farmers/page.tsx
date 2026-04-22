@@ -1,8 +1,9 @@
-import { farmers } from "@/lib/data";
+import { getAllFarmers } from "@/lib/data";
 import FarmerCard from "@/components/FarmerCard";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 
-export default function FarmersPage() {
+export default async function FarmersPage() {
+  const farmers = await getAllFarmers();
   return (
     <div>
       <section className="relative overflow-hidden">

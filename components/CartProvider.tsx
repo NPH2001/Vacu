@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Product } from "@/lib/data";
+import type { ProductRow } from "@/db/schema";
 
 export type CartLine = {
   id: string;
@@ -16,7 +16,7 @@ type CartContextValue = {
   items: CartLine[];
   count: number;
   total: number;
-  add: (item: Product) => void;
+  add: (item: ProductRow) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const add = (item: Product) => {
+  const add = (item: ProductRow) => {
     setItems((prev) => {
       const found = prev.find((p) => p.id === item.id);
       if (found) {

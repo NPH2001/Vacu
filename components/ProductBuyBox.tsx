@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Product } from "@/lib/data";
+import type { ProductRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 
-export default function ProductBuyBox({ p }: { p: Product }) {
+export default function ProductBuyBox({ p }: { p: ProductRow }) {
   const { add, setOpen } = useCart();
   const [qty, setQty] = useState(1);
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, getFarmer, formatPrice, products, getCategory } from "@/lib/data";
+import { getProduct, getFarmer, formatPrice, getAllProducts, getCategory } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 import ProductBuyBox from "@/components/ProductBuyBox";
 
@@ -8,12 +8,15 @@ type Params = Promise<{ id: string }>;
 
 export default async function ProductDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const p = getProduct(id);
+  const p = await getProduct(id);
   if (!p) notFound();
 
-  const farmer = getFarmer(p.farmerId);
-  const category = getCategory(p.category);
-  const related = products.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 4);
+  const [farmer, category, allProducts] = await Promise.all([
+    getFarmer(p.farmerId),
+    getCategory(p.categoryId),
+    getAllProducts(),
+  ]);
+  const related = allProducts.filter((x) => x.categoryId === p.categoryId && x.id !== p.id).slice(0, 4);
   const discount =
     p.oldPrice && p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
 

@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { products, categories, getCategory } from "@/lib/data";
+import { getAllCategories, getAllProducts, getProductsByCategory, getCategory } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 
 type SearchParams = Promise<{ c?: string }>;
 
 export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
-  const params = await searchParams;
-  const activeCat = params.c ?? "";
-  const filtered = activeCat ? products.filter((p) => p.category === activeCat) : products;
-  const activeCategory = activeCat ? getCategory(activeCat) : null;
+  const { c } = await searchParams;
+  const activeCat = c ?? "";
+  const [categories, filtered, activeCategory, allProducts] = await Promise.all([
+    getAllCategories(),
+    activeCat ? getProductsByCategory(activeCat) : getAllProducts(),
+    activeCat ? getCategory(activeCat) : Promise.resolve(null),
+    getAllProducts(),
+  ]);
 
   return (
     <div>
@@ -34,10 +38,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
               !activeCat ? "bg-green-700 text-white border-green-700" : "bg-white text-green-900 border-green-200 hover:border-green-400"
             }`}
           >
-            Tất cả · {products.length}
+            Tất cả · {allProducts.length}
           </Link>
           {categories.map((c) => {
-            const count = products.filter((p) => p.category === c.id).length;
+            const count = allProducts.filter((p) => p.categoryId === c.id).length;
             const isActive = activeCat === c.id;
             return (
               <Link

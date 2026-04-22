@@ -1,14 +1,14 @@
 "use client";
 
 import { useCart } from "./CartProvider";
-import type { Product } from "@/lib/data";
+import type { ProductRow } from "@/db/schema";
 
 export default function AddToCartButton({
   item,
   compact = false,
   disabled = false,
 }: {
-  item: Product;
+  item: ProductRow;
   compact?: boolean;
   disabled?: boolean;
 }) {

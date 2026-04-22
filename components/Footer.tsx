@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { info, categories } from "@/lib/data";
+import type { SiteInfoRow, CategoryRow } from "@/db/schema";
 
-export default function Footer() {
+export default function Footer({ info, categories }: { info: SiteInfoRow; categories: CategoryRow[] }) {
   return (
     <footer className="bg-green-950 text-green-100 mt-24">
       <div className="max-w-7xl mx-auto px-4 py-14 grid md:grid-cols-4 gap-10">

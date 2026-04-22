@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useOrders } from "@/components/OrdersProvider";
-import { formatPrice } from "@/lib/data";
+import { formatPrice } from "@/lib/format";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: "Đã đặt", color: "bg-amber-100 text-amber-800" },

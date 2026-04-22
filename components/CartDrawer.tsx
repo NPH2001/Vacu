@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "./CartProvider";
-import { formatPrice } from "@/lib/data";
+import { formatPrice } from "@/lib/format";
 
 export default function CartDrawer() {
   const { items, total, open, setOpen, setQty, remove } = useCart();

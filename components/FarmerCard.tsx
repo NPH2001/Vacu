@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { Farmer } from "@/lib/data";
+import type { FarmerRow } from "@/db/schema";
 
-export default function FarmerCard({ f }: { f: Farmer }) {
+export default function FarmerCard({ f }: { f: FarmerRow }) {
   return (
     <Link
       href={`/farmers/${f.id}`}

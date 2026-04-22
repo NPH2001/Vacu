@@ -1,20 +1,24 @@
 import Link from "next/link";
 import {
-  categories,
+  getAllCategories,
   getFeaturedProducts,
-  farmers,
-  testimonials,
-  info,
-  faqItems,
+  getAllFarmers,
+  getAllTestimonials,
+  getSiteInfo,
+  getAllFaqItems,
 } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 import FarmerCard from "@/components/FarmerCard";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import FAQ from "@/components/FAQ";
 
-export default function HomePage() {
-  const featured = getFeaturedProducts(8);
+export default async function HomePage() {
+  const [categories, featured, farmers, testimonials, info, faqRows] = await Promise.all([
+    getAllCategories(), getFeaturedProducts(8), getAllFarmers(),
+    getAllTestimonials(), getSiteInfo(), getAllFaqItems(),
+  ]);
   const topFarmers = farmers.slice(0, 3);
+  const faqItems = faqRows.map((f) => ({ q: f.question, a: f.answer }));
 
   return (
     <div>
@@ -39,7 +43,7 @@ export default function HomePage() {
               {info.tagline}
             </h1>
             <p className="text-lg md:text-xl text-green-50/90 mb-10 max-w-xl">
-              Kết nối trực tiếp với {info.stats.farmers} nông dân uy tín khắp Việt Nam. Không trung gian, không hóa chất, giá nông dân.
+              Kết nối trực tiếp với {info.statFarmers} nông dân uy tín khắp Việt Nam. Không trung gian, không hóa chất, giá nông dân.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -56,10 +60,10 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-8 mt-12 pt-8 border-t border-white/20">
-              <Stat value={info.stats.farmers} label="Nông dân" />
-              <Stat value={info.stats.products} label="Sản phẩm" />
-              <Stat value={info.stats.customers} label="Gia đình tin dùng" />
-              <Stat value={info.stats.years} label="Năm kinh nghiệm" />
+              <Stat value={info.statFarmers} label="Nông dân" />
+              <Stat value={info.statProducts} label="Sản phẩm" />
+              <Stat value={info.statCustomers} label="Gia đình tin dùng" />
+              <Stat value={info.statYears} label="Năm kinh nghiệm" />
             </div>
           </div>
         </div>

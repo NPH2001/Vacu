@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { info, farmers } from "@/lib/data";
+import { getSiteInfo, getAllFarmers } from "@/lib/data";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const [info, farmers] = await Promise.all([getSiteInfo(), getAllFarmers()]);
   return (
     <div>
       <section className="relative overflow-hidden">
@@ -31,7 +32,7 @@ export default function AboutPage() {
           Chị quyết định về Đà Lạt, sống cùng bà con nông dân, học cách canh tác hữu cơ, và xây dựng một chuỗi cung ứng mà mỗi cọng rau đều có thể truy xuất được nguồn gốc.
         </p>
         <p>
-          Sau {info.stats.years} năm, {info.name} đã kết nối {info.stats.farmers} hộ nông dân tại Đà Lạt, Mộc Châu, Đắk Lắk, Hà Giang, Lương Sơn — và phục vụ {info.stats.customers} gia đình khắp Việt Nam. Chúng tôi trả cho nông dân cao hơn giá chợ 30-40%, không trung gian, không phụ thu.
+          Sau {info.statYears} năm, {info.name} đã kết nối {info.statFarmers} hộ nông dân tại Đà Lạt, Mộc Châu, Đắk Lắk, Hà Giang, Lương Sơn — và phục vụ {info.statCustomers} gia đình khắp Việt Nam. Chúng tôi trả cho nông dân cao hơn giá chợ 30-40%, không trung gian, không phụ thu.
         </p>
       </section>
 
@@ -60,10 +61,10 @@ export default function AboutPage() {
         <h2 className="text-3xl font-bold text-green-950 font-display text-center mb-10">Những con số biết nói</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { value: info.stats.farmers, label: "Hộ nông dân" },
-            { value: info.stats.products, label: "Sản phẩm" },
-            { value: info.stats.customers, label: "Gia đình tin dùng" },
-            { value: info.stats.years + " năm", label: "Cùng đồng hành" },
+            { value: info.statFarmers, label: "Hộ nông dân" },
+            { value: info.statProducts, label: "Sản phẩm" },
+            { value: info.statCustomers, label: "Gia đình tin dùng" },
+            { value: info.statYears + " năm", label: "Cùng đồng hành" },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-3xl p-8 border border-green-100 text-center">
               <div className="text-4xl md:text-5xl font-bold text-green-800 font-display">{s.value}</div>
@@ -75,7 +76,7 @@ export default function AboutPage() {
 
       <section className="max-w-5xl mx-auto px-4 pb-16">
         <div className="bg-gradient-to-br from-green-800 to-green-950 rounded-[2rem] p-10 md:p-14 text-center text-white">
-          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Còn {farmers.length} câu chuyện khác đang chờ bạn</h2>
+          <h2 className="text-3xl md:text-4xl font-bold font-display mb-4">Còn {farmers.length} câu chuyện nông dân đang chờ bạn</h2>
           <p className="text-green-100/80 max-w-lg mx-auto mb-8">
             Mỗi nông dân chúng tôi cộng tác có một câu chuyện riêng. Hãy đến gặp họ.
           </p>
