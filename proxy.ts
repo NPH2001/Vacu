@@ -9,9 +9,11 @@ async function isSessionValid(jwt: string | undefined): Promise<boolean> {
   catch { return false; }
 }
 
+const PUBLIC_PATHS = new Set(['/admin/login', '/admin/forgot-password']);
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname === '/admin/login') return NextResponse.next();
+  if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
   const jwt = req.cookies.get('ntx_session')?.value;
   if (await isSessionValid(jwt)) return NextResponse.next();
   const url = new URL('/admin/login', req.url);

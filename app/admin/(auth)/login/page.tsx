@@ -28,6 +28,9 @@ function LoginForm() {
         className="w-full bg-green-700 hover:bg-green-800 disabled:opacity-60 text-white font-bold py-2.5 rounded-full">
         {pending ? 'Đang đăng nhập…' : 'Đăng nhập'}
       </button>
+      <div className="text-center text-sm">
+        <a href="/admin/forgot-password" className="text-green-700 hover:underline">Quên mật khẩu?</a>
+      </div>
     </form>
   );
 }
