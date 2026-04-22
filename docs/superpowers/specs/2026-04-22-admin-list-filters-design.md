@@ -136,11 +136,11 @@ Hiển thị 1–25 trong 137           ‹ 1 2 … 5 6 ›         [25 / trang 
 
 | Entity | searchFields | sortable (default*) | filters |
 |---|---|---|---|
-| Orders | id, customerName, phone, email | createdAt*, total, status | status (existing pills, DB-driven), paymentMethod (bank/cod), paymentStatus (pending/paid) |
+| Orders | id, customerName, phone, customerEmail | createdAt*, total, status | status (existing pills, DB-driven), paymentMethod (bank/cod), paymentStatus (unpaid/paid) |
 | Products | name, id, description | name*, price, createdAt | categoryId (select, từ `categories`), featured (bool), inStock (bool) |
-| Users | email, name | email*, createdAt | role (admin/customer) |
+| Users | email, name | email*, createdAt | role (admin/staff) |
 | Categories | name | name*, sortOrder | — |
-| Farmers | name, region | name*, createdAt | — |
+| Farmers | name, farm, location, specialty | name*, createdAt | — |
 | Testimonials | name, content | createdAt* | — |
 | FAQ | question | sortOrder*, createdAt | — |
 | Contact topics | label, key | sortOrder* | — |
