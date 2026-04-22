@@ -1,5 +1,5 @@
 import 'server-only';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
@@ -30,3 +30,22 @@ export async function saveUpload(buf: Buffer): Promise<string> {
   await writeFile(path.join(dir, filename), buf);
   return `/uploads/${yyyy}/${mm}/${filename}`;
 }
+
+const URL_PREFIX = '/uploads/';
+
+export async function deleteUpload(url: string | null | undefined): Promise<void> {
+  if (!url || !url.startsWith(URL_PREFIX)) return;
+  const root = path.resolve(uploadsDir());
+  const abs = path.resolve(root, url.slice(URL_PREFIX.length));
+  if (abs !== root && !abs.startsWith(root + path.sep)) return;
+  await rm(abs, { force: true });
+}
+
+export async function deleteUploadIfReplaced(
+  oldUrl: string | null | undefined,
+  newUrl: string | null | undefined,
+): Promise<void> {
+  if (!oldUrl || oldUrl === newUrl) return;
+  await deleteUpload(oldUrl);
+}
+
