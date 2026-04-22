@@ -1,0 +1,8 @@
+[
+  { "id": "rau-cu", "name": "Rau củ", "icon": "🥬", "description": "Rau lá, củ quả hữu cơ tươi mỗi sáng" },
+  { "id": "trai-cay", "name": "Trái cây", "icon": "🍎", "description": "Trái cây theo mùa, ngọt tự nhiên" },
+  { "id": "trung-thit", "name": "Trứng & Thịt", "icon": "🥚", "description": "Trứng gà ta, thịt heo rừng, gà thả vườn" },
+  { "id": "gia-vi", "name": "Gia vị & Thảo mộc", "icon": "🌿", "description": "Tiêu rừng, quế, húng quế, tía tô" },
+  { "id": "che-bien", "name": "Chế biến tại nông trại", "icon": "🥫", "description": "Mứt, dưa muối, tương, sữa chua nhà làm" },
+  { "id": "hop-qua", "name": "Hộp đăng ký", "icon": "📦", "description": "Hộp rau tuần, hộp trái cây theo mùa" }
+]

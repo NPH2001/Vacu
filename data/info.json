@@ -1,0 +1,16 @@
+{
+  "name": "Nông Trại Xanh",
+  "shortName": "NôngTrạiXanh",
+  "tagline": "Rau sạch từ nông trại tới bữa cơm gia đình",
+  "description": "Nông Trại Xanh là chuỗi nông sản hữu cơ trực tiếp từ hơn 80 hộ nông dân tại Đà Lạt, Mộc Châu và Lâm Đồng. Không hóa chất, không thuốc trừ sâu, thu hoạch buổi sáng và giao tới tay bạn trong ngày.",
+  "address": "12 Trường Chinh, Phường Tân Bình, TP.HCM",
+  "phone": "1900 2468",
+  "email": "xinchao@nongtraixanh.vn",
+  "hours": "6:00 - 21:00 (Thứ 2 - Chủ Nhật)",
+  "stats": {
+    "farmers": "80+",
+    "products": "320+",
+    "customers": "28.000+",
+    "years": "12"
+  }
+}
