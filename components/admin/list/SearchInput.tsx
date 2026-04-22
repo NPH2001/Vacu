@@ -47,7 +47,7 @@ export default function SearchInput({
         value={value}
         placeholder={placeholder}
         onChange={(e) => { setValue(e.target.value); push(e.target.value, false); }}
-        className="admin-input w-72 pl-9"
+        className="admin-input w-full sm:w-72 pl-9"
       />
     </form>
   );

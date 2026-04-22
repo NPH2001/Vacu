@@ -63,7 +63,7 @@ body {
   background: var(--admin-panel);
   border: 1px solid var(--admin-hairline);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: auto;
   box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 1px 3px rgba(17, 24, 39, 0.04);
 }
 
@@ -239,7 +239,7 @@ body {
 }
 
 /* table */
-.admin-table { width: 100%; font-size: 13px; }
+.admin-table { width: 100%; min-width: 640px; font-size: 13px; }
 .admin-table thead th {
   text-align: left;
   padding: 10px 16px;
