@@ -1,6 +1,6 @@
 'use client';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function SearchInput({
   placeholder = 'Tìm kiếm…',
@@ -12,13 +12,15 @@ export default function SearchInput({
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const initial = params.get('q') ?? '';
-  const [value, setValue] = useState(initial);
+  const urlQ = params.get('q') ?? '';
+  const [value, setValue] = useState(urlQ);
+  const [lastUrlQ, setLastUrlQ] = useState(urlQ);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    setValue(initial);
-  }, [initial]);
+  if (urlQ !== lastUrlQ) {
+    setLastUrlQ(urlQ);
+    setValue(urlQ);
+  }
 
   function push(next: string, immediate: boolean) {
     const qs = new URLSearchParams(params.toString());
