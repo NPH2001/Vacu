@@ -5,11 +5,13 @@ import Topbar from '@/components/admin/Topbar';
 export default async function ShellLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
   return (
-    <div className="min-h-screen flex bg-green-50/40">
+    <div className="admin-shell min-h-screen flex">
       <Sidebar role={user.role as 'admin' | 'staff'} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <Topbar email={user.email} />
-        <div className="flex-1 p-6 overflow-auto">{children}</div>
+        <main className="flex-1 overflow-auto">
+          <div className="px-8 py-7 max-w-[1440px] mx-auto w-full">{children}</div>
+        </main>
       </div>
     </div>
   );

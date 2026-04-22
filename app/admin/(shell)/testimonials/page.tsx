@@ -47,10 +47,10 @@ export default async function TestimonialsAdminPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-display text-green-950">Cảm nhận khách hàng</h1>
+        <h1 className="admin-title text-[28px]">Cảm nhận khách hàng</h1>
         <Link
           href="/admin/testimonials/new"
-          className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-full text-sm">
+          className="admin-btn-primary">
           + Thêm cảm nhận
         </Link>
       </div>
@@ -61,14 +61,14 @@ export default async function TestimonialsAdminPage({
       </div>
 
       {total === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+        <div className="admin-panel p-6 text-sm text-stone-500">
           {parsed.q ? 'Không có kết quả phù hợp.' : 'Chưa có cảm nhận.'}
         </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteTestimonials}>
-          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="text-left text-green-900/70 bg-green-50/60">
+          <div className="admin-panel-flush">
+            <table className="admin-table">
+              <thead>
                 <tr>
                   <th className="px-4 py-2.5 w-10"></th>
                   <th className="px-4 py-2.5 font-medium w-14">Ảnh</th>
@@ -80,7 +80,7 @@ export default async function TestimonialsAdminPage({
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-green-50">
+                  <tr key={r.id}>
                     <td className="px-4 py-2"><input type="checkbox" name="ids" value={r.id} /></td>
                     <td className="px-4 py-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,26 +1,130 @@
+'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-const LINKS = [
-  { href: '/admin', label: 'Dashboard', icon: '🏠' },
-  { href: '/admin/products', label: 'Sản phẩm', icon: '🥬' },
-  { href: '/admin/categories', label: 'Danh mục', icon: '🏷️' },
-  { href: '/admin/farmers', label: 'Nông dân', icon: '👨‍🌾' },
-  { href: '/admin/testimonials', label: 'Cảm nhận', icon: '💬' },
-  { href: '/admin/faq', label: 'FAQ', icon: '❓' },
-  { href: '/admin/orders', label: 'Đơn hàng', icon: '📦' },
-  { href: '/admin/users', label: 'Tài khoản', icon: '👤', adminOnly: true },
-  { href: '/admin/settings', label: 'Cài đặt', icon: '⚙️' },
+type NavItem = { href: string; label: string; icon: string; adminOnly?: boolean };
+
+const SECTIONS: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Tổng quan',
+    items: [{ href: '/admin', label: 'Dashboard', icon: '◆' }],
+  },
+  {
+    title: 'Bán hàng',
+    items: [
+      { href: '/admin/orders', label: 'Đơn hàng', icon: '✦' },
+      { href: '/admin/products', label: 'Sản phẩm', icon: '✿' },
+      { href: '/admin/categories', label: 'Danh mục', icon: '❖' },
+    ],
+  },
+  {
+    title: 'Nội dung',
+    items: [
+      { href: '/admin/farmers', label: 'Nông dân', icon: '❀' },
+      { href: '/admin/testimonials', label: 'Cảm nhận', icon: '❝' },
+      { href: '/admin/faq', label: 'Câu hỏi', icon: '?' },
+      { href: '/admin/value-props', label: 'Điểm giá trị', icon: '★' },
+    ],
+  },
+  {
+    title: 'Vận hành',
+    items: [
+      { href: '/admin/delivery-slots', label: 'Khung giờ giao', icon: '◷' },
+      { href: '/admin/payment-methods', label: 'Thanh toán', icon: '◐' },
+      { href: '/admin/order-statuses', label: 'Trạng thái đơn', icon: '⎯' },
+      { href: '/admin/contact-topics', label: 'Chủ đề liên hệ', icon: '✉' },
+      { href: '/admin/email-templates', label: 'Mẫu email', icon: '✎' },
+    ],
+  },
+  {
+    title: 'Hệ thống',
+    items: [
+      { href: '/admin/users', label: 'Tài khoản', icon: '◉', adminOnly: true },
+      { href: '/admin/settings', label: 'Cài đặt', icon: '⚙' },
+    ],
+  },
 ];
 
 export default function Sidebar({ role }: { role: 'admin' | 'staff' }) {
+  const pathname = usePathname() ?? '';
+
   return (
-    <nav className="w-60 bg-white border-r border-green-100 p-4 space-y-1">
-      <div className="text-sm font-bold text-green-700 px-3 mb-2">Nông Trại Xanh CMS</div>
-      {LINKS.filter((l) => !l.adminOnly || role === 'admin').map((l) => (
-        <Link key={l.href} href={l.href} className="block px-3 py-2 rounded-lg hover:bg-green-50 text-green-950 text-sm">
-          <span className="mr-2">{l.icon}</span>{l.label}
-        </Link>
-      ))}
-    </nav>
+    <aside
+      className="w-64 shrink-0 flex flex-col"
+      style={{
+        background: 'var(--admin-nav-bg)',
+        borderRight: '1px solid #0b0b0a',
+      }}>
+      <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
+        <span
+          className="h-8 w-8 rounded-md inline-flex items-center justify-center"
+          style={{
+            background:
+              'linear-gradient(135deg, #15803d 0%, #14532d 55%, #0f3b22 100%)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}>
+          <span
+            className="font-display font-bold text-white text-sm leading-none"
+            style={{ letterSpacing: '-0.04em' }}>
+            V
+          </span>
+        </span>
+        <div className="leading-tight">
+          <div
+            className="font-display text-[15px] text-stone-50"
+            style={{ letterSpacing: '-0.01em' }}>
+            Vacu
+          </div>
+          <div className="text-[10px] tracking-widest uppercase text-stone-500">
+            Console
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-4" style={{ borderTop: '1px solid #2a2a27' }} />
+
+      <nav className="flex-1 px-4 pb-4 overflow-y-auto">
+        {SECTIONS.map((section) => {
+          const items = section.items.filter((i) => !i.adminOnly || role === 'admin');
+          if (items.length === 0) return null;
+          return (
+            <div key={section.title}>
+              <div className="admin-nav-section">{section.title}</div>
+              <div className="space-y-0.5">
+                {items.map((item) => {
+                  const isActive =
+                    item.href === '/admin'
+                      ? pathname === '/admin'
+                      : pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="admin-nav-link"
+                      data-active={isActive || undefined}>
+                      <span className="admin-nav-icon">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+
+      <div
+        className="px-5 py-4 text-[11px] text-stone-500"
+        style={{ borderTop: '1px solid #2a2a27' }}>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: '#86efac', boxShadow: '0 0 6px #4ade80' }}
+          />
+          <span>Hệ thống ổn định</span>
+        </div>
+        <div className="mt-1 text-stone-600">Vacu CMS · v0.9</div>
+      </div>
+    </aside>
   );
 }

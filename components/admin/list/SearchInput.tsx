@@ -37,13 +37,17 @@ export default function SearchInput({
     <form
       onSubmit={(e) => { e.preventDefault(); push(value, true); }}
       className="relative">
+      <span
+        aria-hidden
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-[13px] pointer-events-none">
+        ⌕
+      </span>
       <input
         type="search"
         value={value}
         placeholder={placeholder}
         onChange={(e) => { setValue(e.target.value); push(e.target.value, false); }}
-        className="w-64 rounded-full border border-green-200 bg-white px-4 py-1.5 text-sm
-                   focus:border-green-500 focus:outline-none"
+        className="admin-input w-72 pl-9"
       />
     </form>
   );

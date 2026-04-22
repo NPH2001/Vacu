@@ -75,7 +75,7 @@ export default async function OrdersAdminPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-display text-green-950">Đơn hàng</h1>
+        <h1 className="admin-title text-[28px]">Đơn hàng</h1>
         <ClearFiltersLink basePath={BASE} parsed={parsed} />
       </div>
 
@@ -109,14 +109,14 @@ export default async function OrdersAdminPage({
       </div>
 
       {total === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+        <div className="admin-panel p-6 text-sm text-stone-500">
           {hasFilter ? 'Không có kết quả phù hợp.' : 'Không có đơn hàng.'}
         </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteOrders}>
-          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="text-left text-green-900/70 bg-green-50/60">
+          <div className="admin-panel-flush">
+            <table className="admin-table">
+              <thead>
                 <tr>
                   <th className="px-4 py-2.5 w-10"></th>
                   <th className="px-4 py-2.5 font-medium">Mã</th>
@@ -129,34 +129,44 @@ export default async function OrdersAdminPage({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-green-50 hover:bg-green-50/40">
-                    <td className="px-4 py-2"><input type="checkbox" name="ids" value={r.id} /></td>
-                    <td className="px-4 py-2">
-                      <Link href={`/admin/orders/${r.id}`} className="font-mono text-green-800 hover:underline">{r.id}</Link>
-                    </td>
-                    <td className="px-4 py-2">{r.customerName}</td>
-                    <td className="px-4 py-2">{r.phone}</td>
-                    <td className="px-4 py-2">{formatPrice(r.total)}</td>
-                    <td className="px-4 py-2 text-xs">
-                      <div>{r.paymentMethod === 'bank' ? '🏦 CK' : '💵 COD'}</div>
-                      <div className={r.paymentStatus === 'paid' ? 'text-green-700 font-semibold' : 'text-amber-700'}>
-                        {r.paymentStatus === 'paid' ? 'Đã trả' : 'Chưa trả'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">
-                      {(() => {
-                        const s = statusMap[r.status];
-                        return (
-                          <span className={`text-xs px-2 py-0.5 rounded ${s?.color ?? 'bg-green-50 text-green-800'}`}>
-                            {s?.label ?? r.status}
+                {rows.map((r) => {
+                  const s = statusMap[r.status];
+                  return (
+                    <tr key={r.id}>
+                      <td><input type="checkbox" name="ids" value={r.id} /></td>
+                      <td>
+                        <Link href={`/admin/orders/${r.id}`} className="font-mono text-[12.5px] text-stone-900 hover:underline">{r.id}</Link>
+                      </td>
+                      <td className="text-stone-900">{r.customerName}</td>
+                      <td className="text-stone-600 tabular-nums">{r.phone}</td>
+                      <td className="tabular-nums font-medium text-stone-900">{formatPrice(r.total)}</td>
+                      <td>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[12px] text-stone-600">
+                            {r.paymentMethod === 'bank' ? '🏦 Chuyển khoản' : '💵 COD'}
                           </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-2 text-green-900/70">{r.createdAt.toISOString().slice(0, 16).replace('T', ' ')}</td>
-                  </tr>
-                ))}
+                          <span
+                            className="admin-badge w-fit"
+                            style={
+                              r.paymentStatus === 'paid'
+                                ? { background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
+                                : { background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }
+                            }>
+                            {r.paymentStatus === 'paid' ? 'Đã trả' : 'Chưa trả'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`admin-badge ${s?.color ?? 'bg-stone-100 text-stone-700'}`}>
+                          {s?.label ?? r.status}
+                        </span>
+                      </td>
+                      <td className="text-stone-500 tabular-nums text-[12.5px]">
+                        {r.createdAt.toISOString().slice(0, 16).replace('T', ' ')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

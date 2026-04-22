@@ -24,11 +24,8 @@ export default function FilterChips({
           <Link
             key={opt.label}
             href={filterHref(basePath, parsed, filterKey, opt.value)}
-            className={`px-3 py-1.5 rounded-full text-sm border ${
-              isActive
-                ? 'bg-green-700 text-white border-green-700'
-                : 'bg-white text-green-900 border-green-200 hover:border-green-400'
-            }`}>
+            className="admin-chip"
+            data-active={isActive || undefined}>
             {opt.label}
           </Link>
         );

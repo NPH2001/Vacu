@@ -7,7 +7,7 @@ export default function SortableTh({
   parsed,
   schema,
   sortKey,
-  className = 'px-4 py-2.5 font-medium',
+  className,
   children,
 }: {
   basePath: string;
@@ -23,10 +23,14 @@ export default function SortableTh({
     <th className={className}>
       <Link
         href={sortHref(basePath, parsed, sortKey, schema)}
-        className="inline-flex items-center gap-1 hover:text-green-800"
+        className="inline-flex items-center gap-1.5 hover:text-stone-900 transition-colors"
         scroll={false}>
         <span>{children}</span>
-        <span className={active ? 'text-green-700' : 'text-green-900/30'}>{arrow}</span>
+        <span
+          className={active ? 'text-stone-900' : 'text-stone-300'}
+          aria-hidden>
+          {arrow}
+        </span>
       </Link>
     </th>
   );

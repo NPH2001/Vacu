@@ -20,15 +20,18 @@ export default function Pagination({
   const to = Math.min(total, current * parsed.pageSize);
 
   return (
-    <div className="flex items-center gap-4 text-sm text-green-900/70 px-1">
-      <span>Hiển thị {from}–{to} trong {total}</span>
+    <div className="flex items-center gap-4 text-[12.5px] text-stone-500 px-1">
+      <span>
+        Hiển thị <span className="tabular-nums font-medium text-stone-900">{from}–{to}</span>{' '}
+        trong <span className="tabular-nums font-medium text-stone-900">{total}</span>
+      </span>
       {totalPages > 1 && (
         <nav className="flex items-center gap-1">
           <PageLink basePath={basePath} parsed={parsed} schema={schema} to={current - 1}
                     disabled={current === 1}>‹</PageLink>
           {pages.map((p, i) =>
             p === null
-              ? <span key={`gap-${i}`} className="px-2">…</span>
+              ? <span key={`gap-${i}`} className="px-2 text-stone-400">…</span>
               : <PageLink key={p} basePath={basePath} parsed={parsed} schema={schema} to={p}
                           active={p === current}>{p}</PageLink>,
           )}
@@ -51,14 +54,15 @@ function PageLink({
   active?: boolean;
   children: React.ReactNode;
 }) {
-  const cls = `min-w-[28px] h-7 px-2 inline-flex items-center justify-center rounded border text-sm ${
-    active
-      ? 'bg-green-700 text-white border-green-700'
-      : 'bg-white text-green-900 border-green-200 hover:border-green-400'
-  } ${disabled ? 'opacity-40 pointer-events-none' : ''}`;
-  if (disabled) return <span className={cls}>{children}</span>;
+  const base =
+    'min-w-[30px] h-7 px-2 inline-flex items-center justify-center rounded-md text-[12.5px] tabular-nums transition-colors';
+  const classes = active
+    ? `${base} bg-stone-900 text-white`
+    : `${base} bg-white border border-stone-200 text-stone-600 hover:border-stone-400 hover:text-stone-900`;
+  const disabledCls = disabled ? ' opacity-40 pointer-events-none' : '';
+  if (disabled) return <span className={classes + disabledCls}>{children}</span>;
   return (
-    <Link href={pageHref(basePath, parsed, to, schema)} className={cls} scroll={false}>
+    <Link href={pageHref(basePath, parsed, to, schema)} className={classes + disabledCls} scroll={false}>
       {children}
     </Link>
   );

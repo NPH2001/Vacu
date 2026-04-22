@@ -51,10 +51,10 @@ export default async function DeliverySlotsAdminPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-display text-green-950">Khung giờ giao</h1>
+        <h1 className="admin-title text-[28px]">Khung giờ giao</h1>
         <Link
           href="/admin/delivery-slots/new"
-          className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-full text-sm">
+          className="admin-btn-primary">
           + Thêm
         </Link>
       </div>
@@ -75,13 +75,13 @@ export default async function DeliverySlotsAdminPage({
       </div>
 
       {total === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+        <div className="admin-panel p-6 text-sm text-stone-500">
           {hasFilter ? 'Không có kết quả phù hợp.' : 'Chưa có khung giờ nào.'}
         </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteDeliverySlots}>
-          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
-            <ul className="divide-y divide-green-50">
+          <div className="admin-panel-flush">
+            <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-center">
                   <input type="checkbox" name="ids" value={r.id} />

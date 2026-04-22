@@ -28,8 +28,14 @@ export default function FilterSelect({
         qs.delete('page');
         router.replace(`${pathname}${qs.toString() ? `?${qs}` : ''}`, { scroll: false });
       }}
-      className="rounded-full border border-green-200 bg-white px-3 py-1.5 text-sm
-                 focus:border-green-500 focus:outline-none">
+      className="admin-input pr-8 appearance-none cursor-pointer"
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2378716c' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 12px center',
+        backgroundSize: '10px 6px',
+      }}>
       <option value="">{placeholder}</option>
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>{opt.label}</option>

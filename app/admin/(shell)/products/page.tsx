@@ -63,10 +63,10 @@ export default async function ProductsAdminPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-display text-green-950">Sản phẩm</h1>
+        <h1 className="admin-title text-[28px]">Sản phẩm</h1>
         <Link
           href="/admin/products/new"
-          className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-full text-sm">
+          className="admin-btn-primary">
           + Thêm sản phẩm
         </Link>
       </div>
@@ -102,14 +102,14 @@ export default async function ProductsAdminPage({
       </div>
 
       {total === 0 ? (
-        <div className="bg-white rounded-2xl border border-green-100 p-6 text-sm text-green-900/70">
+        <div className="admin-panel p-6 text-sm text-stone-500">
           {hasFilter ? 'Không có kết quả phù hợp.' : 'Chưa có sản phẩm.'}
         </div>
       ) : (
         <BulkDeleteForm action={bulkDeleteProducts}>
-          <div className="bg-white rounded-2xl border border-green-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="text-left text-green-900/70 bg-green-50/60">
+          <div className="admin-panel-flush">
+            <table className="admin-table">
+              <thead>
                 <tr>
                   <th className="px-4 py-2.5 w-10"></th>
                   <th className="px-4 py-2.5 font-medium">Ảnh</th>
@@ -122,27 +122,46 @@ export default async function ProductsAdminPage({
               </thead>
               <tbody>
                 {rows.map((p) => (
-                  <tr key={p.id} className="border-t border-green-50">
-                    <td className="px-4 py-2">
+                  <tr key={p.id}>
+                    <td>
                       <input type="checkbox" name="ids" value={p.id} />
                     </td>
-                    <td className="px-4 py-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {p.image && <img src={p.image} alt="" className="w-10 h-10 rounded object-cover" />}
+                    <td>
+                      {p.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.image} alt="" className="w-10 h-10 rounded-md object-cover ring-1 ring-stone-200" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-md bg-stone-100 ring-1 ring-stone-200" />
+                      )}
                     </td>
-                    <td className="px-4 py-2">
-                      <Link href={`/admin/products/${p.id}`} className="font-medium text-green-950 hover:underline">{p.name}</Link>
-                      <div className="text-xs text-green-900/60">{p.id}</div>
+                    <td>
+                      <Link href={`/admin/products/${p.id}`} className="font-medium text-stone-900 hover:underline">{p.name}</Link>
+                      <div className="text-[11.5px] text-stone-400 font-mono mt-0.5">{p.id}</div>
                     </td>
-                    <td className="px-4 py-2">{catMap.get(p.categoryId) ?? p.categoryId}</td>
-                    <td className="px-4 py-2">{formatPrice(p.price)}</td>
-                    <td className="px-4 py-2 space-x-1">
-                      {p.featured && <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded">Nổi bật</span>}
-                      {!p.inStock && <span className="text-xs px-2 py-0.5 bg-red-100 text-red-800 rounded">Hết</span>}
+                    <td className="text-stone-600">{catMap.get(p.categoryId) ?? p.categoryId}</td>
+                    <td className="tabular-nums font-medium text-stone-900">{formatPrice(p.price)}</td>
+                    <td>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {p.featured && (
+                          <span className="admin-badge" style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }}>
+                            ★ Nổi bật
+                          </span>
+                        )}
+                        {!p.inStock && (
+                          <span className="admin-badge" style={{ background: '#fee2e2', color: '#991b1b', borderColor: '#fecaca' }}>
+                            Hết hàng
+                          </span>
+                        )}
+                        {p.inStock && !p.featured && (
+                          <span className="text-[11.5px] text-stone-400">Đang bán</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-right space-x-3">
-                      <Link href={`/admin/products/${p.id}`} className="text-green-700 hover:underline">Sửa</Link>
-                      <DeleteButton action={deleteProduct.bind(null, p.id)} confirmText={`Xóa sản phẩm "${p.name}"?`} />
+                    <td className="text-right">
+                      <div className="inline-flex items-center gap-3">
+                        <Link href={`/admin/products/${p.id}`} className="text-[12.5px] text-stone-600 hover:text-stone-900 transition-colors">Sửa</Link>
+                        <DeleteButton action={deleteProduct.bind(null, p.id)} confirmText={`Xóa sản phẩm "${p.name}"?`} />
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -14,7 +14,7 @@ export default function PageSizeSelect({
   const current = Number.parseInt(params.get('pageSize') ?? '', 10) || defaultSize;
 
   return (
-    <label className="text-xs text-green-900/70 flex items-center gap-1">
+    <label className="text-[12px] text-stone-500 flex items-center gap-2">
       <select
         value={current}
         onChange={(e) => {
@@ -25,8 +25,14 @@ export default function PageSizeSelect({
           qs.delete('page');
           router.replace(`${pathname}${qs.toString() ? `?${qs}` : ''}`, { scroll: false });
         }}
-        className="rounded border border-green-200 bg-white px-2 py-1 text-xs
-                   focus:border-green-500 focus:outline-none">
+        className="admin-input !py-1 !px-2.5 text-[12px] cursor-pointer appearance-none pr-7"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2378716c' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right 8px center',
+          backgroundSize: '10px 6px',
+        }}>
         {sizes.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
       / trang

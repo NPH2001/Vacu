@@ -15,8 +15,9 @@ export default function ClearFiltersLink({
   return (
     <Link
       href={clearHref(basePath)}
-      className="text-sm text-green-900/60 hover:text-green-900 underline underline-offset-2">
-      {label} ✕
+      className="text-[12px] text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-1">
+      {label}
+      <span aria-hidden>✕</span>
     </Link>
   );
 }
