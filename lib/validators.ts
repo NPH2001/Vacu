@@ -138,6 +138,7 @@ export const siteInfoSchema = z.object({
   bankAccountHolder: z.string().max(120).default(''),
 
   logoUrl: optUrlOrPath,
+  faviconUrl: optUrlOrPath,
 
   smtpEnabled: z.coerce.boolean().default(false),
   smtpHost: z.string().max(200).default(''),

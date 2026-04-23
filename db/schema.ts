@@ -152,6 +152,7 @@ export const siteInfo = pgTable(
     bankAccountHolder: text('bank_account_holder').notNull().default(''),
 
     logoUrl: text('logo_url'),
+    faviconUrl: text('favicon_url'),
 
     smtpEnabled: boolean('smtp_enabled').notNull().default(false),
     smtpHost: text('smtp_host').notNull().default(''),
