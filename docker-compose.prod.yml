@@ -9,22 +9,22 @@
 #      (default: "letsencrypt").
 #   3. A `.env` file (see .env.production.example) is in the same dir.
 #
-# Usage:
-#   docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+# Usage (image is pulled from the registry, not built locally):
+#   docker login registry.tagatechx.com             # once, with pull creds
+#   docker compose -f docker-compose.prod.yml --env-file .env pull
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
 #   docker compose -f docker-compose.prod.yml logs -f app
 #
 # Notes:
 #   - Postgres is internal-only (no host port published).
 #   - Uploads + Postgres data persist on named volumes.
 #   - Migrations + admin seed run automatically on every app container start.
+#   - Build + push from the dev machine: `make release`.
 
 name: vacu
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ${IMAGE_NAME:-registry.tagatechx.com/vacu/app}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
