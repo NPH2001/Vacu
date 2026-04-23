@@ -19,7 +19,7 @@ FULL        := $(REGISTRY)/$(IMAGE)
 TAGGED      := $(FULL):$(TAG)
 LATEST      := $(FULL):latest
 
-.PHONY: help build push release login info test clean
+.PHONY: help build push release login info test clean backup restore
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} /^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -61,3 +61,10 @@ test: ## Run the full test suite (nodectr-based integration tests need Docker)
 
 clean: ## Remove locally-cached image tags
 	-docker image rm $(TAGGED) $(LATEST) 2>/dev/null || true
+
+backup: ## Snapshot Postgres + uploads to ./backups/<timestamp>/
+	./scripts/backup.sh
+
+restore: ## Restore from backup dir: make restore SRC=backups/<timestamp>
+	@test -n "$(SRC)" || (echo "Usage: make restore SRC=backups/<timestamp>" >&2; exit 1)
+	./scripts/restore.sh $(SRC)
