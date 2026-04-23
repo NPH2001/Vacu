@@ -69,9 +69,15 @@ export default function ProductForm({
 
       <ImageUpload name="image" defaultValue={d.image ?? ''} label="Ảnh sản phẩm *" />
 
-      <Field label="Mô tả" required>
-        <textarea name="description" defaultValue={d.description ?? ''} required rows={4}
+      <Field label="Mô tả ngắn" required hint="Hiển thị ở thẻ sản phẩm và đầu trang chi tiết. Tối đa 2000 ký tự.">
+        <textarea name="description" defaultValue={d.description ?? ''} required rows={3}
           className="w-full border border-green-200 rounded px-3 py-2" />
+      </Field>
+
+      <Field label="Mô tả chi tiết" hint="Hiển thị section 'Chi tiết sản phẩm' dưới khu vực mua. Hỗ trợ Markdown: **đậm**, *nghiêng*, # tiêu đề, - danh sách, [link](url), bảng GFM.">
+        <textarea name="body" defaultValue={d.body ?? ''} rows={12}
+          placeholder="## Đặc điểm&#10;- Trồng tại Đà Lạt&#10;- Thu hoạch sáng cùng ngày&#10;&#10;## Cách bảo quản&#10;Bọc khăn ẩm, để ngăn mát 3-5 ngày."
+          className="w-full border border-green-200 rounded px-3 py-2 font-mono text-[13px] leading-relaxed" />
       </Field>
 
       <div className="flex gap-6">
@@ -96,10 +102,11 @@ export default function ProductForm({
   );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="text-sm font-medium text-green-950">{label}{required && <span className="text-red-500"> *</span>}</span>
+      {hint && <span className="block text-xs text-green-900/60 mt-0.5">{hint}</span>}
       <div className="mt-1">{children}</div>
     </label>
   );

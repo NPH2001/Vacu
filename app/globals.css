@@ -261,3 +261,87 @@ body {
 
 /* small text helpers */
 .admin-subtle { color: var(--admin-muted); }
+
+/* ─── product markdown body ─────────────────────────────────────────── */
+
+.product-prose {
+  color: #1c2918;
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+.product-prose > * + * { margin-top: 0.9em; }
+.product-prose h1,
+.product-prose h2,
+.product-prose h3 {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.01em;
+  color: #14321b;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 1.6em;
+}
+.product-prose h1 { font-size: 1.75em; }
+.product-prose h2 { font-size: 1.4em; }
+.product-prose h3 { font-size: 1.15em; }
+.product-prose p { color: #1f3a25; }
+.product-prose strong { color: #0f2317; font-weight: 600; }
+.product-prose em { font-style: italic; }
+.product-prose a {
+  color: #15803d;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.product-prose a:hover { color: #166534; }
+.product-prose ul,
+.product-prose ol { padding-left: 1.4em; }
+.product-prose ul { list-style: disc; }
+.product-prose ol { list-style: decimal; }
+.product-prose li::marker { color: #15803d; }
+.product-prose li + li { margin-top: 0.35em; }
+.product-prose blockquote {
+  border-left: 3px solid #86efac;
+  padding-left: 1em;
+  color: #4b5e4b;
+  font-style: italic;
+}
+.product-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  background: #ecfccb;
+  color: #15302a;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.product-prose pre {
+  background: #14321b;
+  color: #ecfccb;
+  padding: 14px 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.product-prose pre code { background: transparent; color: inherit; padding: 0; }
+.product-prose hr {
+  border: 0;
+  border-top: 1px solid #d4dac9;
+  margin: 1.8em 0;
+}
+.product-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.product-prose th,
+.product-prose td {
+  border-bottom: 1px solid #e3e7da;
+  padding: 8px 10px;
+  text-align: left;
+}
+.product-prose th { background: #f3f6ec; font-weight: 600; }
+.product-prose img {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 0.8em 0;
+}

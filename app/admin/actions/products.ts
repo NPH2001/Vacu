@@ -22,6 +22,7 @@ function parseForm(fd: FormData) {
     image: fd.get('image'),
     farmerId: fd.get('farmerId') || undefined,
     description: fd.get('description'),
+    body: fd.get('body') ?? '',
     tags: rawTags ? rawTags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     featured: fd.get('featured') === 'on',
     inStock: fd.get('inStock') === 'on',

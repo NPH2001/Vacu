@@ -8,6 +8,76 @@
       "when": 1776836773119,
       "tag": "0000_nasty_iceman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776847457008,
+      "tag": "0001_great_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776848068215,
+      "tag": "0002_new_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776848408119,
+      "tag": "0003_absurd_miek",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776849083396,
+      "tag": "0004_curvy_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776851744411,
+      "tag": "0005_nervous_texas_twister",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776852507292,
+      "tag": "0006_third_umar",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776854564284,
+      "tag": "0007_superb_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776855086749,
+      "tag": "0008_orange_sage",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776855478916,
+      "tag": "0009_productive_doctor_doom",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776904067498,
+      "tag": "0010_chunky_tigra",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getProduct, getFarmer, formatPrice, getAllProducts, getCategory } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 import ProductBuyBox from "@/components/ProductBuyBox";
+import Markdown from "@/components/Markdown";
 
 type Params = Promise<{ id: string }>;
 
@@ -81,6 +82,13 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
           )}
         </div>
       </div>
+
+      {p.body?.trim() && (
+        <section className="mt-14 max-w-3xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-5">Chi tiết sản phẩm</h2>
+          <Markdown content={p.body} />
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-20">

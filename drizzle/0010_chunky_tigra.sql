@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "body" text DEFAULT '' NOT NULL;
