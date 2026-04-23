@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getAllFarmers } from "@/lib/data";
 import FarmerCard from "@/components/FarmerCard";
 import AnimateOnScroll from "@/components/AnimateOnScroll";

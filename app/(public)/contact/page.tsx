@@ -1,7 +1,10 @@
-import { getSiteInfo } from "@/lib/data";
+export const dynamic = 'force-dynamic';
+
+import { getSiteInfo, getAllContactTopics } from "@/lib/data";
+import ContactForm from "@/components/ContactForm";
 
 export default async function ContactPage() {
-  const info = await getSiteInfo();
+  const [info, topics] = await Promise.all([getSiteInfo(), getAllContactTopics()]);
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
@@ -19,37 +22,14 @@ export default async function ContactPage() {
           <Info icon="✉️" title="Email" value={info.email} />
           <Info icon="🕒" title="Giờ làm việc" value={info.hours} />
           <div className="pt-4 border-t border-green-100">
-            <div className="font-bold text-green-950 font-display mb-2">Trang trại demo</div>
+            <div className="font-bold text-green-950 font-display mb-2">{info.contactDemoTitle}</div>
             <p className="text-sm text-green-900/70">
-              Chúng tôi tổ chức tour thăm vườn Đà Lạt mỗi tháng. Đăng ký qua email hoặc hotline phía trên.
+              {info.contactDemoText}
             </p>
           </div>
         </div>
 
-        <form className="md:col-span-3 bg-white rounded-3xl border border-green-100 p-7 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Họ và tên" placeholder="Nguyễn Văn A" />
-            <Field label="Số điện thoại" placeholder="0912 xxx xxx" />
-          </div>
-          <Field label="Email" placeholder="ban@example.com" type="email" />
-          <div>
-            <label className="block text-sm font-semibold text-green-950 mb-1.5">Bạn muốn hỏi về</label>
-            <select className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-500">
-              <option>Sản phẩm</option>
-              <option>Hộp rau tuần</option>
-              <option>Hợp tác nông dân</option>
-              <option>Tour thăm vườn</option>
-              <option>Khác</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-green-950 mb-1.5">Nội dung</label>
-            <textarea rows={5} placeholder="Viết gì đó..." className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-500" />
-          </div>
-          <button type="button" className="w-full bg-green-700 hover:bg-green-800 text-white font-bold px-6 py-3.5 rounded-full transition">
-            Gửi tin nhắn
-          </button>
-        </form>
+        <ContactForm topics={topics} />
       </div>
     </div>
   );
@@ -63,15 +43,6 @@ function Info({ icon, title, value }: { icon: string; title: string; value: stri
         <div className="text-xs text-green-900/60 uppercase tracking-wider">{title}</div>
         <div className="font-semibold text-green-950">{value}</div>
       </div>
-    </div>
-  );
-}
-
-function Field({ label, placeholder, type = "text" }: { label: string; placeholder: string; type?: string }) {
-  return (
-    <div>
-      <label className="block text-sm font-semibold text-green-950 mb-1.5">{label}</label>
-      <input type={type} placeholder={placeholder} className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-500" />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { inArray } from 'drizzle-orm';
@@ -5,14 +7,8 @@ import { db } from '@/db/client';
 import { orders, orderItems } from '@/db/schema';
 import { MY_ORDERS_COOKIE, parseMyOrders } from '@/lib/orders-cookie';
 import { formatPrice } from '@/lib/format';
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending:    { label: 'Đã đặt',         color: 'bg-amber-100 text-amber-800' },
-  preparing:  { label: 'Đang thu hoạch', color: 'bg-blue-100 text-blue-800' },
-  delivering: { label: 'Đang giao',      color: 'bg-green-100 text-green-800' },
-  delivered:  { label: 'Đã giao',        color: 'bg-stone-200 text-stone-700' },
-  cancelled:  { label: 'Đã huỷ',         color: 'bg-red-100 text-red-700' },
-};
+import { getOrderStatusMap, getSiteInfo } from '@/lib/data';
+import { findBank, vietQrImageUrl } from '@/lib/banks';
 
 export default async function OrdersPage({
   searchParams,
@@ -21,6 +17,7 @@ export default async function OrdersPage({
   const cookieStore = await cookies();
   const ids = parseMyOrders(cookieStore.get(MY_ORDERS_COOKIE)?.value);
 
+  const [statusMap, info] = await Promise.all([getOrderStatusMap(), getSiteInfo()]);
   const myOrders = ids.length
     ? await db.select().from(orders).where(inArray(orders.id, ids))
     : [];
@@ -61,7 +58,7 @@ export default async function OrdersPage({
       ) : (
         <div className="space-y-5">
           {myOrders.map((o) => {
-            const s = STATUS_LABELS[o.status] ?? STATUS_LABELS.pending;
+            const s = statusMap[o.status] ?? { label: o.status, color: 'bg-stone-100 text-stone-700' };
             const items = itemsByOrder.get(o.id) ?? [];
             return (
               <div key={o.id} className="bg-white rounded-3xl border border-green-100 p-6">
@@ -93,11 +90,70 @@ export default async function OrdersPage({
                   <div><div className="text-[11px] uppercase tracking-wider text-green-700 font-bold">Khung giờ</div><div className="text-green-950">{o.deliverySlot}</div></div>
                   <div className="md:text-right"><div className="text-[11px] uppercase tracking-wider text-green-700 font-bold">Tổng tiền</div><div className="font-bold text-green-800 text-lg">{formatPrice(o.total)}</div></div>
                 </div>
+                {o.paymentMethod === 'bank' && o.paymentStatus === 'unpaid' && info.bankBin && info.bankAccountNumber && (
+                  <BankQrPanel
+                    orderId={o.id}
+                    total={o.total}
+                    bin={info.bankBin}
+                    accountNumber={info.bankAccountNumber}
+                    accountHolder={info.bankAccountHolder}
+                    bankName={info.bankName}
+                  />
+                )}
+                {o.paymentMethod === 'bank' && o.paymentStatus === 'paid' && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 font-semibold">
+                    ✓ Đã xác nhận thanh toán chuyển khoản
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function BankQrPanel({
+  orderId, total, bin, accountNumber, accountHolder, bankName,
+}: {
+  orderId: string; total: number; bin: string; accountNumber: string; accountHolder: string; bankName: string;
+}) {
+  const note = `Thanh toan ${orderId}`;
+  const qrUrl = vietQrImageUrl({ bin, accountNumber, accountHolder, amount: total, note });
+  const bank = findBank(bin);
+  const bankDisplay = bankName || bank?.name || 'Ngân hàng';
+  return (
+    <div className="mt-4 border border-amber-200 bg-amber-50/70 rounded-2xl p-5">
+      <div className="flex flex-wrap items-start gap-2 mb-3">
+        <span className="text-xs font-bold bg-amber-400 text-green-950 px-2 py-0.5 rounded-full">CHƯA THANH TOÁN</span>
+        <div className="text-sm text-green-900/80">Quét QR dưới đây bằng app ngân hàng để chuyển khoản. Nội dung và số tiền đã điền sẵn.</div>
+      </div>
+      <div className="grid md:grid-cols-2 gap-5 items-start">
+        <div className="bg-white rounded-xl p-3 border border-amber-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrUrl} alt={`QR thanh toán ${orderId}`} className="w-full max-w-xs mx-auto" />
+        </div>
+        <dl className="text-sm space-y-2">
+          <Row label="Ngân hàng" value={bankDisplay} />
+          <Row label="Số tài khoản" value={accountNumber} mono />
+          <Row label="Chủ tài khoản" value={accountHolder} />
+          <Row label="Số tiền" value={formatPrice(total)} strong />
+          <Row label="Nội dung" value={note} mono strong />
+          <p className="text-xs text-green-900/60 pt-2">
+            Sau khi chuyển, vui lòng đợi admin xác nhận. Đơn sẽ tự chuyển sang &quot;Đang thu hoạch&quot; khi nhận được tiền.
+          </p>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value, mono, strong }: { label: string; value: string; mono?: boolean; strong?: boolean }) {
+  return (
+    <div className="flex justify-between gap-3">
+      <dt className="text-green-900/60">{label}</dt>
+      <dd className={`text-right ${mono ? 'font-mono' : ''} ${strong ? 'font-bold text-green-950' : 'text-green-950'}`}>{value}</dd>
     </div>
   );
 }

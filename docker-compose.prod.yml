@@ -1,0 +1,91 @@
+# Production stack — Vacu CMS
+# Routes through an EXISTING Traefik instance via an external Docker network.
+#
+# Prerequisites on the host:
+#   1. A Traefik container is already running and attached to a network whose
+#      name matches ${TRAEFIK_NETWORK} (default: "traefik").
+#   2. That Traefik instance has an HTTPS entrypoint named ${TRAEFIK_ENTRYPOINT}
+#      (default: "websecure") and a cert resolver named ${TRAEFIK_CERT_RESOLVER}
+#      (default: "letsencrypt").
+#   3. A `.env` file (see .env.production.example) is in the same dir.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+#   docker compose -f docker-compose.prod.yml logs -f app
+#
+# Notes:
+#   - Postgres is internal-only (no host port published).
+#   - Uploads + Postgres data persist on named volumes.
+#   - Migrations + admin seed run automatically on every app container start.
+
+name: vacu
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${IMAGE_NAME:-vacu/app}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-vacu}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}@postgres:5432/${POSTGRES_DB:-vacu}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET required (32+ random bytes)}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      UPLOADS_DIR: /app/public/uploads
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/public/uploads
+    networks:
+      - internal
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      # router (HTTPS)
+      traefik.http.routers.vacu.rule: Host(`${APP_DOMAIN:?APP_DOMAIN required}`)
+      traefik.http.routers.vacu.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.vacu.tls: "true"
+      traefik.http.routers.vacu.tls.certresolver: ${TRAEFIK_CERT_RESOLVER:-letsencrypt}
+      # service port
+      traefik.http.services.vacu.loadbalancer.server.port: "3000"
+      # optional HTTP → HTTPS redirect (delete if your Traefik already forces it globally)
+      traefik.http.routers.vacu-http.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.vacu-http.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT:-web}
+      traefik.http.routers.vacu-http.middlewares: vacu-redirect
+      traefik.http.middlewares.vacu-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.vacu-redirect.redirectscheme.permanent: "true"
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vacu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-vacu}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vacu}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  uploads:
+
+networks:
+  # External network shared with the host's Traefik instance.
+  # Name must match the network your Traefik container uses.
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true
+  # Internal network for app ↔ postgres only — not reachable from Traefik.
+  internal:
+    driver: bridge

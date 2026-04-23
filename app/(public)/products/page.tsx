@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import { getAllCategories, getAllProducts, getProductsByCategory, getCategory } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
