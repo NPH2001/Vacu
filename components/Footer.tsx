@@ -71,8 +71,19 @@ export default function Footer({ info, categories }: { info: SiteInfoRow; catego
           {info.taxCode && <div>Mã số thuế: {info.taxCode}</div>}
         </div>
       )}
-      <div className="border-t border-green-900 py-5 text-center text-xs text-green-300/60">
-        © {new Date().getFullYear()} {info.name} — {info.footerTagline}
+      <div className="border-t border-green-900 py-5 text-center text-xs text-green-300/60 space-y-1">
+        <div>© {new Date().getFullYear()} {info.name} — {info.footerTagline}</div>
+        <div>
+          Xây dựng bởi{' '}
+          <a
+            href="https://idflow.vn"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-200 hover:text-white underline-offset-2 hover:underline"
+          >
+            idflow.vn
+          </a>
+        </div>
       </div>
     </footer>
   );

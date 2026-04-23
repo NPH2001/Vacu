@@ -45,9 +45,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # can `import 'pg'`, `import 'drizzle-orm'`, etc.
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Migration files + helper scripts
+# Migration files + helper scripts + seed data
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --from=builder --chown=nextjs:nodejs /app/data ./data
 
 # Pre-create uploads dir so a mounted volume picks up correct ownership.
 RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
@@ -55,5 +56,5 @@ RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 USER nextjs
 EXPOSE 3000
 
-# Migrate (idempotent), ensure admin user, then start the server.
-CMD ["sh", "-c", "node scripts/migrate.mjs && node scripts/seed-admin.mjs && node server.js"]
+# Migrate (idempotent), ensure admin user, seed baseline content, then start the server.
+CMD ["sh", "-c", "node scripts/migrate.mjs && node scripts/seed-admin.mjs && node scripts/seed.mjs && node server.js"]

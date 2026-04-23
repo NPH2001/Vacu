@@ -61,6 +61,7 @@ async function main() {
     email: info.email, hours: info.hours,
     statFarmers: info.stats.farmers, statProducts: info.stats.products,
     statCustomers: info.stats.customers, statYears: info.stats.years,
+    logoUrl: info.logoUrl ?? null,
   }).onConflictDoNothing();
 
   console.log('Done.');
