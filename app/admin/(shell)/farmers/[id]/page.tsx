@@ -13,7 +13,7 @@ export default async function EditFarmerPage({ params }: { params: Promise<{ id:
   const bound = updateFarmer.bind(null, row.id);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sửa: {row.name}</h1>
+      <h1 className="admin-title text-[28px]">Sửa: {row.name}</h1>
       <FarmerForm action={bound} defaults={row} editing />
     </div>
   );

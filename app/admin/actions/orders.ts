@@ -3,9 +3,11 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { orders } from '@/db/schema';
+import { orders, siteInfo } from '@/db/schema';
 import { orderStatusSchema } from '@/lib/validators';
 import { requireAdmin } from '@/lib/session';
+import { sendTemplatedMail } from '@/lib/mail';
+import { formatPrice } from '@/lib/format';
 
 export async function updateOrderStatus(id: string, fd: FormData): Promise<void> {
   await requireAdmin();
@@ -14,6 +16,37 @@ export async function updateOrderStatus(id: string, fd: FormData): Promise<void>
   await db.update(orders).set({ status: parsed.data, updatedAt: new Date() }).where(eq(orders.id, id));
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${id}`);
+}
+
+export async function markOrderPaid(id: string): Promise<void> {
+  await requireAdmin();
+  await db.update(orders).set({ paymentStatus: 'paid', updatedAt: new Date() }).where(eq(orders.id, id));
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath('/orders');
+
+  try {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+    const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
+    if (order?.customerEmail && info?.smtpEnabled) {
+      await sendTemplatedMail('payment_confirmed', order.customerEmail, {
+        siteName: info.name,
+        customerName: order.customerName,
+        orderId: order.id,
+        orderTotal: formatPrice(order.total),
+      });
+    }
+  } catch (e) {
+    console.error('[markOrderPaid] email error:', e);
+  }
+}
+
+export async function markOrderUnpaid(id: string): Promise<void> {
+  await requireAdmin();
+  await db.update(orders).set({ paymentStatus: 'unpaid', updatedAt: new Date() }).where(eq(orders.id, id));
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath('/orders');
 }
 
 export async function deleteOrder(id: string): Promise<void> {

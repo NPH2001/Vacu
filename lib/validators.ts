@@ -79,6 +79,8 @@ export const siteInfoSchema = z.object({
   phone: z.string().min(1),
   email: z.string().email(),
   hours: z.string().min(1),
+  taxCode: z.string().max(40).default(''),
+  businessName: z.string().max(200).default(''),
   statFarmers: z.string().min(1),
   statProducts: z.string().min(1),
   statCustomers: z.string().min(1),

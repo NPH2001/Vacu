@@ -47,6 +47,8 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
     phone: fd.get('phone'),
     email: fd.get('email'),
     hours: fd.get('hours'),
+    taxCode: fd.get('taxCode') ?? '',
+    businessName: fd.get('businessName') ?? '',
     statFarmers: fd.get('statFarmers'),
     statProducts: fd.get('statProducts'),
     statCustomers: fd.get('statCustomers'),

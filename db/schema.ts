@@ -85,6 +85,8 @@ export const siteInfo = pgTable(
     phone: text('phone').notNull(),
     email: text('email').notNull(),
     hours: text('hours').notNull(),
+    taxCode: text('tax_code').notNull().default(''),
+    businessName: text('business_name').notNull().default(''),
     statFarmers: text('stat_farmers').notNull(),
     statProducts: text('stat_products').notNull(),
     statCustomers: text('stat_customers').notNull(),
@@ -136,7 +138,7 @@ export const siteInfo = pgTable(
     ]),
     aboutCommitmentsTitle: text('about_commitments_title').notNull().default('Ba điều chúng tôi cam kết'),
     aboutCommitments: jsonb('about_commitments').$type<Array<{ num: string; title: string; desc: string }>>().notNull().default([
-      { num: '01', title: 'Trung thực về nguồn gốc', desc: "Mỗi sản phẩm đều ghi rõ nông dân, nông trại, ngày thu hoạch. Không mập mờ, không 'rau sạch' chung chung." },
+      { num: '01', title: 'Trung thực về nguồn gốc', desc: 'Mỗi sản phẩm đều ghi rõ nông dân, nông trại, ngày thu hoạch. Không mập mờ, không "rau sạch" chung chung.' },
       { num: '02', title: 'Công bằng với nông dân', desc: 'Chúng tôi ký hợp đồng bao tiêu với giá cao hơn giá thị trường, trả trước 50% để bà con an tâm đầu tư.' },
       { num: '03', title: 'Tôn trọng đất đai', desc: '100% không thuốc trừ sâu hóa học, ưu tiên phân hữu cơ, luân canh bảo vệ đất. Chúng tôi trồng cho con cháu.' },
     ]),

@@ -11,7 +11,7 @@ export default async function NewProductPage() {
   ]);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sản phẩm mới</h1>
+      <h1 className="admin-title text-[28px]">Sản phẩm mới</h1>
       <ProductForm action={createProduct} categories={cats} farmers={farms} editing={false} />
     </div>
   );

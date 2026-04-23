@@ -9,6 +9,16 @@ import { requireAdmin } from '@/lib/session';
 
 export type CategoryFormState = { error?: string } | null;
 
+// pg error 23503 = foreign_key_violation. Drizzle v4 wraps the pg error,
+// so check both the code on the error and its cause, and fall back to
+// string matching for older versions.
+function isFkViolation(e: unknown): boolean {
+  const err = e as { message?: string; code?: string; cause?: { message?: string; code?: string } };
+  if (err.code === '23503' || err.cause?.code === '23503') return true;
+  const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
+  return /violates foreign key|restrict/i.test(msg);
+}
+
 function parse(fd: FormData) {
   return categorySchema.safeParse({
     id: fd.get('id'),
@@ -47,10 +57,7 @@ export async function deleteCategory(id: string): Promise<void> {
   try {
     await db.delete(categories).where(eq(categories.id, id));
   } catch (e) {
-    const msg = (e as Error).message;
-    if (/violates foreign key|restrict/i.test(msg)) {
-      throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng.');
-    }
+    if (isFkViolation(e)) throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng.');
     throw e;
   }
   revalidatePath('/admin/categories');
@@ -64,10 +71,7 @@ export async function bulkDeleteCategories(fd: FormData): Promise<void> {
   try {
     await db.delete(categories).where(inArray(categories.id, ids));
   } catch (e) {
-    const msg = (e as Error).message;
-    if (/violates foreign key|restrict/i.test(msg)) {
-      throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng.');
-    }
+    if (isFkViolation(e)) throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng.');
     throw e;
   }
   revalidatePath('/admin/categories');

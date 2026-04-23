@@ -127,6 +127,21 @@ export default function SettingsForm({
           </section>
 
           <section>
+            <SectionHead
+              title="Thông tin pháp lý"
+              hint="Theo Nghị định 52/2013/NĐ-CP — website thương mại hiển thị MST và tên pháp nhân ở footer."
+            />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Tên pháp nhân (doanh nghiệp/HTX)">
+                <input name="businessName" defaultValue={d.businessName} className={inputCls} placeholder="VD: Hợp tác xã Nông nghiệp OCOP Việt Nam" />
+              </L>
+              <L label="Mã số thuế">
+                <input name="taxCode" defaultValue={d.taxCode} className={inputCls} placeholder="VD: 0123456789" />
+              </L>
+            </div>
+          </section>
+
+          <section>
             <SectionHead title='Khối "Trang trại demo" ở trang liên hệ' />
             <div className="grid md:grid-cols-2 gap-4">
               <L label="Tiêu đề khối" required><input name="contactDemoTitle" defaultValue={d.contactDemoTitle} required className={inputCls} /></L>

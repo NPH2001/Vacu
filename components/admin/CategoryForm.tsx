@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import type { CategoryFormState } from '@/app/admin/actions/categories';
 import type { CategoryRow } from '@/db/schema';
+import EmojiPicker from './EmojiPicker';
 
 export default function CategoryForm({
   action, defaults, editing,
@@ -13,6 +14,7 @@ export default function CategoryForm({
 }) {
   const [state, formAction, pending] = useActionState<CategoryFormState, FormData>(action, null);
   const d = defaults ?? {};
+  const [icon, setIcon] = useState(d.icon ?? '');
   return (
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
@@ -25,8 +27,7 @@ export default function CategoryForm({
             className="w-full border border-green-200 rounded px-3 py-2" />
         </L>
         <L label="Icon (emoji)" required>
-          <input name="icon" defaultValue={d.icon ?? ''} required maxLength={10}
-            className="w-full border border-green-200 rounded px-3 py-2" />
+          <EmojiPicker value={icon} onChange={setIcon} name="icon" required />
         </L>
         <L label="Thứ tự">
           <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}

@@ -1,6 +1,6 @@
-# farm-app — Nông Trại Xanh
+# Vacu — Hợp tác xã Nông nghiệp OCOP Việt Nam
 
-Template nông sản sạch farm-to-table: rau củ hữu cơ, trái cây tươi, trứng, thịt sạch trực tiếp từ nông trại tới bàn ăn.
+Website & CMS cho Hợp tác xã Nông nghiệp OCOP Việt Nam (Vacu). Trang giới thiệu, catalog sản phẩm OCOP, đặt hàng, và admin nội bộ.
 
 ## Run
 

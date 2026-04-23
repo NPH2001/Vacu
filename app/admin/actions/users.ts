@@ -10,6 +10,15 @@ import { hashPassword } from '@/lib/auth';
 
 export type UserFormState = { error?: string } | null;
 
+// pg error 23505 = unique_violation. Drizzle v4 wraps the pg error, so
+// check both code and message on the error and its cause.
+function isUniqueViolation(e: unknown): boolean {
+  const err = e as { message?: string; code?: string; cause?: { message?: string; code?: string } };
+  if (err.code === '23505' || err.cause?.code === '23505') return true;
+  const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
+  return /unique|duplicate/i.test(msg);
+}
+
 export async function createUser(_p: UserFormState, fd: FormData): Promise<UserFormState> {
   await requireRole('admin');
   const parsed = userCreateSchema.safeParse({
@@ -23,9 +32,8 @@ export async function createUser(_p: UserFormState, fd: FormData): Promise<UserF
     const { email, name, role, password } = parsed.data;
     await db.insert(users).values({ email, name, role, passwordHash: await hashPassword(password) });
   } catch (e) {
-    const msg = (e as Error).message;
-    if (/unique|duplicate/i.test(msg)) return { error: 'Email đã tồn tại.' };
-    return { error: msg };
+    if (isUniqueViolation(e)) return { error: 'Email đã tồn tại.' };
+    return { error: (e as Error).message };
   }
   revalidatePath('/admin/users');
   redirect('/admin/users');
@@ -54,9 +62,8 @@ export async function updateUser(id: string, _p: UserFormState, fd: FormData): P
   try {
     await db.update(users).set(patch).where(eq(users.id, id));
   } catch (e) {
-    const msg = (e as Error).message;
-    if (/unique|duplicate/i.test(msg)) return { error: 'Email đã tồn tại.' };
-    return { error: msg };
+    if (isUniqueViolation(e)) return { error: 'Email đã tồn tại.' };
+    return { error: (e as Error).message };
   }
   revalidatePath('/admin/users');
   redirect('/admin/users');

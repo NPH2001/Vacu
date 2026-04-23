@@ -15,7 +15,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
   const bound = updateUser.bind(null, row.id);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sửa: {row.email}</h1>
+      <h1 className="admin-title text-[28px]">Sửa: {row.email}</h1>
       <UserForm action={bound} defaults={row} editing />
     </div>
   );

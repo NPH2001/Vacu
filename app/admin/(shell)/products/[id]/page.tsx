@@ -19,7 +19,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sửa: {row.name}</h1>
+      <h1 className="admin-title text-[28px]">Sửa: {row.name}</h1>
       <ProductForm action={boundUpdate} defaults={row} categories={cats} farmers={farms} editing />
     </div>
   );

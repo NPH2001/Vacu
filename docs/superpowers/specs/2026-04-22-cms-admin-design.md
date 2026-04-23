@@ -1,4 +1,4 @@
-# CMS quản trị Nông Trại Xanh — Thiết kế
+# CMS quản trị Vacu — Thiết kế
 
 - **Ngày:** 2026-04-22
 - **Trạng thái:** Đã duyệt
@@ -313,7 +313,7 @@ API cũ là sync (`products: Product[]`, `getProduct(id)`), API mới là **asyn
 ```
 DATABASE_URL=postgres://vacu:vacu@localhost:5432/vacu
 AUTH_SECRET=<openssl rand -hex 32>
-ADMIN_EMAIL=admin@nongtraixanh.vn
+ADMIN_EMAIL=admin@vacu.com.vn
 ADMIN_PASSWORD=<đặt 1 lần cho seed-admin rồi bỏ khỏi env>
 UPLOADS_DIR=./public/uploads        # optional
 NODE_ENV=development|production

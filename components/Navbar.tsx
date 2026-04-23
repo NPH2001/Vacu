@@ -26,7 +26,12 @@ export default function Navbar({ info }: { info: SiteInfoRow }) {
           onClick={() => setOpen(false)}
           className="flex items-center gap-2 text-xl md:text-2xl font-bold text-green-800 font-display"
         >
-          <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-700 text-white text-lg">🌱</span>
+          {info.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={info.logoUrl} alt={info.name} className="w-9 h-9 rounded-full object-cover" />
+          ) : (
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-700 text-white text-lg">🌱</span>
+          )}
           {info.name}
         </Link>
 

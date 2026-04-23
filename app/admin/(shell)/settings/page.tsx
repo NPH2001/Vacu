@@ -10,14 +10,14 @@ export default async function SettingsPage() {
   if (!row) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold font-display text-green-950">Cài đặt</h1>
+        <h1 className="admin-title text-[28px]">Cài đặt</h1>
         <p className="text-sm text-red-600">Bảng <code>site_info</code> chưa có dữ liệu. Chạy <code>npm run db:seed</code> trước.</p>
       </div>
     );
   }
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Cài đặt website</h1>
+      <h1 className="admin-title text-[28px]">Cài đặt website</h1>
       <SettingsForm action={updateSiteInfo} defaults={row} />
     </div>
   );

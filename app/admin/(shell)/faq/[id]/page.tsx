@@ -15,7 +15,7 @@ export default async function EditFaqPage({ params }: { params: Promise<{ id: st
   const bound = updateFaq.bind(null, row.id);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sửa FAQ</h1>
+      <h1 className="admin-title text-[28px]">Sửa FAQ</h1>
       <FaqForm action={bound} defaults={row} editing />
     </div>
   );

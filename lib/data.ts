@@ -3,8 +3,11 @@ import { eq, asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   products, categories, farmers, testimonials, faqItems, siteInfo,
+  valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses,
   type ProductRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
+  type ValuePropRow, type DeliverySlotRow, type PaymentMethodRow, type ContactTopicRow,
+  type OrderStatusRow,
 } from '@/db/schema';
 
 export type Product = ProductRow;
@@ -55,6 +58,30 @@ export async function getSiteInfo(): Promise<SiteInfoRow> {
   const rows = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!rows[0]) throw new Error('site_info row missing — run npm run db:seed');
   return rows[0];
+}
+
+export async function getAllValueProps(): Promise<ValuePropRow[]> {
+  return db.select().from(valueProps).orderBy(asc(valueProps.sortOrder), asc(valueProps.id));
+}
+export async function getActiveDeliverySlots(): Promise<DeliverySlotRow[]> {
+  return db.select().from(deliverySlots)
+    .where(eq(deliverySlots.active, true))
+    .orderBy(asc(deliverySlots.sortOrder), asc(deliverySlots.id));
+}
+export async function getActivePaymentMethods(): Promise<PaymentMethodRow[]> {
+  return db.select().from(paymentMethods)
+    .where(eq(paymentMethods.active, true))
+    .orderBy(asc(paymentMethods.sortOrder), asc(paymentMethods.id));
+}
+export async function getAllContactTopics(): Promise<ContactTopicRow[]> {
+  return db.select().from(contactTopics).orderBy(asc(contactTopics.sortOrder), asc(contactTopics.id));
+}
+export async function getAllOrderStatuses(): Promise<OrderStatusRow[]> {
+  return db.select().from(orderStatuses).orderBy(asc(orderStatuses.sortOrder), asc(orderStatuses.key));
+}
+export async function getOrderStatusMap(): Promise<Record<string, OrderStatusRow>> {
+  const rows = await getAllOrderStatuses();
+  return Object.fromEntries(rows.map((r) => [r.key, r]));
 }
 
 export { formatPrice } from './format';

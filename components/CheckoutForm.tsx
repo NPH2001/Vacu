@@ -6,25 +6,29 @@ import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
 import { placeOrder } from "@/app/(public)/checkout/actions";
+import type { DeliverySlotRow } from "@/db/schema";
 
-const SLOTS = [
-  "Sáng mai (7:00 - 11:00)",
-  "Chiều mai (14:00 - 18:00)",
-  "Sáng ngày kia (7:00 - 11:00)",
-  "Chiều ngày kia (14:00 - 18:00)",
-];
+type PaymentMethod = "cod" | "bank";
 
-export default function CheckoutForm() {
+export default function CheckoutForm({
+  slots, bankEnabled,
+}: {
+  slots: DeliverySlotRow[];
+  bankEnabled: boolean;
+}) {
   const router = useRouter();
   const { items, total, clear } = useCart();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string; phone: string; email: string; address: string; note: string; slot: string; payment: PaymentMethod;
+  }>({
     name: "",
     phone: "",
+    email: "",
     address: "",
     note: "",
-    slot: SLOTS[0],
+    slot: slots[0]?.label ?? "",
     payment: "cod",
   });
 
@@ -36,6 +40,8 @@ export default function CheckoutForm() {
     fd.set('phone', form.phone);
     fd.set('address', form.address);
     fd.set('deliverySlot', form.slot);
+    fd.set('paymentMethod', form.payment);
+    if (form.email) fd.set('customerEmail', form.email);
     if (form.note) fd.set('note', form.note);
     fd.set('cart', JSON.stringify(items.map((i) => ({
       id: i.id, name: i.name, price: i.price, qty: i.qty, unit: i.unit, image: i.image,
@@ -77,6 +83,7 @@ export default function CheckoutForm() {
             <Field label="Họ và tên" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Nguyễn Văn A" required />
             <Field label="Số điện thoại" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="0912 xxx xxx" type="tel" required />
           </div>
+          <Field label="Email (để nhận xác nhận đơn)" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="ban@example.com" type="email" />
           <Field label="Địa chỉ giao hàng" value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="Số nhà, đường, phường, quận, thành phố" required />
 
           <div>
@@ -85,8 +92,11 @@ export default function CheckoutForm() {
               value={form.slot}
               onChange={(e) => setForm({ ...form, slot: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-600"
+              disabled={slots.length === 0}
             >
-              {SLOTS.map((s) => <option key={s}>{s}</option>)}
+              {slots.length === 0
+                ? <option>Chưa có khung giờ nào</option>
+                : slots.map((s) => <option key={s.id} value={s.label}>{s.label}</option>)}
             </select>
             <p className="text-xs text-green-900/60 mt-1">Rau được thu hoạch buổi sáng cùng ngày giao.</p>
           </div>
@@ -102,34 +112,43 @@ export default function CheckoutForm() {
             />
           </div>
 
-          <div>
-            <div className="block text-sm font-semibold text-green-950 mb-2">Phương thức thanh toán</div>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {[
-                { id: "cod", label: "💵 Tiền mặt khi nhận" },
-                { id: "momo", label: "📱 Ví MoMo" },
-                { id: "bank", label: "🏦 Chuyển khoản" },
-                { id: "card", label: "💳 Thẻ ngân hàng" },
-              ].map((p) => (
-                <label
-                  key={p.id}
-                  className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer text-sm font-medium transition ${
-                    form.payment === p.id ? "border-green-700 bg-green-50" : "border-green-200 hover:border-green-400"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value={p.id}
-                    checked={form.payment === p.id}
-                    onChange={(e) => setForm({ ...form, payment: e.target.value })}
-                    className="accent-green-700"
-                  />
-                  {p.label}
-                </label>
-              ))}
+          {bankEnabled ? (
+            <div>
+              <div className="block text-sm font-semibold text-green-950 mb-2">Phương thức thanh toán</div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                {(
+                  [
+                    { id: "cod" as const,  label: "💵 Tiền mặt khi nhận",   hint: "Trả khi nông dân giao tới" },
+                    { id: "bank" as const, label: "🏦 Chuyển khoản (QR)",   hint: "Quét mã VietQR sau khi đặt" },
+                  ]
+                ).map((p) => (
+                  <label
+                    key={p.id}
+                    className={`flex flex-col gap-0.5 p-3 rounded-xl border cursor-pointer text-sm font-medium transition ${
+                      form.payment === p.id ? "border-green-700 bg-green-50" : "border-green-200 hover:border-green-400"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={p.id}
+                        checked={form.payment === p.id}
+                        onChange={() => setForm({ ...form, payment: p.id })}
+                        className="accent-green-700"
+                      />
+                      {p.label}
+                    </span>
+                    <span className="text-xs text-green-900/60 pl-6">{p.hint}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-green-50/60 border border-green-100 rounded-xl p-4 text-sm text-green-900/80">
+              💵 <strong>Thanh toán khi nhận hàng (COD).</strong> Bạn chỉ cần chuẩn bị tiền mặt khi nông dân giao tới cửa.
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button

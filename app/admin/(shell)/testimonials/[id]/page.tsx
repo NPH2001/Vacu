@@ -15,7 +15,7 @@ export default async function EditTestimonialPage({ params }: { params: Promise<
   const bound = updateTestimonial.bind(null, row.id);
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold font-display text-green-950">Sửa cảm nhận: {row.name}</h1>
+      <h1 className="admin-title text-[28px]">Sửa cảm nhận: {row.name}</h1>
       <TestimonialForm action={bound} defaults={row} editing />
     </div>
   );

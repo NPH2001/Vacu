@@ -7,11 +7,17 @@ import { signIn, type SignInState } from '@/app/admin/actions/auth';
 function LoginForm() {
   const params = useSearchParams();
   const next = params.get('next') ?? '/admin';
+  const reset = params.get('reset') === '1';
   const [state, action, pending] = useActionState<SignInState, FormData>(signIn, null);
 
   return (
     <form action={action} className="bg-white rounded-2xl shadow-sm border border-green-100 p-8 w-full max-w-md space-y-4">
       <h1 className="text-2xl font-bold font-display text-green-950">Đăng nhập quản trị</h1>
+      {reset && (
+        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
+          ✓ Đặt mật khẩu mới thành công. Hãy đăng nhập.
+        </p>
+      )}
       <input type="hidden" name="next" value={next} />
       <label className="block">
         <span className="text-sm font-medium text-green-950">Email</span>
