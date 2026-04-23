@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Vacu — restore Postgres + uploads from a backup dir produced by backup.sh.
+# Vacu — restore Postgres + uploads from a backup dir produced by either
+# scripts/backup.sh or the `backup` sidecar container.
 #
 # ⚠️ DESTRUCTIVE: drops and recreates the target Postgres database, and
 # replaces the contents of the uploads volume. Stop external traffic first.
+#
+# If the snapshot lives in the `backups` volume (from the sidecar), copy
+# it out first:
+#   docker run --rm -v vacu_backups:/src -v "$(pwd):/dst" alpine:3 \
+#     cp -r /src/<timestamp> /dst/backups/
 #
 # Usage:
 #   ./scripts/restore.sh backups/20260101T030000Z

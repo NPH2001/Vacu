@@ -76,9 +76,35 @@ services:
       timeout: 5s
       retries: 5
 
+  backup:
+    image: ${BACKUP_IMAGE:-registry.tagatechx.com/vacu/backup}:${BACKUP_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-vacu}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      PGDATABASE: ${POSTGRES_DB:-vacu}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 3 * * *}   # daily 03:00 UTC
+      RETAIN_DAYS: ${BACKUP_RETAIN:-14}
+      BACKUP_ON_START: ${BACKUP_ON_START:-1}
+      # Optional off-site copy. Example (S3 via rclone):
+      #   POST_BACKUP_CMD: "rclone copy $$BACKUP_DIR s3:my-bucket/vacu"
+      POST_BACKUP_CMD: ${POST_BACKUP_CMD:-}
+    volumes:
+      - uploads:/data/uploads:ro
+      - backups:/data/backups
+      # Mount an rclone config if POST_BACKUP_CMD uses rclone:
+      #   - ./rclone.conf:/root/.config/rclone/rclone.conf:ro
+    networks:
+      - internal
+
 volumes:
   postgres-data:
   uploads:
+  backups:
 
 networks:
   # External network shared with the host's Traefik instance.

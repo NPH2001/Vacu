@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Vacu — snapshot Postgres + uploads into ./backups/<timestamp>/.
+# Vacu — ad-hoc snapshot from the dev/admin host. For scheduled runs use
+# the `backup` sidecar service in docker-compose.prod.yml.
 #
-# Runs against the prod compose stack (docker-compose.prod.yml).
-# Keeps the last RETAIN days of backups (default 14).
+# Writes to ./backups/<timestamp>/ on the host (NOT the `backups` volume).
+# Useful for: on-demand snapshots before risky ops, or running against the
+# local dev stack.
 #
 # Usage:
 #   ./scripts/backup.sh

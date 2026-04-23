@@ -8,18 +8,23 @@
 #   make release TAG=v1.0.0
 #   make release REGISTRY=registry.other.com IMAGE=vacu/app
 
-REGISTRY    ?= registry.tagatechx.com
-IMAGE       ?= vacu/app
-PLATFORM    ?= linux/amd64
-GIT_SHA     := $(shell git rev-parse --short HEAD 2>/dev/null || echo nosha)
-GIT_DIRTY   := $(shell git diff --quiet 2>/dev/null || echo -dirty)
-TAG         ?= $(GIT_SHA)$(GIT_DIRTY)
+REGISTRY      ?= registry.tagatechx.com
+IMAGE         ?= vacu/app
+BACKUP_IMAGE  ?= vacu/backup
+PLATFORM      ?= linux/amd64
+GIT_SHA       := $(shell git rev-parse --short HEAD 2>/dev/null || echo nosha)
+GIT_DIRTY     := $(shell git diff --quiet 2>/dev/null || echo -dirty)
+TAG           ?= $(GIT_SHA)$(GIT_DIRTY)
 
-FULL        := $(REGISTRY)/$(IMAGE)
-TAGGED      := $(FULL):$(TAG)
-LATEST      := $(FULL):latest
+FULL          := $(REGISTRY)/$(IMAGE)
+TAGGED        := $(FULL):$(TAG)
+LATEST        := $(FULL):latest
 
-.PHONY: help build push release login info test clean backup restore
+BACKUP_FULL   := $(REGISTRY)/$(BACKUP_IMAGE)
+BACKUP_TAGGED := $(BACKUP_FULL):$(TAG)
+BACKUP_LATEST := $(BACKUP_FULL):latest
+
+.PHONY: help build push release login info test clean backup restore release-backup release-all
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} /^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -47,7 +52,7 @@ push: ## Push both tags to the registry (image must be built first)
 	docker push $(TAGGED)
 	docker push $(LATEST)
 
-release: ## build + push in one shot (uses buildx --push, no local load)
+release: ## build + push app image in one shot (buildx --push)
 	docker buildx build \
 	  --platform $(PLATFORM) \
 	  --push \
@@ -55,6 +60,17 @@ release: ## build + push in one shot (uses buildx --push, no local load)
 	  -t $(LATEST) \
 	  .
 	@echo "✓ Released $(TAGGED) (+ :latest)"
+
+release-backup: ## build + push backup sidecar image
+	docker buildx build \
+	  --platform $(PLATFORM) \
+	  --push \
+	  -t $(BACKUP_TAGGED) \
+	  -t $(BACKUP_LATEST) \
+	  ./backup
+	@echo "✓ Released $(BACKUP_TAGGED) (+ :latest)"
+
+release-all: release release-backup ## both app + backup images
 
 test: ## Run the full test suite (nodectr-based integration tests need Docker)
 	npm test
