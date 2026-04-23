@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ${IMAGE_NAME:-vacu/app}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_NAME:-registry.tagatechx.com/vacu/app}:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
