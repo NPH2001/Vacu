@@ -9,7 +9,7 @@ async function isSessionValid(jwt: string | undefined): Promise<boolean> {
   catch { return false; }
 }
 
-const PUBLIC_PATHS = new Set(['/admin/login', '/admin/forgot-password']);
+const PUBLIC_PATHS = new Set(['/admin/login', '/admin/forgot-password', '/admin/reset-password']);
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
