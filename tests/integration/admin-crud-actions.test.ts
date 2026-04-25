@@ -1543,3 +1543,110 @@ describe('testimonials actions', () => {
     expect(rem).toHaveLength(0);
   });
 });
+
+// ---------------- menu items ----------------
+describe('menu actions', () => {
+  it('blocks unauthenticated create', async () => {
+    authed = false;
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const fd = new FormData();
+    fd.set('location', 'header');
+    fd.set('label', 'Trang chủ');
+    fd.set('href', '/');
+    await expect(createMenuItem(null, fd)).rejects.toThrow();
+  });
+
+  it('rejects invalid location', async () => {
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const fd = new FormData();
+    fd.set('location', 'sidebar');
+    fd.set('label', 'Test');
+    fd.set('href', '/x');
+    const res = await createMenuItem(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('rejects empty label', async () => {
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const fd = new FormData();
+    fd.set('location', 'header');
+    fd.set('label', '');
+    fd.set('href', '/x');
+    const res = await createMenuItem(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('rejects empty href', async () => {
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const fd = new FormData();
+    fd.set('location', 'header');
+    fd.set('label', 'Trang chủ');
+    fd.set('href', '');
+    const res = await createMenuItem(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('creates, updates, deletes', async () => {
+    const { createMenuItem, updateMenuItem, deleteMenuItem } =
+      await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const fd = new FormData();
+    fd.set('location', 'header');
+    fd.set('label', 'Trang chủ');
+    fd.set('href', '/');
+    fd.set('sortOrder', '10');
+    await expect(createMenuItem(null, fd)).rejects.toThrow();
+    const [row] = await db.select().from(menuItems).where(eq(menuItems.label, 'Trang chủ'));
+    expect(row.location).toBe('header');
+    expect(row.href).toBe('/');
+    expect(row.sortOrder).toBe(10);
+    expect(row.openInNewTab).toBe(false);
+
+    const u = new FormData();
+    u.set('location', 'footer');
+    u.set('label', 'Trang chính');
+    u.set('href', '/home');
+    u.set('openInNewTab', 'on');
+    u.set('sortOrder', '20');
+    await expect(updateMenuItem(row.id, null, u)).rejects.toThrow();
+    const [after] = await db.select().from(menuItems).where(eq(menuItems.id, row.id));
+    expect(after.location).toBe('footer');
+    expect(after.label).toBe('Trang chính');
+    expect(after.href).toBe('/home');
+    expect(after.openInNewTab).toBe(true);
+    expect(after.sortOrder).toBe(20);
+
+    await expect(deleteMenuItem(row.id)).rejects.toThrow();
+    const gone = await db.select().from(menuItems).where(eq(menuItems.id, row.id));
+    expect(gone).toHaveLength(0);
+  });
+
+  it('bulk-deletes; empty short-circuits', async () => {
+    const { bulkDeleteMenuItems } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+
+    const rows = await db
+      .insert(menuItems)
+      .values([
+        { location: 'header', label: 'A', href: '/a' },
+        { location: 'header', label: 'B', href: '/b' },
+      ])
+      .returning();
+    const ids = rows.map((r) => r.id);
+
+    await expect(bulkDeleteMenuItems(new FormData())).rejects.toThrow();
+    const still = await db.select().from(menuItems).where(inArray(menuItems.id, ids));
+    expect(still).toHaveLength(2);
+
+    const fd = new FormData();
+    ids.forEach((id) => fd.append('ids', String(id)));
+    await expect(bulkDeleteMenuItems(fd)).rejects.toThrow();
+    const remaining = await db.select().from(menuItems).where(inArray(menuItems.id, ids));
+    expect(remaining).toHaveLength(0);
+  });
+});
