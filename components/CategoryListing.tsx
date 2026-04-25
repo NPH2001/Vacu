@@ -21,8 +21,30 @@ export default function CategoryListing({
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
     : new Set<string>();
 
-  const showDrawer = topLevel.length > MAX_INLINE_PILLS;
-  const inlinePills = showDrawer ? topLevel.slice(0, MAX_INLINE_PILLS - 1) : topLevel;
+  // Contextual pill list:
+  // - root view (no active category)            → top-level
+  // - active category WITH children             → its children
+  // - active leaf (no children) WITH a parent   → its siblings
+  // - active leaf at root (parentless leaf)     → top-level
+  const sortBySortOrder = (a: CategoryRow, b: CategoryRow) =>
+    a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
+  const siblings: CategoryRow[] =
+    activeCategory && activeCategory.parentId
+      ? allCategories.filter((c) => c.parentId === activeCategory.parentId).sort(sortBySortOrder)
+      : [];
+  const contextPills: CategoryRow[] = !activeCategory
+    ? topLevel
+    : directChildren.length > 0
+      ? directChildren
+      : siblings.length > 0
+        ? siblings
+        : topLevel;
+  // Only render a "Tất cả" pill at the root view; on a category page the breadcrumb
+  // already provides the up-link.
+  const showAllPill = !activeCategory;
+
+  const showDrawer = contextPills.length > MAX_INLINE_PILLS;
+  const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
 
   const productCounts: Record<string, number> = showDrawer
     ? Object.fromEntries(
@@ -61,9 +83,11 @@ export default function CategoryListing({
           </nav>
         )}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
-          <Link href="/products" className={pillClass(!activeCategory)}>
-            Tất cả · {allProducts.length}
-          </Link>
+          {showAllPill && (
+            <Link href="/products" className={pillClass(!activeCategory)}>
+              Tất cả · {allProducts.length}
+            </Link>
+          )}
           {inlinePills.map((c) => {
             const ids = getDescendantIds(c.id, allCategories);
             const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
