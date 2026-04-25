@@ -58,6 +58,23 @@ export async function createCategory(_prev: CategoryFormState, fd: FormData): Pr
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   const cycleErr = await checkCycle(r.data.id, r.data.parentId);
   if (cycleErr) return { error: cycleErr };
+
+  // Pre-check: slug uniqueness + parent existence — friendlier than raw FK/PK errors.
+  const [existing, parent] = await Promise.all([
+    db.select({ id: categories.id, name: categories.name })
+      .from(categories).where(eq(categories.id, r.data.id)).limit(1),
+    r.data.parentId
+      ? db.select({ id: categories.id }).from(categories)
+          .where(eq(categories.id, r.data.parentId)).limit(1)
+      : Promise.resolve([]),
+  ]);
+  if (existing[0]) {
+    return { error: `Slug "${r.data.id}" đã có danh mục "${existing[0].name}" dùng — chọn slug khác.` };
+  }
+  if (r.data.parentId && !parent[0]) {
+    return { error: `Danh mục cha "${r.data.parentId}" không tồn tại.` };
+  }
+
   try { await db.insert(categories).values(r.data); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/categories');
@@ -70,6 +87,16 @@ export async function updateCategory(originalId: string, _prev: CategoryFormStat
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   const cycleErr = await checkCycle(originalId, r.data.parentId);
   if (cycleErr) return { error: cycleErr };
+
+  if (r.data.parentId) {
+    const parent = await db
+      .select({ id: categories.id })
+      .from(categories).where(eq(categories.id, r.data.parentId)).limit(1);
+    if (!parent[0]) {
+      return { error: `Danh mục cha "${r.data.parentId}" không tồn tại.` };
+    }
+  }
+
   try {
     await db.update(categories).set({ ...r.data, updatedAt: new Date() }).where(eq(categories.id, originalId));
   } catch (e) {
