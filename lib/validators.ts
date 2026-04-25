@@ -196,8 +196,8 @@ export const emailTemplateSchema = z.object({
 
 export const menuItemSchema = z.object({
   location: z.enum(['header', 'footer']),
-  label: z.string().min(1).max(120),
-  href: z.string().min(1).max(500),
+  label: z.string().trim().min(1).max(120),
+  href: z.string().trim().min(1).max(500),
   openInNewTab: z.coerce.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
 });
