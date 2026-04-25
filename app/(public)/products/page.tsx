@@ -10,16 +10,20 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const { c } = await searchParams;
   if (c && /^[a-z0-9-]+$/.test(c)) permanentRedirect(`/danh-muc/${c}`);
 
-  const [categories, allProducts] = await Promise.all([
+  const [allCategories, allProducts] = await Promise.all([
     getAllCategories(),
     getAllProducts(),
   ]);
+  const topLevel = allCategories.filter((cat) => !cat.parentId);
   return (
     <CategoryListing
-      categories={categories}
-      allProducts={allProducts}
+      topLevel={topLevel}
+      directChildren={[]}
+      ancestors={[]}
       filtered={allProducts}
+      allProducts={allProducts}
       activeCategory={null}
+      allCategories={allCategories}
     />
   );
 }
