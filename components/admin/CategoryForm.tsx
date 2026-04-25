@@ -6,11 +6,12 @@ import type { CategoryRow } from '@/db/schema';
 import EmojiPicker from './EmojiPicker';
 
 export default function CategoryForm({
-  action, defaults, editing,
+  action, defaults, editing, availableParents,
 }: {
   action: (prev: CategoryFormState, fd: FormData) => Promise<CategoryFormState>;
   defaults?: Partial<CategoryRow>;
   editing: boolean;
+  availableParents: Pick<CategoryRow, 'id' | 'name'>[];
 }) {
   const [state, formAction, pending] = useActionState<CategoryFormState, FormData>(action, null);
   const d = defaults ?? {};
@@ -32,6 +33,15 @@ export default function CategoryForm({
         <L label="Thứ tự">
           <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
             className="w-full border border-green-200 rounded px-3 py-2" />
+        </L>
+        <L label="Danh mục cha">
+          <select name="parentId" defaultValue={d.parentId ?? ''}
+            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            <option value="">— Không có (cấp gốc) —</option>
+            {availableParents.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </L>
       </div>
       <L label="Mô tả" required>

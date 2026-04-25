@@ -38,11 +38,13 @@ export default async function CategoriesAdminPage({
   const orderBy = buildOrderBy(parsed, schema);
   const { limit, offset } = buildPagination(parsed);
 
-  const [rows, totalRows] = await Promise.all([
+  const [rows, totalRows, allRows] = await Promise.all([
     db.select().from(categories).where(where).orderBy(orderBy).limit(limit).offset(offset),
     db.select({ total: sql<number>`count(*)::int` }).from(categories).where(where),
+    db.select({ id: categories.id, name: categories.name }).from(categories),
   ]);
   const total = totalRows[0]?.total ?? 0;
+  const nameById = new Map(allRows.map((r) => [r.id, r.name]));
 
   return (
     <div className="space-y-4">
@@ -74,6 +76,7 @@ export default async function CategoriesAdminPage({
                   <th className="px-4 py-2.5 font-medium w-14">Icon</th>
                   <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="name">Tên</SortableTh>
                   <th className="px-4 py-2.5 font-medium">Slug</th>
+                  <th className="px-4 py-2.5 font-medium">Cha</th>
                   <SortableTh basePath={BASE} parsed={parsed} schema={schema} sortKey="sortOrder">Thứ tự</SortableTh>
                   <th className="px-4 py-2.5 font-medium text-right">Thao tác</th>
                 </tr>
@@ -88,6 +91,9 @@ export default async function CategoriesAdminPage({
                       <div className="text-xs text-green-900/60 line-clamp-1">{r.description}</div>
                     </td>
                     <td className="px-4 py-2 font-mono text-xs">{r.id}</td>
+                    <td className="px-4 py-2 text-sm text-green-900/70">
+                      {r.parentId ? (nameById.get(r.parentId) ?? r.parentId) : '—'}
+                    </td>
                     <td className="px-4 py-2">{r.sortOrder}</td>
                     <td className="px-4 py-2 text-right space-x-3">
                       <Link href={`/admin/categories/${r.id}`} className="text-green-700 hover:underline">Sửa</Link>

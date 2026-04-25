@@ -2,8 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import {
-  getAllCategories, getAllProducts, getProductsByCategory, getCategory,
+  getAllCategories, getAllProducts, getProductsByCategoryDeep, getCategory,
 } from '@/lib/data';
+import { getDescendantIds, getAncestors } from '@/lib/categories';
 import CategoryListing from '@/components/CategoryListing';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -18,19 +19,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [activeCategory, categories, allProducts, filtered] = await Promise.all([
+  const [activeCategory, allCategories, allProducts] = await Promise.all([
     getCategory(slug),
     getAllCategories(),
     getAllProducts(),
-    getProductsByCategory(slug),
   ]);
   if (!activeCategory) notFound();
+
+  const descendantIds = getDescendantIds(activeCategory.id, allCategories);
+  const directChildren = allCategories
+    .filter((c) => c.parentId === activeCategory.id)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const ancestors = getAncestors(activeCategory.id, allCategories);
+  const topLevel = allCategories.filter((c) => !c.parentId);
+  const filtered = await getProductsByCategoryDeep(descendantIds);
+
   return (
     <CategoryListing
-      categories={categories}
-      allProducts={allProducts}
+      topLevel={topLevel}
+      directChildren={directChildren}
+      ancestors={ancestors}
       filtered={filtered}
+      allProducts={allProducts}
       activeCategory={activeCategory}
+      allCategories={allCategories}
     />
   );
 }
