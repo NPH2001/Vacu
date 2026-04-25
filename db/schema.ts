@@ -1,5 +1,6 @@
 import {
-  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check
+  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm';
@@ -16,6 +17,7 @@ export const users = pgTable('users', {
 
 export const categories = pgTable('categories', {
   id: text('id').primaryKey(),
+  parentId: text('parent_id').references((): AnyPgColumn => categories.id, { onDelete: 'restrict' }),
   name: text('name').notNull(),
   icon: text('icon').notNull(),
   description: text('description').notNull(),
