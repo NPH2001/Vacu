@@ -2,19 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { SiteInfoRow } from "@/db/schema";
+import type { SiteInfoRow, MenuItemRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 
-const links = [
-  { href: "/", label: "Trang chủ" },
-  { href: "/products", label: "Nông sản" },
-  { href: "/farmers", label: "Nông dân" },
-  { href: "/orders", label: "Đơn hàng" },
-  { href: "/about", label: "Câu chuyện" },
-  { href: "/contact", label: "Liên hệ" },
-];
-
-export default function Navbar({ info }: { info: SiteInfoRow }) {
+export default function Navbar({ info, items }: { info: SiteInfoRow; items: MenuItemRow[] }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
 
@@ -35,15 +26,22 @@ export default function Navbar({ info }: { info: SiteInfoRow }) {
           {info.name}
         </Link>
 
-        <ul className="hidden lg:flex gap-7 text-sm font-medium text-green-900/80">
-          {links.map((l) => (
-            <li key={l.href}>
-              <Link href={l.href} className="hover:text-green-700 transition">
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {items.length > 0 && (
+          <ul className="hidden lg:flex gap-7 text-sm font-medium text-green-900/80">
+            {items.map((l) => (
+              <li key={l.id}>
+                <Link
+                  href={l.href}
+                  target={l.openInNewTab ? "_blank" : undefined}
+                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
+                  className="hover:text-green-700 transition"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="flex items-center gap-2">
           <button
@@ -89,13 +87,15 @@ export default function Navbar({ info }: { info: SiteInfoRow }) {
         </div>
       </nav>
 
-      {open && (
+      {open && items.length > 0 && (
         <div className="lg:hidden border-t border-green-100 bg-white">
           <ul className="px-4 py-4 space-y-1">
-            {links.map((l) => (
-              <li key={l.href}>
+            {items.map((l) => (
+              <li key={l.id}>
                 <Link
                   href={l.href}
+                  target={l.openInNewTab ? "_blank" : undefined}
+                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
                   onClick={() => setOpen(false)}
                   className="block px-3 py-3 rounded-lg text-green-900 hover:bg-green-50 font-medium"
                 >
