@@ -8,7 +8,7 @@ type SearchParams = Promise<{ c?: string }>;
 
 export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
   const { c } = await searchParams;
-  if (c) permanentRedirect(`/danh-muc/${c}`);
+  if (c && /^[a-z0-9-]+$/.test(c)) permanentRedirect(`/danh-muc/${c}`);
 
   const [categories, allProducts] = await Promise.all([
     getAllCategories(),

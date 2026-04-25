@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { eq, asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
@@ -40,10 +41,10 @@ export async function getMenu(location: 'header' | 'footer') {
     .where(eq(menuItems.location, location))
     .orderBy(asc(menuItems.sortOrder), asc(menuItems.id));
 }
-export async function getCategory(id: string) {
+export const getCategory = cache(async (id: string) => {
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
   return rows[0] ?? null;
-}
+});
 export async function getAllFarmers() {
   return db.select().from(farmers).orderBy(asc(farmers.name));
 }
