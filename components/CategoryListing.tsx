@@ -20,8 +20,8 @@ export default function CategoryListing({
 
   return (
     <div>
-      {ancestors.length > 0 && (
-        <nav className="max-w-7xl mx-auto px-4 pt-6 text-sm text-green-900/60">
+      {activeCategory && (
+        <nav aria-label="Đường dẫn" className="max-w-7xl mx-auto px-4 pt-6 text-sm text-green-900/60">
           <Link href="/products" className="hover:underline">Tất cả nông sản</Link>
           {ancestors.map((a) => (
             <span key={a.id}>
