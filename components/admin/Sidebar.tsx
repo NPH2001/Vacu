@@ -26,6 +26,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { href: '/admin/testimonials', label: 'Cảm nhận', icon: '❝' },
       { href: '/admin/faq', label: 'Câu hỏi', icon: '?' },
       { href: '/admin/value-props', label: 'Điểm giá trị', icon: '★' },
+      { href: '/admin/menu', label: 'Menu', icon: '☰' },
     ],
   },
   {
