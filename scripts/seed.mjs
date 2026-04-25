@@ -90,8 +90,8 @@ try {
     console.log('Seeding menu_items…');
     const HEADER = [
       { label: 'Trang chủ',         href: '/' },
-      { label: 'Rau Sạch Hữu Cơ',   href: '/products?c=rau-cu' },
-      { label: 'Gà ăn thảo dược',   href: '/products?c=trung-thit' },
+      { label: 'Rau Sạch Hữu Cơ',   href: '/danh-muc/rau-cu' },
+      { label: 'Gà ăn thảo dược',   href: '/danh-muc/trung-thit' },
       { label: 'Cá Tầm Nga',        href: '/products' },
       { label: 'Thực phẩm bổ sung', href: '/products' },
       { label: 'Câu chuyện',        href: '/about' },
@@ -128,6 +128,18 @@ try {
       [i.logoUrl],
     );
   }
+
+  // One-time URL migration for existing installs: /products?c=<slug> → /danh-muc/<slug>
+  await client.query(
+    `UPDATE menu_items
+       SET href = REPLACE(href, '/products?c=', '/danh-muc/')
+       WHERE href LIKE '/products?c=%'`,
+  );
+  await client.query(
+    `UPDATE site_info
+       SET sub_box_link = '/danh-muc/hop-qua'
+       WHERE sub_box_link = '/products?c=hop-qua'`,
+  );
 
   await client.query('COMMIT');
   console.log('Done.');

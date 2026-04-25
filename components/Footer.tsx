@@ -55,7 +55,7 @@ export default function Footer({
           <ul className="text-sm space-y-2 text-green-200/80">
             {categories.slice(0, 5).map((c) => (
               <li key={c.id}>
-                <Link href={`/products?c=${c.id}`} className="hover:text-white">
+                <Link href={`/danh-muc/${c.id}`} className="hover:text-white">
                   {c.icon} {c.name}
                 </Link>
               </li>

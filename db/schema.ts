@@ -107,7 +107,7 @@ export const siteInfo = pgTable(
       'Tham quan nông trại miễn phí',
     ]),
     subBoxCta: text('sub_box_cta').notNull().default('Đăng ký hộp rau →'),
-    subBoxLink: text('sub_box_link').notNull().default('/products?c=hop-qua'),
+    subBoxLink: text('sub_box_link').notNull().default('/danh-muc/hop-qua'),
     subBoxImage: text('sub_box_image').notNull().default('/farm/1610348725531-843dff563e2c.jpg'),
 
     sectionCategoriesEyebrow: text('section_categories_eyebrow').notNull().default('Danh mục'),

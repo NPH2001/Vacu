@@ -36,7 +36,7 @@ export default function MenuItemForm({
       <L label="Đường dẫn (URL)" required>
         <input name="href" defaultValue={d.href ?? ''} required maxLength={500}
           className="w-full border border-green-200 rounded px-3 py-2"
-          placeholder="VD: /products?c=rau-cu hoặc https://..." />
+          placeholder="VD: /danh-muc/rau-cu hoặc https://..." />
       </L>
       <L label="Mở tab mới">
         <label className="inline-flex items-center gap-2">

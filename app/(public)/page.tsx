@@ -106,7 +106,7 @@ export default async function HomePage() {
           {categories.map((c, i) => (
             <AnimateOnScroll key={c.id} delay={i * 50}>
               <Link
-                href={`/products?c=${c.id}`}
+                href={`/danh-muc/${c.id}`}
                 className="block bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition h-full"
               >
                 <div className="text-4xl mb-2">{c.icon}</div>

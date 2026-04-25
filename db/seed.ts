@@ -69,8 +69,8 @@ async function main() {
   if (existingMenu.length === 0) {
     const HEADER = [
       { label: 'Trang chủ',         href: '/' },
-      { label: 'Rau Sạch Hữu Cơ',   href: '/products?c=rau-cu' },
-      { label: 'Gà ăn thảo dược',   href: '/products?c=trung-thit' },
+      { label: 'Rau Sạch Hữu Cơ',   href: '/danh-muc/rau-cu' },
+      { label: 'Gà ăn thảo dược',   href: '/danh-muc/trung-thit' },
       { label: 'Cá Tầm Nga',        href: '/products' },
       { label: 'Thực phẩm bổ sung', href: '/products' },
       { label: 'Câu chuyện',        href: '/about' },

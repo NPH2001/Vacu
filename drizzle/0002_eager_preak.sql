@@ -1,0 +1,1 @@
+ALTER TABLE "site_info" ALTER COLUMN "sub_box_link" SET DEFAULT '/danh-muc/hop-qua';

@@ -30,7 +30,7 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
         <Link href="/products" className="hover:underline">Nông sản</Link>
         {category && (
           <>
-            {" "}/ <Link href={`/products?c=${category.id}`} className="hover:underline">{category.name}</Link>
+            {" "}/ <Link href={`/danh-muc/${category.id}`} className="hover:underline">{category.name}</Link>
           </>
         )}
         {" "}/ <span className="text-green-950">{p.name}</span>
