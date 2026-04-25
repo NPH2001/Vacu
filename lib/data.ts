@@ -3,7 +3,7 @@ import { eq, asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   products, categories, farmers, testimonials, faqItems, siteInfo,
-  valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses,
+  valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
   type ProductRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
   type ValuePropRow, type DeliverySlotRow, type PaymentMethodRow, type ContactTopicRow,
@@ -32,6 +32,13 @@ export async function getFeaturedProducts(limit = 8) {
 }
 export async function getAllCategories() {
   return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
+}
+export async function getMenu(location: 'header' | 'footer') {
+  return db
+    .select()
+    .from(menuItems)
+    .where(eq(menuItems.location, location))
+    .orderBy(asc(menuItems.sortOrder), asc(menuItems.id));
 }
 export async function getCategory(id: string) {
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
