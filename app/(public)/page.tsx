@@ -103,7 +103,7 @@ export default async function HomePage() {
           </div>
         </AnimateOnScroll>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((c, i) => (
+          {categories.filter((c) => !c.parentId).map((c, i) => (
             <AnimateOnScroll key={c.id} delay={i * 50}>
               <Link
                 href={`/danh-muc/${c.id}`}

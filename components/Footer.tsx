@@ -53,7 +53,7 @@ export default function Footer({
         <div>
           <h4 className="font-semibold mb-3 text-white font-display">Danh mục</h4>
           <ul className="text-sm space-y-2 text-green-200/80">
-            {categories.slice(0, 5).map((c) => (
+            {categories.filter((c) => !c.parentId).slice(0, 5).map((c) => (
               <li key={c.id}>
                 <Link href={`/danh-muc/${c.id}`} className="hover:text-white">
                   {c.icon} {c.name}
