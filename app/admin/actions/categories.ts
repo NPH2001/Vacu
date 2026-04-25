@@ -6,12 +6,10 @@ import { db } from '@/db/client';
 import { categories } from '@/db/schema';
 import { categorySchema } from '@/lib/validators';
 import { requireAdmin } from '@/lib/session';
+import { getDescendantIds } from '@/lib/categories';
 
 export type CategoryFormState = { error?: string } | null;
 
-// pg error 23503 = foreign_key_violation. Drizzle v4 wraps the pg error,
-// so check both the code on the error and its cause, and fall back to
-// string matching for older versions.
 function isFkViolation(e: unknown): boolean {
   const err = e as { message?: string; code?: string; cause?: { message?: string; code?: string } };
   if (err.code === '23503' || err.cause?.code === '23503') return true;
@@ -22,6 +20,7 @@ function isFkViolation(e: unknown): boolean {
 function parse(fd: FormData) {
   return categorySchema.safeParse({
     id: fd.get('id'),
+    parentId: fd.get('parentId'),
     name: fd.get('name'),
     icon: fd.get('icon'),
     description: fd.get('description'),
@@ -29,10 +28,21 @@ function parse(fd: FormData) {
   });
 }
 
+async function checkCycle(id: string, parentId: string | null): Promise<string | null> {
+  if (!parentId) return null;
+  if (parentId === id) return 'Không thể chọn chính nó làm cha';
+  const allRows = await db.select().from(categories);
+  const descendants = getDescendantIds(id, allRows);
+  if (descendants.includes(parentId)) return 'Không thể chọn danh mục con làm cha';
+  return null;
+}
+
 export async function createCategory(_prev: CategoryFormState, fd: FormData): Promise<CategoryFormState> {
   await requireAdmin();
   const r = parse(fd);
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+  const cycleErr = await checkCycle(r.data.id, r.data.parentId);
+  if (cycleErr) return { error: cycleErr };
   try { await db.insert(categories).values(r.data); }
   catch (e) { return { error: (e as Error).message }; }
   revalidatePath('/admin/categories');
@@ -43,6 +53,8 @@ export async function updateCategory(originalId: string, _prev: CategoryFormStat
   await requireAdmin();
   const r = parse(fd);
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+  const cycleErr = await checkCycle(originalId, r.data.parentId);
+  if (cycleErr) return { error: cycleErr };
   try {
     await db.update(categories).set({ ...r.data, updatedAt: new Date() }).where(eq(categories.id, originalId));
   } catch (e) {
@@ -57,7 +69,7 @@ export async function deleteCategory(id: string): Promise<void> {
   try {
     await db.delete(categories).where(eq(categories.id, id));
   } catch (e) {
-    if (isFkViolation(e)) throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng.');
+    if (isFkViolation(e)) throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng hoặc có danh mục con.');
     throw e;
   }
   revalidatePath('/admin/categories');
@@ -71,7 +83,7 @@ export async function bulkDeleteCategories(fd: FormData): Promise<void> {
   try {
     await db.delete(categories).where(inArray(categories.id, ids));
   } catch (e) {
-    if (isFkViolation(e)) throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng.');
+    if (isFkViolation(e)) throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng hoặc có danh mục con.');
     throw e;
   }
   revalidatePath('/admin/categories');

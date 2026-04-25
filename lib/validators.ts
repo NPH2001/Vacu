@@ -9,8 +9,17 @@ export const loginSchema = z.object({
   next: z.string().optional(),
 });
 
+const optParentSlug = z
+  .string()
+  .trim()
+  .max(80)
+  .optional()
+  .transform((v) => (v && v.length ? v : null))
+  .nullable();
+
 export const categorySchema = z.object({
   id: slug,
+  parentId: optParentSlug,
   name: z.string().min(1).max(120),
   icon: z.string().min(1).max(10),
   description: z.string().min(1).max(300),

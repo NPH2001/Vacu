@@ -1211,6 +1211,57 @@ describe('categories actions', () => {
     }));
     expect(r2?.error).toBeTruthy();
   });
+
+  it('creates a category with a valid parent', async () => {
+    const { createCategory } = await import('@/app/admin/actions/categories');
+    const { db } = await import('@/db/client');
+    const { categories } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const parent = new FormData();
+    parent.set('id', 'parent-cat'); parent.set('name', 'Parent');
+    parent.set('icon', '🥦'); parent.set('description', 'p'); parent.set('sortOrder', '0');
+    await expect(createCategory(null, parent)).rejects.toThrow();
+
+    const child = new FormData();
+    child.set('id', 'child-cat'); child.set('name', 'Child');
+    child.set('icon', '🥬'); child.set('description', 'c'); child.set('sortOrder', '1');
+    child.set('parentId', 'parent-cat');
+    await expect(createCategory(null, child)).rejects.toThrow();
+
+    const [row] = await db.select().from(categories).where(eq(categories.id, 'child-cat'));
+    expect(row.parentId).toBe('parent-cat');
+  });
+
+  it('rejects parentId equal to id (self-cycle)', async () => {
+    const { createCategory } = await import('@/app/admin/actions/categories');
+    const fd = new FormData();
+    fd.set('id', 'self-cat'); fd.set('name', 'Self');
+    fd.set('icon', '🥦'); fd.set('description', 'x'); fd.set('sortOrder', '0');
+    fd.set('parentId', 'self-cat');
+    const res = await createCategory(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('rejects updateCategory parentId pointing to a descendant', async () => {
+    const { createCategory, updateCategory } =
+      await import('@/app/admin/actions/categories');
+    // Build: A → B → C
+    for (const [id, parent] of [['cyc-a', null], ['cyc-b', 'cyc-a'], ['cyc-c', 'cyc-b']] as const) {
+      const fd = new FormData();
+      fd.set('id', id); fd.set('name', id); fd.set('icon', '🥦');
+      fd.set('description', 'x'); fd.set('sortOrder', '0');
+      if (parent) fd.set('parentId', parent);
+      await expect(createCategory(null, fd)).rejects.toThrow();
+    }
+    // Try to make A's parent be C (which is a descendant of A).
+    const u = new FormData();
+    u.set('id', 'cyc-a'); u.set('name', 'cyc-a'); u.set('icon', '🥦');
+    u.set('description', 'x'); u.set('sortOrder', '0');
+    u.set('parentId', 'cyc-c');
+    const res = await updateCategory('cyc-a', null, u);
+    expect(res?.error).toBeTruthy();
+  });
 });
 
 // =====================================================================
