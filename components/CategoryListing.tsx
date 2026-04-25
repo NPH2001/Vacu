@@ -20,22 +20,7 @@ export default function CategoryListing({
 
   return (
     <div>
-      {activeCategory && (
-        <nav aria-label="Đường dẫn" className="max-w-7xl mx-auto px-4 pt-6 text-sm text-green-900/60">
-          <Link href="/products" className="hover:underline">Tất cả nông sản</Link>
-          {ancestors.map((a) => (
-            <span key={a.id}>
-              {' / '}
-              <Link href={`/danh-muc/${a.id}`} className="hover:underline">{a.name}</Link>
-            </span>
-          ))}
-          {activeCategory && (
-            <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
-          )}
-        </nav>
-      )}
-
-      <section className="bg-gradient-to-br from-green-800 to-green-950 text-white py-14 mt-4">
+      <section className="bg-gradient-to-br from-green-800 to-green-950 text-white py-14">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-amber-300 text-sm font-bold tracking-widest uppercase mb-2">Chợ nông trại</div>
           <h1 className="text-4xl md:text-5xl font-bold font-display mb-3">
@@ -48,6 +33,18 @@ export default function CategoryListing({
       </section>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
+        {activeCategory && (
+          <nav aria-label="Đường dẫn" className="text-sm text-green-900/60 mb-6">
+            <Link href="/products" className="hover:underline">Tất cả nông sản</Link>
+            {ancestors.map((a) => (
+              <span key={a.id}>
+                {' / '}
+                <Link href={`/danh-muc/${a.id}`} className="hover:underline">{a.name}</Link>
+              </span>
+            ))}
+            <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
+          </nav>
+        )}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
           <Link href="/products" className={pillClass(!activeCategory)}>
             Tất cả · {allProducts.length}
