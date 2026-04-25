@@ -64,26 +64,28 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
             Mua nông sản →
           </Link>
 
-          <button
-            aria-label="Toggle menu"
-            onClick={() => setOpen(!open)}
-            className="lg:hidden p-2 -mr-2 text-green-900"
-          >
-            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              {open ? (
-                <>
-                  <line x1="6" y1="6" x2="22" y2="22" />
-                  <line x1="22" y1="6" x2="6" y2="22" />
-                </>
-              ) : (
-                <>
-                  <line x1="4" y1="8" x2="24" y2="8" />
-                  <line x1="4" y1="14" x2="24" y2="14" />
-                  <line x1="4" y1="20" x2="24" y2="20" />
-                </>
-              )}
-            </svg>
-          </button>
+          {items.length > 0 && (
+            <button
+              aria-label="Toggle menu"
+              onClick={() => setOpen(!open)}
+              className="lg:hidden p-2 -mr-2 text-green-900"
+            >
+              <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                {open ? (
+                  <>
+                    <line x1="6" y1="6" x2="22" y2="22" />
+                    <line x1="22" y1="6" x2="6" y2="22" />
+                  </>
+                ) : (
+                  <>
+                    <line x1="4" y1="8" x2="24" y2="8" />
+                    <line x1="4" y1="14" x2="24" y2="14" />
+                    <line x1="4" y1="20" x2="24" y2="20" />
+                  </>
+                )}
+              </svg>
+            </button>
+          )}
         </div>
       </nav>
 
