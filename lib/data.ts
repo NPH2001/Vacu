@@ -1,6 +1,6 @@
 import 'server-only';
 import { cache } from 'react';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   products, categories, farmers, testimonials, faqItems, siteInfo,
@@ -27,6 +27,14 @@ export async function getProduct(id: string) {
 }
 export async function getProductsByCategory(categoryId: string) {
   return db.select().from(products).where(eq(products.categoryId, categoryId)).orderBy(asc(products.name));
+}
+export async function getProductsByCategoryDeep(categoryIds: string[]) {
+  if (categoryIds.length === 0) return [];
+  return db
+    .select()
+    .from(products)
+    .where(inArray(products.categoryId, categoryIds))
+    .orderBy(asc(products.name));
 }
 export async function getFeaturedProducts(limit = 8) {
   return db.select().from(products).where(eq(products.featured, true)).limit(limit);
