@@ -42,9 +42,6 @@ export default function CategoryListing({
   // Only render a "Tất cả" pill at the root view; on a category page the breadcrumb
   // already provides the up-link.
   const showAllPill = !activeCategory;
-  // Hide the pill bar on parent pages — the subcategory cards below already show
-  // the same children with more visual richness. Show pills only at root or on leaves.
-  const showPillBar = !activeCategory || directChildren.length === 0;
 
   const showDrawer = contextPills.length > MAX_INLINE_PILLS;
   const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
@@ -85,7 +82,7 @@ export default function CategoryListing({
             <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
           </nav>
         )}
-        <div className={`flex gap-2 overflow-x-auto pb-4 mb-8 ${showPillBar ? '' : 'hidden'}`}>
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
           {showAllPill && (
             <Link href="/products" className={pillClass(!activeCategory)}>
               Tất cả · {allProducts.length}
@@ -113,34 +110,11 @@ export default function CategoryListing({
           )}
         </div>
 
-        {directChildren.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
-            {directChildren.map((c) => {
-              const ids = getDescendantIds(c.id, allCategories);
-              const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
-              return (
-                <Link
-                  key={c.id}
-                  href={`/danh-muc/${c.id}`}
-                  className="block bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition h-full"
-                >
-                  <div className="text-4xl mb-2">{c.icon}</div>
-                  <div className="font-bold text-green-950">{c.name}</div>
-                  <div className="text-xs text-green-800/60 mt-1 line-clamp-2">{c.description}</div>
-                  <div className="text-xs text-green-700 font-semibold mt-2">{count} sản phẩm</div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
         {filtered.length === 0 ? (
-          directChildren.length === 0 && (
-            <div className="text-center py-16 text-green-900/60">
-              Chưa có sản phẩm trong danh mục này.{' '}
-              <Link href="/products" className="text-green-700 font-semibold underline">Xem tất cả</Link>
-            </div>
-          )
+          <div className="text-center py-16 text-green-900/60">
+            Chưa có sản phẩm trong danh mục này.{' '}
+            <Link href="/products" className="text-green-700 font-semibold underline">Xem tất cả</Link>
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((p) => <ProductCard key={p.id} p={p} />)}
