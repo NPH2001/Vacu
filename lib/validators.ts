@@ -194,6 +194,14 @@ export const emailTemplateSchema = z.object({
   enabled: z.coerce.boolean().default(true),
 });
 
+export const menuItemSchema = z.object({
+  location: z.enum(['header', 'footer']),
+  label: z.string().min(1).max(120),
+  href: z.string().min(1).max(500),
+  openInNewTab: z.coerce.boolean().default(false),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
 export const requestPasswordResetSchema = z.object({
   email: z.string().email(),
 });
