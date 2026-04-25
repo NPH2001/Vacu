@@ -1,9 +1,15 @@
 import Link from "next/link";
-import type { SiteInfoRow, CategoryRow } from "@/db/schema";
+import type { SiteInfoRow, CategoryRow, MenuItemRow } from "@/db/schema";
 
 type Social = { key: string; label: string; url: string | null };
 
-export default function Footer({ info, categories }: { info: SiteInfoRow; categories: CategoryRow[] }) {
+export default function Footer({
+  info, categories, quickLinks,
+}: {
+  info: SiteInfoRow;
+  categories: CategoryRow[];
+  quickLinks: MenuItemRow[];
+}) {
   const socials: Social[] = [
     { key: "FB", label: "Facebook", url: info.socialFacebook },
     { key: "IG", label: "Instagram", url: info.socialInstagram },
@@ -11,11 +17,12 @@ export default function Footer({ info, categories }: { info: SiteInfoRow; catego
     { key: "TT", label: "TikTok", url: info.socialTiktok },
   ];
   const activeSocials = socials.filter((s) => s.url);
+  const showQuickLinks = quickLinks.length > 0;
 
   return (
     <footer className="bg-green-950 text-green-100 mt-24">
       <div className="max-w-7xl mx-auto px-4 py-14 grid md:grid-cols-4 gap-10">
-        <div className="md:col-span-2">
+        <div className={showQuickLinks ? "md:col-span-1" : "md:col-span-2"}>
           <h3 className="text-2xl font-bold text-green-300 mb-3 font-display flex items-center gap-2">
             {info.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -55,6 +62,25 @@ export default function Footer({ info, categories }: { info: SiteInfoRow; catego
             ))}
           </ul>
         </div>
+        {showQuickLinks && (
+          <div>
+            <h4 className="font-semibold mb-3 text-white font-display">Liên kết nhanh</h4>
+            <ul className="text-sm space-y-2 text-green-200/80">
+              {quickLinks.map((l) => (
+                <li key={l.id}>
+                  <Link
+                    href={l.href}
+                    target={l.openInNewTab ? "_blank" : undefined}
+                    rel={l.openInNewTab ? "noopener noreferrer" : undefined}
+                    className="hover:text-white"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div>
           <h4 className="font-semibold mb-3 text-white font-display">Liên hệ</h4>
           <ul className="text-sm space-y-2 text-green-200/80">

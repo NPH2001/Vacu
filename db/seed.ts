@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { db, pool } from './client';
 import {
-  categories, farmers, products, testimonials, faqItems, siteInfo,
+  categories, farmers, products, testimonials, faqItems, siteInfo, menuItems,
 } from './schema';
 import categoriesJson from '@/data/categories.json';
 import farmersJson from '@/data/farmers.json';
@@ -63,6 +63,25 @@ async function main() {
     statCustomers: info.stats.customers, statYears: info.stats.years,
     logoUrl: info.logoUrl ?? null,
   }).onConflictDoNothing();
+
+  console.log('Seeding menu_items...');
+  const existingMenu = await db.select().from(menuItems);
+  if (existingMenu.length === 0) {
+    const HEADER = [
+      { label: 'Trang chủ',         href: '/' },
+      { label: 'Rau Sạch Hữu Cơ',   href: '/products?c=rau-cu' },
+      { label: 'Gà ăn thảo dược',   href: '/products?c=trung-thit' },
+      { label: 'Cá Tầm Nga',        href: '/products' },
+      { label: 'Thực phẩm bổ sung', href: '/products' },
+      { label: 'Câu chuyện',        href: '/about' },
+      { label: 'Liên hệ',           href: '/contact' },
+    ];
+    for (const [i, m] of HEADER.entries()) {
+      await db.insert(menuItems).values({
+        location: 'header', label: m.label, href: m.href, sortOrder: (i + 1) * 10,
+      });
+    }
+  }
 
   console.log('Done.');
   await pool.end();

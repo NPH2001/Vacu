@@ -86,6 +86,28 @@ try {
     console.log('FAQ already present — skipping.');
   }
 
+  if ((await tableCount('menu_items')) === 0) {
+    console.log('Seeding menu_items…');
+    const HEADER = [
+      { label: 'Trang chủ',         href: '/' },
+      { label: 'Rau Sạch Hữu Cơ',   href: '/products?c=rau-cu' },
+      { label: 'Gà ăn thảo dược',   href: '/products?c=trung-thit' },
+      { label: 'Cá Tầm Nga',        href: '/products' },
+      { label: 'Thực phẩm bổ sung', href: '/products' },
+      { label: 'Câu chuyện',        href: '/about' },
+      { label: 'Liên hệ',           href: '/contact' },
+    ];
+    for (const [i, m] of HEADER.entries()) {
+      await client.query(
+        `INSERT INTO menu_items (location, label, href, sort_order)
+         VALUES ('header', $1, $2, $3)`,
+        [m.label, m.href, (i + 1) * 10],
+      );
+    }
+  } else {
+    console.log('Menu items already present — skipping.');
+  }
+
   console.log('Seeding site_info…');
   const i = infoJson;
   await client.query(

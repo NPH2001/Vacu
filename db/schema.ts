@@ -218,6 +218,15 @@ export const emailTemplates = pgTable('email_templates', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const menuItems = pgTable('menu_items', {
+  id: serial('id').primaryKey(),
+  location: text('location', { enum: ['header', 'footer'] }).notNull(),
+  label: text('label').notNull(),
+  href: text('href').notNull(),
+  openInNewTab: boolean('open_in_new_tab').notNull().default(false),
+  sortOrder: integer('sort_order').default(0).notNull(),
+});
+
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   tokenHash: text('token_hash').primaryKey(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -272,6 +281,7 @@ export type PaymentMethodRow = typeof paymentMethods.$inferSelect;
 export type ContactTopicRow = typeof contactTopics.$inferSelect;
 export type OrderStatusRow = typeof orderStatuses.$inferSelect;
 export type EmailTemplateRow = typeof emailTemplates.$inferSelect;
+export type MenuItemRow = typeof menuItems.$inferSelect;
 export type PasswordResetTokenRow = typeof passwordResetTokens.$inferSelect;
 export type UserRow = typeof users.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;

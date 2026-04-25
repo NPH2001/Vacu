@@ -2,19 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { SiteInfoRow } from "@/db/schema";
+import type { SiteInfoRow, MenuItemRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 
-const links = [
-  { href: "/", label: "Trang chủ" },
-  { href: "/products", label: "Nông sản" },
-  { href: "/farmers", label: "Nông dân" },
-  { href: "/orders", label: "Đơn hàng" },
-  { href: "/about", label: "Câu chuyện" },
-  { href: "/contact", label: "Liên hệ" },
-];
-
-export default function Navbar({ info }: { info: SiteInfoRow }) {
+export default function Navbar({ info, items }: { info: SiteInfoRow; items: MenuItemRow[] }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
 
@@ -35,15 +26,22 @@ export default function Navbar({ info }: { info: SiteInfoRow }) {
           {info.name}
         </Link>
 
-        <ul className="hidden lg:flex gap-7 text-sm font-medium text-green-900/80">
-          {links.map((l) => (
-            <li key={l.href}>
-              <Link href={l.href} className="hover:text-green-700 transition">
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {items.length > 0 && (
+          <ul className="hidden lg:flex gap-7 text-sm font-medium text-green-900/80">
+            {items.map((l) => (
+              <li key={l.id}>
+                <Link
+                  href={l.href}
+                  target={l.openInNewTab ? "_blank" : undefined}
+                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
+                  className="hover:text-green-700 transition"
+                >
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="flex items-center gap-2">
           <button
@@ -66,36 +64,40 @@ export default function Navbar({ info }: { info: SiteInfoRow }) {
             Mua nông sản →
           </Link>
 
-          <button
-            aria-label="Toggle menu"
-            onClick={() => setOpen(!open)}
-            className="lg:hidden p-2 -mr-2 text-green-900"
-          >
-            <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              {open ? (
-                <>
-                  <line x1="6" y1="6" x2="22" y2="22" />
-                  <line x1="22" y1="6" x2="6" y2="22" />
-                </>
-              ) : (
-                <>
-                  <line x1="4" y1="8" x2="24" y2="8" />
-                  <line x1="4" y1="14" x2="24" y2="14" />
-                  <line x1="4" y1="20" x2="24" y2="20" />
-                </>
-              )}
-            </svg>
-          </button>
+          {items.length > 0 && (
+            <button
+              aria-label="Toggle menu"
+              onClick={() => setOpen(!open)}
+              className="lg:hidden p-2 -mr-2 text-green-900"
+            >
+              <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                {open ? (
+                  <>
+                    <line x1="6" y1="6" x2="22" y2="22" />
+                    <line x1="22" y1="6" x2="6" y2="22" />
+                  </>
+                ) : (
+                  <>
+                    <line x1="4" y1="8" x2="24" y2="8" />
+                    <line x1="4" y1="14" x2="24" y2="14" />
+                    <line x1="4" y1="20" x2="24" y2="20" />
+                  </>
+                )}
+              </svg>
+            </button>
+          )}
         </div>
       </nav>
 
-      {open && (
+      {open && items.length > 0 && (
         <div className="lg:hidden border-t border-green-100 bg-white">
           <ul className="px-4 py-4 space-y-1">
-            {links.map((l) => (
-              <li key={l.href}>
+            {items.map((l) => (
+              <li key={l.id}>
                 <Link
                   href={l.href}
+                  target={l.openInNewTab ? "_blank" : undefined}
+                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
                   onClick={() => setOpen(false)}
                   className="block px-3 py-3 rounded-lg text-green-900 hover:bg-green-50 font-medium"
                 >

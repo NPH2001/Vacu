@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CartProvider } from '@/components/CartProvider';
 import CartDrawer from '@/components/CartDrawer';
-import { getSiteInfo, getAllCategories } from '@/lib/data';
+import { getSiteInfo, getAllCategories, getMenu } from '@/lib/data';
 
 export async function generateMetadata() {
   const info = await getSiteInfo();
@@ -12,12 +12,17 @@ export async function generateMetadata() {
 }
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const [info, categories] = await Promise.all([getSiteInfo(), getAllCategories()]);
+  const [info, categories, headerMenu, footerMenu] = await Promise.all([
+    getSiteInfo(),
+    getAllCategories(),
+    getMenu('header'),
+    getMenu('footer'),
+  ]);
   return (
     <CartProvider>
-      <Navbar info={info} />
+      <Navbar info={info} items={headerMenu} />
       <main className="flex-1">{children}</main>
-      <Footer info={info} categories={categories} />
+      <Footer info={info} categories={categories} quickLinks={footerMenu} />
       <CartDrawer />
     </CartProvider>
   );
