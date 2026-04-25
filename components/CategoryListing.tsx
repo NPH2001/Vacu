@@ -2,6 +2,9 @@ import Link from 'next/link';
 import type { CategoryRow, ProductRow } from '@/db/schema';
 import { getDescendantIds } from '@/lib/categories';
 import ProductCard from '@/components/ProductCard';
+import CategoryDrawer from '@/components/CategoryDrawer';
+
+const MAX_INLINE_PILLS = 6;
 
 export default function CategoryListing({
   topLevel, directChildren, ancestors, filtered, allProducts, activeCategory, allCategories,
@@ -17,6 +20,18 @@ export default function CategoryListing({
   const activeBranchIds = activeCategory
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
     : new Set<string>();
+
+  const showDrawer = topLevel.length > MAX_INLINE_PILLS;
+  const inlinePills = showDrawer ? topLevel.slice(0, MAX_INLINE_PILLS - 1) : topLevel;
+
+  const productCounts: Record<string, number> = showDrawer
+    ? Object.fromEntries(
+        allCategories.map((c) => {
+          const ids = new Set(getDescendantIds(c.id, allCategories));
+          return [c.id, allProducts.filter((p) => ids.has(p.categoryId)).length];
+        }),
+      )
+    : {};
 
   return (
     <div>
@@ -49,7 +64,7 @@ export default function CategoryListing({
           <Link href="/products" className={pillClass(!activeCategory)}>
             Tất cả · {allProducts.length}
           </Link>
-          {topLevel.map((c) => {
+          {inlinePills.map((c) => {
             const ids = getDescendantIds(c.id, allCategories);
             const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
             return (
@@ -62,6 +77,13 @@ export default function CategoryListing({
               </Link>
             );
           })}
+          {showDrawer && (
+            <CategoryDrawer
+              allCategories={allCategories}
+              productCounts={productCounts}
+              activeId={activeCategory?.id ?? null}
+            />
+          )}
         </div>
 
         {directChildren.length > 0 && (
