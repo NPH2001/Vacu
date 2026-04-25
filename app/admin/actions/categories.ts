@@ -10,11 +10,26 @@ import { getDescendantIds } from '@/lib/categories';
 
 export type CategoryFormState = { error?: string } | null;
 
+type PgErr = { message?: string; code?: string; cause?: { message?: string; code?: string } };
+
 function isFkViolation(e: unknown): boolean {
-  const err = e as { message?: string; code?: string; cause?: { message?: string; code?: string } };
+  const err = e as PgErr;
   if (err.code === '23503' || err.cause?.code === '23503') return true;
   const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
   return /violates foreign key|restrict/i.test(msg);
+}
+
+function isUniqueViolation(e: unknown): boolean {
+  const err = e as PgErr;
+  if (err.code === '23505' || err.cause?.code === '23505') return true;
+  const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
+  return /duplicate key|unique constraint/i.test(msg);
+}
+
+function friendlyWriteError(e: unknown): string {
+  if (isUniqueViolation(e)) return 'Slug đã tồn tại — chọn slug khác.';
+  if (isFkViolation(e)) return 'Danh mục cha không tồn tại.';
+  return (e as Error).message;
 }
 
 function parse(fd: FormData) {
@@ -44,7 +59,7 @@ export async function createCategory(_prev: CategoryFormState, fd: FormData): Pr
   const cycleErr = await checkCycle(r.data.id, r.data.parentId);
   if (cycleErr) return { error: cycleErr };
   try { await db.insert(categories).values(r.data); }
-  catch (e) { return { error: (e as Error).message }; }
+  catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/categories');
   redirect('/admin/categories');
 }
@@ -58,7 +73,7 @@ export async function updateCategory(originalId: string, _prev: CategoryFormStat
   try {
     await db.update(categories).set({ ...r.data, updatedAt: new Date() }).where(eq(categories.id, originalId));
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/categories');
   redirect('/admin/categories');
