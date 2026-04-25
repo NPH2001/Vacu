@@ -42,6 +42,9 @@ export default function CategoryListing({
   // Only render a "Tất cả" pill at the root view; on a category page the breadcrumb
   // already provides the up-link.
   const showAllPill = !activeCategory;
+  // Hide the pill bar on parent pages — the subcategory cards below already show
+  // the same children with more visual richness. Show pills only at root or on leaves.
+  const showPillBar = !activeCategory || directChildren.length === 0;
 
   const showDrawer = contextPills.length > MAX_INLINE_PILLS;
   const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
@@ -82,7 +85,7 @@ export default function CategoryListing({
             <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
           </nav>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+        <div className={`flex gap-2 overflow-x-auto pb-4 mb-8 ${showPillBar ? '' : 'hidden'}`}>
           {showAllPill && (
             <Link href="/products" className={pillClass(!activeCategory)}>
               Tất cả · {allProducts.length}
