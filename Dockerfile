@@ -56,5 +56,6 @@ RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 USER nextjs
 EXPOSE 3000
 
-# Migrate (idempotent), ensure admin user, seed baseline content, then start the server.
-CMD ["sh", "-c", "node scripts/migrate.mjs && node scripts/seed-admin.mjs && node scripts/seed.mjs && node server.js"]
+# Migrate (idempotent), then start the server.
+# Seed scripts (scripts/seed-admin.mjs, scripts/seed.mjs) are one-shots — run manually inside the container when needed.
+CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]

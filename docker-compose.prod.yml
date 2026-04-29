@@ -18,7 +18,7 @@
 # Notes:
 #   - Postgres is internal-only (no host port published).
 #   - Uploads + Postgres data persist on named volumes.
-#   - Migrations + admin seed run automatically on every app container start.
+#   - Migrations run automatically on every app container start. Seed scripts (admin, baseline content) are one-shots — exec them manually after first deploy.
 #   - Build + push from the dev machine: `make release`.
 
 name: vacu
