@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import ImageUpload from '@/components/admin/ImageUpload';
+import SlugInput from '@/components/admin/SlugInput';
 import type { FarmerFormState } from '@/app/admin/actions/farmers';
 import type { FarmerRow } from '@/db/schema';
 
@@ -18,8 +19,7 @@ export default function FarmerForm({
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <L label="Slug (ID)" required>
-          <input name="id" defaultValue={d.id ?? ''} required readOnly={editing} pattern="[a-z0-9-]+"
-            className="w-full border border-green-200 rounded px-3 py-2 read-only:bg-green-50 read-only:text-green-900/70" />
+          <SlugInput defaultValue={d.id ?? ''} editing={editing} />
         </L>
         <L label="Tên" required>
           <input name="name" defaultValue={d.name ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />

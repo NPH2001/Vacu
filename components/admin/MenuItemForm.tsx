@@ -67,6 +67,7 @@ export default function MenuItemForm({
       sortOrder: c.sortOrder,
       icon: '',
       description: '',
+      coverImage: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }));

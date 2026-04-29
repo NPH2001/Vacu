@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { CategoryRow } from '@/db/schema';
 import { buildCategoryTree, type CategoryNode } from '@/lib/categories';
+import CategoryIcon from '@/components/CategoryIcon';
 
 export default function CategoryDrawer({
   allCategories, productCounts, activeId,
@@ -63,8 +64,13 @@ export default function CategoryDrawer({
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between p-5 border-b border-green-100">
-          <h2 className="text-xl font-bold text-green-950 font-display">
-            {currentNode ? `${currentNode.icon} ${currentNode.name}` : 'Tất cả danh mục'}
+          <h2 className="text-xl font-bold text-green-950 font-display flex items-center gap-2">
+            {currentNode ? (
+              <>
+                <CategoryIcon value={currentNode.icon} alt="" className="w-6 h-6 rounded" />
+                <span>{currentNode.name}</span>
+              </>
+            ) : 'Tất cả danh mục'}
           </h2>
           <button
             type="button"
@@ -155,7 +161,7 @@ function ChildItem({
             isActive ? 'bg-green-700 text-white' : 'text-green-950 hover:bg-green-50'
           }`}
         >
-          <span>{node.icon} {node.name}</span>
+          <span className="inline-flex items-center gap-2"><CategoryIcon value={node.icon} alt="" className="w-5 h-5 rounded" />{node.name}</span>
           <span className="flex items-center gap-2 text-xs">
             <span className={isActive ? 'text-green-100' : 'text-green-900/50'}>{count}</span>
             <span className={isActive ? 'text-green-100' : 'text-green-900/40'}>›</span>

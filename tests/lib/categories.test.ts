@@ -12,6 +12,7 @@ function row(id: string, parentId: string | null = null, sortOrder = 0): Categor
     name: id,
     icon: '#',
     description: '',
+    coverImage: null,
     sortOrder,
     createdAt: new Date(),
     updatedAt: new Date(),

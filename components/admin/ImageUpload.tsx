@@ -1,10 +1,11 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ImageUpload({
-  name, defaultValue, label,
-}: { name: string; defaultValue?: string; label: string }) {
+  name, defaultValue, label, onChange,
+}: { name: string; defaultValue?: string; label: string; onChange?: (url: string) => void }) {
   const [url, setUrl] = useState(defaultValue ?? '');
+  useEffect(() => { onChange?.(url); }, [url, onChange]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);

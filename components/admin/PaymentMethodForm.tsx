@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useActionState } from 'react';
+import SlugInput from './SlugInput';
 import type { PaymentMethodFormState } from '@/app/admin/actions/payment-methods';
 import type { PaymentMethodRow } from '@/db/schema';
 
@@ -17,9 +18,13 @@ export default function PaymentMethodForm({
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       {!editing && (
         <L label="Mã (slug)" required>
-          <input name="id" defaultValue={d.id ?? ''} required pattern="[a-z0-9-]+"
-            className="w-full border border-green-200 rounded px-3 py-2 font-mono"
-            placeholder="cod / momo / bank / card" />
+          <SlugInput
+            defaultValue={d.id ?? ''}
+            editing={false}
+            sourceName="label"
+            placeholder="cod / momo / bank / card"
+            mono
+          />
           <p className="text-xs text-green-900/60 mt-1">Chữ thường, số, dấu gạch ngang. Không đổi được sau khi tạo.</p>
         </L>
       )}

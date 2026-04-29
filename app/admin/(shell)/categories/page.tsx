@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { categories, type CategoryRow } from '@/db/schema';
+import CategoryIcon from '@/components/CategoryIcon';
 import DeleteButton from '@/components/admin/DeleteButton';
 import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
 import { deleteCategory, bulkDeleteCategories } from '@/app/admin/actions/categories';
@@ -113,7 +114,7 @@ export default async function CategoriesAdminPage({
                 {displayRows.map((r) => (
                   <tr key={r.id}>
                     <td className="px-4 py-2"><input type="checkbox" name="ids" value={r.id} /></td>
-                    <td className="px-4 py-2 text-xl">{r.icon}</td>
+                    <td className="px-4 py-2"><CategoryIcon value={r.icon} alt={r.name} className="w-8 h-8 rounded text-xl" /></td>
                     <td className="px-4 py-2">
                       <div style={{ paddingLeft: `${r.level * 20}px` }}>
                         {r.level > 0 && <span className="text-green-900/40 mr-1">└</span>}

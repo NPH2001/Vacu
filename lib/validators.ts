@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 const slug = z.string().min(1).max(80).regex(/^[a-z0-9-]+$/, 'Slug kiểu: chữ thường, số, gạch ngang');
 const url = z.string().min(1).max(500);
+const optUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .optional()
+  .transform((v) => (v && v.length ? v : null))
+  .nullable();
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -21,8 +28,10 @@ export const categorySchema = z.object({
   id: slug,
   parentId: optParentSlug,
   name: z.string().min(1).max(120),
-  icon: z.string().min(1).max(10),
+  // icon is either a short emoji string or an image URL/path — relaxed max length.
+  icon: z.string().min(1).max(500),
   description: z.string().min(1).max(300),
+  coverImage: optUrl,
   sortOrder: z.coerce.number().int().default(0),
 });
 

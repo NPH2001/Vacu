@@ -21,6 +21,7 @@ export const categories = pgTable('categories', {
   name: text('name').notNull(),
   icon: text('icon').notNull(),
   description: text('description').notNull(),
+  coverImage: text('cover_image'),
   sortOrder: integer('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

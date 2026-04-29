@@ -27,9 +27,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!activeCategory) notFound();
 
   const descendantIds = getDescendantIds(activeCategory.id, allCategories);
-  const directChildren = allCategories
-    .filter((c) => c.parentId === activeCategory.id)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
   const ancestors = getAncestors(activeCategory.id, allCategories);
   const topLevel = allCategories.filter((c) => !c.parentId);
   const filtered = await getProductsByCategoryDeep(descendantIds);
@@ -37,7 +34,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   return (
     <CategoryListing
       topLevel={topLevel}
-      directChildren={directChildren}
       ancestors={ancestors}
       filtered={filtered}
       allProducts={allProducts}

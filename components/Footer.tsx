@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { SiteInfoRow, CategoryRow, MenuItemRow } from "@/db/schema";
+import CategoryIcon from "@/components/CategoryIcon";
 
 type Social = { key: string; label: string; url: string | null };
 
@@ -55,8 +56,9 @@ export default function Footer({
           <ul className="text-sm space-y-2 text-green-200/80">
             {categories.filter((c) => !c.parentId).slice(0, 5).map((c) => (
               <li key={c.id}>
-                <Link href={`/danh-muc/${c.id}`} className="hover:text-white">
-                  {c.icon} {c.name}
+                <Link href={`/danh-muc/${c.id}`} className="hover:text-white inline-flex items-center gap-1.5">
+                  <CategoryIcon value={c.icon} alt="" className="w-4 h-4 rounded" />
+                  <span>{c.name}</span>
                 </Link>
               </li>
             ))}
