@@ -43,7 +43,7 @@ export default function CategoryListing({
   return (
     <div>
       <section
-        className={`relative overflow-hidden text-white ${cover ? 'min-h-[420px] md:min-h-[500px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
+        className={`relative overflow-hidden text-white ${cover ? 'min-h-[520px] md:min-h-[640px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
         style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {cover && (
