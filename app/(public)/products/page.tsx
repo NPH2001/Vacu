@@ -18,7 +18,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   return (
     <CategoryListing
       topLevel={topLevel}
-      directChildren={[]}
       ancestors={[]}
       filtered={allProducts}
       allProducts={allProducts}

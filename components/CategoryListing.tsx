@@ -8,10 +8,9 @@ import CategoryIcon from '@/components/CategoryIcon';
 const MAX_INLINE_PILLS = 6;
 
 export default function CategoryListing({
-  topLevel, directChildren, ancestors, filtered, allProducts, activeCategory, allCategories,
+  topLevel, ancestors, filtered, allProducts, activeCategory, allCategories,
 }: {
   topLevel: CategoryRow[];
-  directChildren: CategoryRow[];
   ancestors: CategoryRow[];
   filtered: ProductRow[];
   allProducts: ProductRow[];
@@ -22,30 +21,13 @@ export default function CategoryListing({
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
     : new Set<string>();
 
-  // Contextual pill list:
-  // - root view (no active category)            → top-level
-  // - active category WITH children             → its children
-  // - active leaf (no children) WITH a parent   → its siblings
-  // - active leaf at root (parentless leaf)     → top-level
-  const sortBySortOrder = (a: CategoryRow, b: CategoryRow) =>
-    a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
-  const siblings: CategoryRow[] =
-    activeCategory && activeCategory.parentId
-      ? allCategories.filter((c) => c.parentId === activeCategory.parentId).sort(sortBySortOrder)
-      : [];
-  const contextPills: CategoryRow[] = !activeCategory
-    ? topLevel
-    : directChildren.length > 0
-      ? directChildren
-      : siblings.length > 0
-        ? siblings
-        : topLevel;
-  // Only render a "Tất cả" pill at the root view; on a category page the breadcrumb
-  // already provides the up-link.
+  // Pill bar always shows top-level (parent) categories so users can pivot
+  // between branches from any depth. The active branch's root highlights via
+  // activeBranchIds; the drawer covers the full tree.
   const showAllPill = !activeCategory;
 
-  const showDrawer = contextPills.length > MAX_INLINE_PILLS;
-  const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
+  const showDrawer = topLevel.length > MAX_INLINE_PILLS;
+  const inlinePills = showDrawer ? topLevel.slice(0, MAX_INLINE_PILLS - 1) : topLevel;
 
   const productCounts: Record<string, number> = showDrawer
     ? Object.fromEntries(
