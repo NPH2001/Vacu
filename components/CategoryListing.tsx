@@ -21,13 +21,20 @@ export default function CategoryListing({
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
     : new Set<string>();
 
-  // Pill bar always shows top-level (parent) categories so users can pivot
-  // between branches from any depth. The active branch's root highlights via
-  // activeBranchIds; the drawer covers the full tree.
+  // Pill bar = direct children of the current page. On root, that's top-level.
+  // If the active category has no children, hide the bar entirely — drill-down
+  // navigation, no sideways jumps to unrelated branches.
+  const directChildren = activeCategory
+    ? allCategories
+        .filter((c) => c.parentId === activeCategory.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+    : [];
+  const contextPills: CategoryRow[] = activeCategory ? directChildren : topLevel;
+  const showPillBar = contextPills.length > 0;
   const showAllPill = !activeCategory;
 
-  const showDrawer = topLevel.length > MAX_INLINE_PILLS;
-  const inlinePills = showDrawer ? topLevel.slice(0, MAX_INLINE_PILLS - 1) : topLevel;
+  const showDrawer = contextPills.length > MAX_INLINE_PILLS;
+  const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
 
   const productCounts: Record<string, number> = showDrawer
     ? Object.fromEntries(
@@ -103,34 +110,36 @@ export default function CategoryListing({
             <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
           </nav>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
-          {showAllPill && (
-            <Link href="/products" className={pillClass(!activeCategory)}>
-              Tất cả · {allProducts.length}
-            </Link>
-          )}
-          {inlinePills.map((c) => {
-            const ids = getDescendantIds(c.id, allCategories);
-            const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
-            return (
-              <Link
-                key={c.id}
-                href={`/danh-muc/${c.id}`}
-                className={`${pillClass(activeBranchIds.has(c.id))} inline-flex items-center gap-1.5`}
-              >
-                <CategoryIcon value={c.icon} alt="" className="w-5 h-5 rounded" />
-                <span>{c.name} · {count}</span>
+        {showPillBar && (
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+            {showAllPill && (
+              <Link href="/products" className={pillClass(!activeCategory)}>
+                Tất cả · {allProducts.length}
               </Link>
-            );
-          })}
-          {showDrawer && (
-            <CategoryDrawer
-              allCategories={allCategories}
-              productCounts={productCounts}
-              activeId={activeCategory?.id ?? null}
-            />
-          )}
-        </div>
+            )}
+            {inlinePills.map((c) => {
+              const ids = getDescendantIds(c.id, allCategories);
+              const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
+              return (
+                <Link
+                  key={c.id}
+                  href={`/danh-muc/${c.id}`}
+                  className={`${pillClass(activeBranchIds.has(c.id))} inline-flex items-center gap-1.5`}
+                >
+                  <CategoryIcon value={c.icon} alt="" className="w-5 h-5 rounded" />
+                  <span>{c.name} · {count}</span>
+                </Link>
+              );
+            })}
+            {showDrawer && (
+              <CategoryDrawer
+                allCategories={allCategories}
+                productCounts={productCounts}
+                activeId={activeCategory?.id ?? null}
+              />
+            )}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-green-900/60">
