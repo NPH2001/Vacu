@@ -50,7 +50,7 @@ export default function CategoryListing({
   return (
     <div>
       <section
-        className={`relative overflow-hidden text-white ${cover ? 'min-h-[440px] lg:min-h-[640px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
+        className={`relative overflow-hidden text-white ${cover ? 'min-h-[240px] lg:min-h-[640px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
         style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {cover && (
@@ -59,7 +59,7 @@ export default function CategoryListing({
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-green-950/70 via-green-950/20 to-transparent" aria-hidden />
           </>
         )}
-        <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-4 lg:pb-16 pt-12 lg:pt-24' : ''}`}>
+        <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-3 lg:pb-16 pt-6 lg:pt-24' : ''}`}>
           {activeCategory ? (
             <div className="flex items-end gap-5">
               {!cover && (
