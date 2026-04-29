@@ -55,18 +55,19 @@ export default function CategoryListing({
         <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-12 md:pb-16 pt-20 md:pt-24' : ''}`}>
           {activeCategory ? (
             <div className="flex items-end gap-5">
-              <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
-                <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
-              </div>
+              {!cover && (
+                <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
+                  <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 bg-amber-300 text-green-950 text-[11px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full shadow-md mb-3">
                   Chợ nông trại
                   <span className="text-green-900/40">•</span>
                   <span>{filtered.length} sản phẩm</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-2xl leading-[1.05] flex items-center gap-3 sm:block">
-                  <CategoryIcon value={activeCategory.icon} alt="" className="sm:hidden w-10 h-10 rounded-lg" />
-                  <span>{activeCategory.name}</span>
+                <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-2xl leading-[1.05]">
+                  {activeCategory.name}
                 </h1>
                 <p className="text-green-50/95 max-w-2xl text-base md:text-lg drop-shadow leading-relaxed">
                   {activeCategory.description}
