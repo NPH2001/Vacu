@@ -10,9 +10,17 @@ export default function CategoryIcon({
   alt?: string;
   style?: CSSProperties;
 }) {
-  if (isImage(value)) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={value} alt={alt} className={`inline-block object-cover ${className}`} style={style} />;
-  }
-  return <span className={className} style={style}>{value}</span>;
+  return (
+    <span
+      className={`inline-flex items-center justify-center overflow-hidden leading-none align-middle ${className}`}
+      style={style}
+    >
+      {isImage(value) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={value} alt={alt} className="w-full h-full object-cover" />
+      ) : (
+        <span aria-hidden>{value}</span>
+      )}
+    </span>
+  );
 }

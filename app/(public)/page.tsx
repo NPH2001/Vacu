@@ -110,7 +110,7 @@ export default async function HomePage() {
                 href={`/danh-muc/${c.id}`}
                 className="block bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition h-full"
               >
-                <CategoryIcon value={c.icon} alt={c.name} className="w-14 h-14 mx-auto mb-2 text-4xl flex items-center justify-center rounded-xl" />
+                <CategoryIcon value={c.icon} alt={c.name} className="w-14 h-14 mx-auto mb-2 text-4xl rounded-xl" />
                 <div className="font-bold text-green-950">{c.name}</div>
                 <div className="text-xs text-green-800/60 mt-1 line-clamp-2">{c.description}</div>
               </Link>
