@@ -39,6 +39,7 @@ function parse(fd: FormData) {
     name: fd.get('name'),
     icon: fd.get('icon'),
     description: fd.get('description'),
+    coverImage: fd.get('coverImage'),
     sortOrder: fd.get('sortOrder') || 0,
   });
 }

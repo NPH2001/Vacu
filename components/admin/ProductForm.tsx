@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useActionState } from 'react';
 import ImageUpload from '@/components/admin/ImageUpload';
+import SlugInput from '@/components/admin/SlugInput';
 import type { ProductFormState } from '@/app/admin/actions/products';
 import type { ProductRow, CategoryRow, FarmerRow } from '@/db/schema';
 
@@ -27,9 +28,7 @@ export default function ProductForm({
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <Field label="Slug (ID)" required>
-          <input name="id" defaultValue={d.id ?? ''} readOnly={editing} required
-            pattern="[a-z0-9-]+"
-            className="w-full border border-green-200 rounded px-3 py-2 read-only:bg-green-50 read-only:text-green-900/70" />
+          <SlugInput defaultValue={d.id ?? ''} editing={editing} />
         </Field>
         <Field label="Tên sản phẩm" required>
           <input name="name" defaultValue={d.name ?? ''} required

@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useActionState } from 'react';
 import type { CategoryFormState } from '@/app/admin/actions/categories';
 import type { CategoryRow } from '@/db/schema';
-import EmojiPicker from './EmojiPicker';
+import CategoryIconField from './CategoryIconField';
+import ImageUpload from './ImageUpload';
+import SlugInput from './SlugInput';
 
 export default function CategoryForm({
   action, defaults, editing, availableParents,
@@ -15,20 +17,18 @@ export default function CategoryForm({
 }) {
   const [state, formAction, pending] = useActionState<CategoryFormState, FormData>(action, null);
   const d = defaults ?? {};
-  const [icon, setIcon] = useState(d.icon ?? '');
   return (
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <L label="Slug (ID)" required>
-          <input name="id" defaultValue={d.id ?? ''} required readOnly={editing} pattern="[a-z0-9-]+"
-            className="w-full border border-green-200 rounded px-3 py-2 read-only:bg-green-50 read-only:text-green-900/70" />
+          <SlugInput defaultValue={d.id ?? ''} editing={editing} />
         </L>
         <L label="Tên" required>
           <input name="name" defaultValue={d.name ?? ''} required
             className="w-full border border-green-200 rounded px-3 py-2" />
         </L>
-        <L label="Icon (emoji)" required>
-          <EmojiPicker value={icon} onChange={setIcon} name="icon" required />
+        <L label="Icon" required>
+          <CategoryIconField defaultValue={d.icon ?? ''} />
         </L>
         <L label="Thứ tự">
           <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
@@ -48,6 +48,11 @@ export default function CategoryForm({
         <textarea name="description" defaultValue={d.description ?? ''} required rows={3}
           className="w-full border border-green-200 rounded px-3 py-2" />
       </L>
+      <ImageUpload
+        name="coverImage"
+        defaultValue={d.coverImage ?? ''}
+        label="Ảnh bìa danh mục (banner)"
+      />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">
         <Link href="/admin/categories" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>

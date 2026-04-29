@@ -3,6 +3,7 @@ import type { CategoryRow, ProductRow } from '@/db/schema';
 import { getDescendantIds } from '@/lib/categories';
 import ProductCard from '@/components/ProductCard';
 import CategoryDrawer from '@/components/CategoryDrawer';
+import CategoryIcon from '@/components/CategoryIcon';
 
 const MAX_INLINE_PILLS = 6;
 
@@ -55,17 +56,54 @@ export default function CategoryListing({
       )
     : {};
 
+  const cover = activeCategory?.coverImage;
+
   return (
     <div>
-      <section className="bg-gradient-to-br from-green-800 to-green-950 text-white py-14">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-amber-300 text-sm font-bold tracking-widest uppercase mb-2">Chợ nông trại</div>
-          <h1 className="text-4xl md:text-5xl font-bold font-display mb-3">
-            {activeCategory ? `${activeCategory.icon} ${activeCategory.name}` : 'Toàn bộ nông sản'}
-          </h1>
-          <p className="text-green-100/80 max-w-xl">
-            {activeCategory ? activeCategory.description : 'Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.'}
-          </p>
+      <section
+        className={`relative overflow-hidden text-white ${cover ? 'min-h-[420px] md:min-h-[500px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
+        style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
+        {cover && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-950/85 via-green-950/35 to-transparent" aria-hidden />
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-green-950/70 via-green-950/20 to-transparent" aria-hidden />
+          </>
+        )}
+        <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-12 md:pb-16 pt-20 md:pt-24' : ''}`}>
+          {activeCategory ? (
+            <div className="flex items-end gap-5">
+              <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
+                <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
+              </div>
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 bg-amber-300 text-green-950 text-[11px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full shadow-md mb-3">
+                  Chợ nông trại
+                  <span className="text-green-900/40">•</span>
+                  <span>{filtered.length} sản phẩm</span>
+                </div>
+                <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-2xl leading-[1.05] flex items-center gap-3 sm:block">
+                  <CategoryIcon value={activeCategory.icon} alt="" className="sm:hidden w-10 h-10 rounded-lg" />
+                  <span>{activeCategory.name}</span>
+                </h1>
+                <p className="text-green-50/95 max-w-2xl text-base md:text-lg drop-shadow leading-relaxed">
+                  {activeCategory.description}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="inline-block bg-amber-300 text-green-950 text-[11px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full shadow-md mb-3">
+                Chợ nông trại
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-lg leading-[1.05]">
+                Toàn bộ nông sản
+              </h1>
+              <p className="text-green-50/90 max-w-xl text-base md:text-lg drop-shadow">
+                Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -95,9 +133,10 @@ export default function CategoryListing({
               <Link
                 key={c.id}
                 href={`/danh-muc/${c.id}`}
-                className={pillClass(activeBranchIds.has(c.id))}
+                className={`${pillClass(activeBranchIds.has(c.id))} inline-flex items-center gap-1.5`}
               >
-                {c.icon} {c.name} · {count}
+                <CategoryIcon value={c.icon} alt="" className="w-5 h-5 rounded" />
+                <span>{c.name} · {count}</span>
               </Link>
             );
           })}
