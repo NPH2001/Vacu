@@ -21,13 +21,20 @@ export default function CategoryListing({
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
     : new Set<string>();
 
-  // Pill bar always shows top-level (parent) categories so users can pivot
-  // between branches from any depth. The active branch's root highlights via
-  // activeBranchIds; the drawer covers the full tree.
+  // Pill bar = direct children of the current page. On root, that's top-level.
+  // If the active category has no children, hide the bar entirely — drill-down
+  // navigation, no sideways jumps to unrelated branches.
+  const directChildren = activeCategory
+    ? allCategories
+        .filter((c) => c.parentId === activeCategory.id)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+    : [];
+  const contextPills: CategoryRow[] = activeCategory ? directChildren : topLevel;
+  const showPillBar = contextPills.length > 0;
   const showAllPill = !activeCategory;
 
-  const showDrawer = topLevel.length > MAX_INLINE_PILLS;
-  const inlinePills = showDrawer ? topLevel.slice(0, MAX_INLINE_PILLS - 1) : topLevel;
+  const showDrawer = contextPills.length > MAX_INLINE_PILLS;
+  const inlinePills = showDrawer ? contextPills.slice(0, MAX_INLINE_PILLS - 1) : contextPills;
 
   const productCounts: Record<string, number> = showDrawer
     ? Object.fromEntries(
@@ -43,7 +50,7 @@ export default function CategoryListing({
   return (
     <div>
       <section
-        className={`relative overflow-hidden text-white ${cover ? 'min-h-[420px] md:min-h-[500px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
+        className={`relative overflow-hidden text-white ${cover ? 'min-h-[520px] md:min-h-[640px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
         style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {cover && (
@@ -55,18 +62,19 @@ export default function CategoryListing({
         <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-12 md:pb-16 pt-20 md:pt-24' : ''}`}>
           {activeCategory ? (
             <div className="flex items-end gap-5">
-              <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
-                <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
-              </div>
+              {!cover && (
+                <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
+                  <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 bg-amber-300 text-green-950 text-[11px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full shadow-md mb-3">
                   Chợ nông trại
                   <span className="text-green-900/40">•</span>
                   <span>{filtered.length} sản phẩm</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-2xl leading-[1.05] flex items-center gap-3 sm:block">
-                  <CategoryIcon value={activeCategory.icon} alt="" className="sm:hidden w-10 h-10 rounded-lg" />
-                  <span>{activeCategory.name}</span>
+                <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-2xl leading-[1.05]">
+                  {activeCategory.name}
                 </h1>
                 <p className="text-green-50/95 max-w-2xl text-base md:text-lg drop-shadow leading-relaxed">
                   {activeCategory.description}
@@ -102,34 +110,36 @@ export default function CategoryListing({
             <span>{' / '}<span className="text-green-950">{activeCategory.name}</span></span>
           </nav>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
-          {showAllPill && (
-            <Link href="/products" className={pillClass(!activeCategory)}>
-              Tất cả · {allProducts.length}
-            </Link>
-          )}
-          {inlinePills.map((c) => {
-            const ids = getDescendantIds(c.id, allCategories);
-            const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
-            return (
-              <Link
-                key={c.id}
-                href={`/danh-muc/${c.id}`}
-                className={`${pillClass(activeBranchIds.has(c.id))} inline-flex items-center gap-1.5`}
-              >
-                <CategoryIcon value={c.icon} alt="" className="w-5 h-5 rounded" />
-                <span>{c.name} · {count}</span>
+        {showPillBar && (
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+            {showAllPill && (
+              <Link href="/products" className={pillClass(!activeCategory)}>
+                Tất cả · {allProducts.length}
               </Link>
-            );
-          })}
-          {showDrawer && (
-            <CategoryDrawer
-              allCategories={allCategories}
-              productCounts={productCounts}
-              activeId={activeCategory?.id ?? null}
-            />
-          )}
-        </div>
+            )}
+            {inlinePills.map((c) => {
+              const ids = getDescendantIds(c.id, allCategories);
+              const count = allProducts.filter((p) => ids.includes(p.categoryId)).length;
+              return (
+                <Link
+                  key={c.id}
+                  href={`/danh-muc/${c.id}`}
+                  className={`${pillClass(activeBranchIds.has(c.id))} inline-flex items-center gap-1.5`}
+                >
+                  <CategoryIcon value={c.icon} alt="" className="w-5 h-5 rounded" />
+                  <span>{c.name} · {count}</span>
+                </Link>
+              );
+            })}
+            {showDrawer && (
+              <CategoryDrawer
+                allCategories={allCategories}
+                productCounts={productCounts}
+                activeId={activeCategory?.id ?? null}
+              />
+            )}
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-green-900/60">
