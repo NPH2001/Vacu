@@ -15,6 +15,25 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Every uploaded file gets a row here so the admin can browse and re-pick images
+ * instead of re-uploading. Because a URL may now be referenced from many places
+ * (products, posts, rich-text bodies), files are only removed via explicit
+ * deletion in the media library — never implicitly when one reference changes.
+ */
+export const media = pgTable('media', {
+  id: serial('id').primaryKey(),
+  url: text('url').notNull().unique(),
+  filename: text('filename').notNull(),
+  alt: text('alt').notNull().default(''),
+  width: integer('width'),
+  height: integer('height'),
+  size: integer('size').notNull().default(0),
+  mime: text('mime').notNull().default('image/webp'),
+  uploadedBy: uuid('uploaded_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const categories = pgTable('categories', {
   id: text('id').primaryKey(),
   parentId: text('parent_id').references((): AnyPgColumn => categories.id, { onDelete: 'restrict' }),
@@ -60,12 +79,104 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Extra gallery shots. `products.image` stays the primary/thumbnail image so
+ * every existing card, list and order row keeps working untouched; these are
+ * the additional views shown on the detail page.
+ */
+export const productImages = pgTable('product_images', {
+  id: serial('id').primaryKey(),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  alt: text('alt').notNull().default(''),
+  sortOrder: integer('sort_order').default(0).notNull(),
+});
+
+export const postCategories = pgTable('post_categories', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Scheduling has no cron behind it: a post is public when
+ * `status = 'published' AND published_at <= now()`. Setting a future
+ * `published_at` therefore *is* scheduling — the post surfaces on its own once
+ * the clock passes. Keeping "scheduled" out of the enum avoids a second source
+ * of truth that a cron would have to keep in sync.
+ */
+export const posts = pgTable('posts', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  excerpt: text('excerpt').notNull().default(''),
+  coverImage: text('cover_image'),
+  contentHtml: text('content_html').notNull().default(''),
+  categoryId: text('category_id').references(() => postCategories.id, { onDelete: 'set null' }),
+  authorId: uuid('author_id').references(() => users.id, { onDelete: 'set null' }),
+  authorName: text('author_name').notNull().default(''),
+  status: text('status', { enum: ['draft', 'published'] }).notNull().default('draft'),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  featured: boolean('featured').notNull().default(false),
+  tags: jsonb('tags').$type<string[]>().notNull().default([]),
+  metaTitle: text('meta_title').notNull().default(''),
+  metaDescription: text('meta_description').notNull().default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * Which homepage sections show, and in what order. Rows are fixed: each `key`
+ * maps to a purpose-built section in app/(public)/page.tsx (they read different
+ * data and cannot be generic blocks), so the admin controls order and
+ * visibility rather than creating or deleting them.
+ */
+export const homeSections = pgTable('home_sections', {
+  key: text('key').primaryKey(),
+  visible: boolean('visible').notNull().default(true),
+  sortOrder: integer('sort_order').default(0).notNull(),
+});
+
+/**
+ * Admin-authored pages served by the catch-all /[slug] route. Static routes win
+ * over the catch-all, so a page whose slug collides with a real route (e.g.
+ * "products") would be created but never reachable — createPage rejects those.
+ */
+export const pages = pgTable('pages', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  status: text('status', { enum: ['draft', 'published'] }).notNull().default('draft'),
+  metaTitle: text('meta_title').notNull().default(''),
+  metaDescription: text('meta_description').notNull().default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/**
+ * One row per section, ordered by sort_order. `data` holds the fields for that
+ * block type — shapes are validated by the discriminated union in
+ * lib/blocks.ts, which is the contract between the builder and the renderer.
+ */
+export const pageBlocks = pgTable('page_blocks', {
+  id: serial('id').primaryKey(),
+  pageId: text('page_id').notNull().references(() => pages.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  visible: boolean('visible').notNull().default(true),
+  data: jsonb('data').$type<Record<string, unknown>>().notNull().default({}),
+});
+
 export const testimonials = pgTable('testimonials', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   role: text('role').notNull(),
   avatar: text('avatar').notNull(),
   content: text('content').notNull(),
+  // 1–5 stars. Defaults to 5 so existing rows keep the look they had when the
+  // rating was a hardcoded ★★★★★.
+  rating: integer('rating').notNull().default(5),
   sortOrder: integer('sort_order').default(0).notNull(),
 });
 
@@ -94,6 +205,11 @@ export const siteInfo = pgTable(
     statProducts: text('stat_products').notNull(),
     statCustomers: text('stat_customers').notNull(),
     statYears: text('stat_years').notNull(),
+    // Labels beside each stat number in the hero — previously hardcoded.
+    statFarmersLabel: text('stat_farmers_label').notNull().default('Nông dân'),
+    statProductsLabel: text('stat_products_label').notNull().default('Sản phẩm'),
+    statCustomersLabel: text('stat_customers_label').notNull().default('Gia đình tin dùng'),
+    statYearsLabel: text('stat_years_label').notNull().default('Năm kinh nghiệm'),
 
     heroBadge: text('hero_badge').notNull().default('Thu hoạch sáng nay — giao chiều nay'),
     heroImage: text('hero_image').notNull().default('/farm/1500937386664-56d1dfef3854.jpg'),
@@ -121,6 +237,9 @@ export const siteInfo = pgTable(
     sectionFarmersTitle: text('section_farmers_title').notNull().default('Người trồng rau cho bạn'),
     sectionTestimonialsTitle: text('section_testimonials_title').notNull().default('28.000+ gia đình đã tin dùng'),
     sectionFaqTitle: text('section_faq_title').notNull().default('Câu hỏi thường gặp'),
+    // The line under the FAQ heading. {phone} is replaced with the site phone
+    // at render, so the number stays in sync even after this text is edited.
+    sectionFaqSubtitle: text('section_faq_subtitle').notNull().default('Còn thắc mắc? Gọi {phone} để trò chuyện với chúng tôi.'),
 
     footerTagline: text('footer_tagline').notNull().default('Rau sạch, lòng sạch.'),
     socialFacebook: text('social_facebook'),
@@ -170,11 +289,83 @@ export const siteInfo = pgTable(
 
     emailHeaderHtml: text('email_header_html').notNull().default(''),
     emailFooterHtml: text('email_footer_html').notNull().default(''),
+
+    // ─── SEO & tracking ───────────────────────────────────────────────
+    // Public site URL, e.g. https://vacu.vn — used as metadataBase so Open
+    // Graph/canonical URLs resolve to absolute paths. Empty = Next's default.
+    siteUrl: text('site_url').notNull().default(''),
+    // GA4 "G-XXXXXXX". Empty = analytics script not loaded at all.
+    gaMeasurementId: text('ga_measurement_id').notNull().default(''),
+    // Search-engine / platform ownership verification tokens (the token only,
+    // not the whole meta tag). Empty = tag not emitted.
+    verificationGoogle: text('verification_google').notNull().default(''),
+    verificationBing: text('verification_bing').notNull().default(''),
+    verificationFacebook: text('verification_facebook').notNull().default(''),
+
+    // ─── storefront copy (was hardcoded in the pages) ─────────────────
+    navbarCta: text('navbar_cta').notNull().default('Mua nông sản →'),
+    productsPageTitle: text('products_page_title').notNull().default('Toàn bộ nông sản'),
+    productsPageSubtitle: text('products_page_subtitle').notNull().default('Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.'),
+    farmersHeroImage: text('farmers_hero_image').notNull().default('/farm/1464226184884-fa280b87c399.jpg'),
+    farmersHeroEyebrow: text('farmers_hero_eyebrow').notNull().default('Hậu phương'),
+    farmersHeroTitle: text('farmers_hero_title').notNull().default('Những người âm thầm trồng rau cho bạn'),
+    // {count} is replaced with the number of farmers at render.
+    farmersHeroSubtitle: text('farmers_hero_subtitle').notNull().default('{count} bà con nông dân từ Đà Lạt, Mộc Châu, Đắk Lắk, Hà Giang. Mỗi cọng rau là một câu chuyện.'),
+    newsTitle: text('news_title').notNull().default('Chuyện nhà nông'),
+    newsSubtitle: text('news_subtitle').notNull().default('Mẹo chọn rau, công thức nấu ăn và câu chuyện từ những người trồng rau cho bạn.'),
+    contactTitle: text('contact_title').notNull().default('Chúng tôi luôn lắng nghe'),
+    contactSubtitle: text('contact_subtitle').notNull().default('Có câu hỏi về sản phẩm? Muốn hợp tác? Hay chỉ muốn nói lời cảm ơn? Gửi cho chúng tôi vài dòng.'),
+    orderSuccessNote: text('order_success_note').notNull().default('Cô nông dân sẽ thu hoạch rau của bạn vào sáng mai.'),
+    footerBuiltByLabel: text('footer_built_by_label').notNull().default('idflow.vn'),
+    footerBuiltByUrl: text('footer_built_by_url').notNull().default('https://idflow.vn'),
+
+    // ─── secondary UI copy (brand voice, was hardcoded) ───────────────
+    // Home "see all" link labels per section.
+    sectionCategoriesLinkLabel: text('section_categories_link_label').notNull().default('Tất cả'),
+    sectionFeaturedLinkLabel: text('section_featured_link_label').notNull().default('Xem tất cả'),
+    sectionFarmersLinkLabel: text('section_farmers_link_label').notNull().default('Toàn bộ'),
+    // Product listing badge above the title.
+    listingBadge: text('listing_badge').notNull().default('Chợ nông trại'),
+    // Detail-page section headings.
+    grownByLabel: text('grown_by_label').notNull().default('Trồng bởi'),
+    productDetailHeading: text('product_detail_heading').notNull().default('Chi tiết sản phẩm'),
+    relatedProductsHeading: text('related_products_heading').notNull().default('Có thể bạn thích'),
+    farmerStoryHeading: text('farmer_story_heading').notNull().default('Câu chuyện nông trại'),
+    // {name} → the farmer's name at render.
+    farmerProductsHeading: text('farmer_products_heading').notNull().default('Sản phẩm của {name}'),
+    relatedPostsHeading: text('related_posts_heading').notNull().default('Bài viết khác'),
+    // Empty states.
+    cartEmptyTitle: text('cart_empty_title').notNull().default('Giỏ nông sản còn trống'),
+    cartEmptyText: text('cart_empty_text').notNull().default('Hãy đi chợ và chọn vài loại rau tươi nhé!'),
+    ordersEmptyTitle: text('orders_empty_title').notNull().default('Chưa có đơn nào'),
+    ordersEmptyText: text('orders_empty_text').notNull().default('Rau tươi đang chờ bạn trong vườn.'),
+    // Checkout helpers.
+    checkoutSlotNote: text('checkout_slot_note').notNull().default('Rau được thu hoạch buổi sáng cùng ngày giao.'),
+    shippingLabel: text('shipping_label').notNull().default('Miễn phí'),
   },
   (t) => ({
     onlyOne: check('site_info_only_one', sql`${t.id} = 1`),
   }),
 );
+
+/**
+ * Rotating homepage hero. When at least one active slide exists the homepage
+ * shows the slider; with none it falls back to the single static hero built
+ * from the site_info hero* columns, so a fresh install still has a hero.
+ */
+export const heroSlides = pgTable('hero_slides', {
+  id: serial('id').primaryKey(),
+  badge: text('badge').notNull().default(''),
+  title: text('title').notNull(),
+  subtitle: text('subtitle').notNull().default(''),
+  image: text('image').notNull(),
+  ctaPrimaryLabel: text('cta_primary_label').notNull().default(''),
+  ctaPrimaryHref: text('cta_primary_href').notNull().default(''),
+  ctaSecondaryLabel: text('cta_secondary_label').notNull().default(''),
+  ctaSecondaryHref: text('cta_secondary_href').notNull().default(''),
+  active: boolean('active').notNull().default(true),
+  sortOrder: integer('sort_order').default(0).notNull(),
+});
 
 export const valueProps = pgTable('value_props', {
   id: serial('id').primaryKey(),
@@ -194,6 +385,8 @@ export const deliverySlots = pgTable('delivery_slots', {
 export const paymentMethods = pgTable('payment_methods', {
   id: text('id').primaryKey(),
   label: text('label').notNull(),
+  // Sub-text shown under the option at checkout (e.g. "Trả khi nông dân giao tới").
+  hint: text('hint').notNull().default(''),
   active: boolean('active').notNull().default(true),
   sortOrder: integer('sort_order').default(0).notNull(),
 });
@@ -273,12 +466,39 @@ export const ordersRelations = relations(orders, ({ many }) => ({
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
 }));
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, { fields: [products.categoryId], references: [categories.id] }),
   farmer: one(farmers, { fields: [products.farmerId], references: [farmers.id] }),
+  images: many(productImages),
+}));
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, { fields: [productImages.productId], references: [products.id] }),
 }));
 
+export const postsRelations = relations(posts, ({ one }) => ({
+  category: one(postCategories, { fields: [posts.categoryId], references: [postCategories.id] }),
+  author: one(users, { fields: [posts.authorId], references: [users.id] }),
+}));
+export const postCategoriesRelations = relations(postCategories, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const pagesRelations = relations(pages, ({ many }) => ({
+  blocks: many(pageBlocks),
+}));
+export const pageBlocksRelations = relations(pageBlocks, ({ one }) => ({
+  page: one(pages, { fields: [pageBlocks.pageId], references: [pages.id] }),
+}));
+
+export type MediaRow = typeof media.$inferSelect;
+export type ProductImageRow = typeof productImages.$inferSelect;
+export type PageRow = typeof pages.$inferSelect;
+export type PageBlockRow = typeof pageBlocks.$inferSelect;
+export type HomeSectionRow = typeof homeSections.$inferSelect;
+export type PostRow = typeof posts.$inferSelect;
+export type PostCategoryRow = typeof postCategories.$inferSelect;
 export type ValuePropRow = typeof valueProps.$inferSelect;
+export type HeroSlideRow = typeof heroSlides.$inferSelect;
 export type DeliverySlotRow = typeof deliverySlots.$inferSelect;
 export type PaymentMethodRow = typeof paymentMethods.$inferSelect;
 export type ContactTopicRow = typeof contactTopics.$inferSelect;

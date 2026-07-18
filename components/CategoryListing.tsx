@@ -9,6 +9,9 @@ const MAX_INLINE_PILLS = 6;
 
 export default function CategoryListing({
   topLevel, ancestors, filtered, allProducts, activeCategory, allCategories,
+  rootTitle = 'Toàn bộ nông sản',
+  rootSubtitle = 'Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.',
+  badge = 'Chợ nông trại',
 }: {
   topLevel: CategoryRow[];
   ancestors: CategoryRow[];
@@ -16,6 +19,11 @@ export default function CategoryListing({
   allProducts: ProductRow[];
   activeCategory: CategoryRow | null;
   allCategories: CategoryRow[];
+  // Only shown on the root /products view; category pages use the category's
+  // own name/description.
+  rootTitle?: string;
+  rootSubtitle?: string;
+  badge?: string;
 }) {
   const activeBranchIds = activeCategory
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
@@ -69,7 +77,7 @@ export default function CategoryListing({
               )}
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 bg-amber-300 text-green-950 text-[10px] lg:text-[11px] font-extrabold tracking-widest uppercase px-2.5 py-1 rounded-full shadow-md mb-2.5 lg:mb-3">
-                  Chợ nông trại
+                  {badge}
                   <span className="text-green-900/40">•</span>
                   <span>{filtered.length} sản phẩm</span>
                 </div>
@@ -84,13 +92,13 @@ export default function CategoryListing({
           ) : (
             <div>
               <div className="inline-block bg-amber-300 text-green-950 text-[11px] font-extrabold tracking-widest uppercase px-3 py-1 rounded-full shadow-md mb-3">
-                Chợ nông trại
+                {badge}
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-lg leading-[1.05]">
-                Toàn bộ nông sản
+              <h1 className="text-4xl md:text-6xl font-bold font-display mb-3 drop-shadow-lg leading-[1.05] wrap-anywhere">
+                {rootTitle}
               </h1>
-              <p className="text-green-50/90 max-w-xl text-base md:text-lg drop-shadow">
-                Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.
+              <p className="text-green-50/90 max-w-xl text-base md:text-lg drop-shadow wrap-anywhere">
+                {rootSubtitle}
               </p>
             </div>
           )}

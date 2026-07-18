@@ -262,6 +262,64 @@ body {
 /* small text helpers */
 .admin-subtle { color: var(--admin-muted); }
 
+/* ─── skeleton shimmer ───────────────────────────────────────────────
+   Placeholder blocks shown while a force-dynamic page fetches on the server.
+   A moving highlight reads as "loading" rather than "broken/empty". */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e7eee1;
+  border-radius: 0.75rem;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
+/* ─── horizontal section scrollers (mobile) ──────────────────────────
+   Phone layouts turn a row of cards into a very tall column — the featured
+   products ran 3936px on a 390px screen, about five screens of scrolling for
+   one section. Swiping sideways keeps each section roughly one screen tall and
+   matches how shopping apps behave. */
+
+.hide-scrollbar {
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* old Edge */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                    /* WebKit — the swipe is the affordance */
+}
+
+/* ─── overflow guards for admin-entered text ─────────────────────────
+   Anything the admin types can be longer than the design assumed, and a single
+   long word with no spaces has nowhere to break: it sets the element's
+   min-content width, stretches its container, and drags the whole page wider
+   than the screen (a product name with no spaces blew a 390px phone layout out
+   to 1510px). `anywhere` lets the browser break mid-word only when there is no
+   other option, so normal Vietnamese text still wraps at spaces as before. */
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+/* Rich text can contain pasted URLs, which are exactly this problem. */
+.product-prose {
+  overflow-wrap: anywhere;
+}
+.product-prose pre {
+  /* Code blocks scroll instead — breaking code mid-token makes it unreadable. */
+  overflow-wrap: normal;
+}
+
 /* ─── product markdown body ─────────────────────────────────────────── */
 
 .product-prose {
@@ -345,3 +403,29 @@ body {
   border-radius: 12px;
   margin: 0.8em 0;
 }
+
+/* ─── rich text editor ──────────────────────────────────────────────────
+   The editor surface reuses .product-prose so the admin sees the same
+   typography the visitor will get. These rules only cover editing affordances
+   the published page has no need for. */
+
+.product-prose.ProseMirror:focus { outline: none; }
+
+/* Placeholder text — Tiptap's Placeholder extension puts the string in
+   data-placeholder on the empty node. */
+.product-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: #14532d59;
+}
+
+/* The currently selected image, so the admin can see what they're about to
+   replace or delete. */
+.product-prose img.ProseMirror-selectednode {
+  outline: 3px solid #15803d;
+  outline-offset: 2px;
+}
+
+.product-prose.ProseMirror ul[data-type='taskList'] { list-style: none; padding-left: 0; }

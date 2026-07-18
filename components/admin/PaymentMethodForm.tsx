@@ -33,6 +33,11 @@ export default function PaymentMethodForm({
           className="w-full border border-green-200 rounded px-3 py-2"
           placeholder="VD: 💵 Tiền mặt khi nhận" />
       </L>
+      <L label="Gợi ý (dòng nhỏ dưới nhãn)">
+        <input name="hint" defaultValue={d.hint ?? ''}
+          className="w-full border border-green-200 rounded px-3 py-2"
+          placeholder="VD: Trả khi nông dân giao tới" />
+      </L>
       <L label="Kích hoạt">
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" name="active" defaultChecked={d.active ?? true} />

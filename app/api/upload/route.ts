@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { validateUpload, processImage, saveUpload } from '@/lib/uploads';
+import { recordMedia } from '@/lib/media';
 
 export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
@@ -17,7 +18,18 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const inBuf = Buffer.from(await file.arrayBuffer());
-  const outBuf = await processImage(inBuf);
-  const url = await saveUpload(outBuf);
-  return NextResponse.json({ url });
+  const { buf, width, height } = await processImage(inBuf);
+  const url = await saveUpload(buf);
+
+  const row = await recordMedia({
+    url,
+    filename: file.name || 'anh.webp',
+    width,
+    height,
+    size: buf.byteLength,
+    mime: 'image/webp',
+    uploadedBy: user.id,
+  });
+
+  return NextResponse.json({ url, media: row });
 }

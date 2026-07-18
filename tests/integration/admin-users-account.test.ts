@@ -258,9 +258,24 @@ describe('deleteUser', () => {
     await expect(deleteUser('anything')).rejects.toThrow();
   });
 
-  it('forbids self-delete with Vietnamese message', async () => {
+  it('forbids self-delete and explains why on the list page', async () => {
     const { deleteUser } = await import('@/app/admin/actions/users');
-    await expect(deleteUser(adminId)).rejects.toThrow(/tự xóa tài khoản/);
+    const { db } = await import('@/db/client');
+    const { users } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // Redirects with a flash code instead of throwing: production redacts
+    // server error messages, so a thrown explanation never reached the admin.
+    await expect(deleteUser(adminId)).rejects.toMatchObject({
+      digest: expect.stringContaining('/admin/users?loi=tu-xoa-tai-khoan'),
+    });
+
+    // The account must survive the refusal.
+    expect(await db.select().from(users).where(eq(users.id, adminId))).toHaveLength(1);
+
+    // And the code must resolve to a real message, not a blank banner.
+    const { flashOf } = await import('@/lib/admin/flash');
+    expect(flashOf('tu-xoa-tai-khoan')?.text).toMatch(/không thể tự xóa/i);
   });
 
   it('deletes another user', async () => {

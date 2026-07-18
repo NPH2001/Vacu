@@ -34,9 +34,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
+  // Restores the saved cart after mount. This has to be an effect: localStorage
+  // does not exist during the server render, so seeding it via useState would
+  // make the server and client disagree and break hydration. The one extra
+  // render on mount is the intended cost — `hydrated` then guards the writer
+  // effect below so an empty initial state never overwrites the saved cart.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above: no SSR-safe alternative without moving the cart to an external store.
       if (raw) setItems(JSON.parse(raw));
     } catch {}
     setHydrated(true);

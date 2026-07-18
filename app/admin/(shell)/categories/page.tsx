@@ -16,6 +16,7 @@ import {
   type ListSchema,
 } from '@/lib/admin/list-params';
 import { buildCategoryTree, type CategoryNode } from '@/lib/categories';
+import FlashBanner from '@/components/admin/FlashBanner';
 
 const BASE = '/admin/categories';
 
@@ -77,6 +78,7 @@ export default async function CategoriesAdminPage({
 
   return (
     <div className="space-y-4">
+      <FlashBanner code={sp.loi} basePath={BASE} />
       <div className="flex items-center justify-between">
         <h1 className="admin-title text-[28px]">Danh mục</h1>
         <Link

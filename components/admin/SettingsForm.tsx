@@ -1,17 +1,21 @@
 'use client';
+import Link from 'next/link';
 import { useActionState, useState } from 'react';
 import type { SettingsFormState } from '@/app/admin/actions/settings';
 import type { SiteInfoRow } from '@/db/schema';
 import { VN_BANKS } from '@/lib/banks';
 import ImageUpload from './ImageUpload';
 
-type TabId = 'brand' | 'contact' | 'home' | 'footer' | 'about' | 'bank' | 'smtp';
+type TabId = 'brand' | 'contact' | 'home' | 'pages' | 'copy' | 'footer' | 'about' | 'seo' | 'bank' | 'smtp';
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'brand',   label: 'Thương hiệu',     icon: '🌱' },
   { id: 'contact', label: 'Liên hệ',         icon: '📞' },
   { id: 'home',    label: 'Trang chủ',       icon: '🏠' },
+  { id: 'pages',   label: 'Trang phụ',       icon: '📄' },
+  { id: 'copy',    label: 'Nội dung khác',   icon: '💬' },
   { id: 'footer',  label: 'Footer & Social', icon: '🔗' },
-  { id: 'about',   label: 'Trang About',     icon: '📖' },
+  { id: 'about',   label: 'Trang Câu chuyện', icon: '📖' },
+  { id: 'seo',     label: 'SEO & Theo dõi',  icon: '📈' },
   { id: 'bank',    label: 'Thanh toán',      icon: '🏦' },
   { id: 'smtp',    label: 'Email (SMTP)',    icon: '📧' },
 ];
@@ -26,22 +30,10 @@ export default function SettingsForm({
   const d = defaults;
   const [tab, setTab] = useState<TabId>('brand');
   const [features, setFeatures] = useState<string[]>(d.subBoxFeatures ?? []);
-  const [story, setStory] = useState<string[]>(d.aboutStory ?? []);
-  const [commitments, setCommitments] = useState<Array<{ num: string; title: string; desc: string }>>(d.aboutCommitments ?? []);
 
   const addFeature = () => setFeatures((xs) => [...xs, '']);
   const updateFeature = (i: number, v: string) => setFeatures((xs) => xs.map((x, idx) => (idx === i ? v : x)));
   const removeFeature = (i: number) => setFeatures((xs) => xs.filter((_, idx) => idx !== i));
-
-  const addStory = () => setStory((xs) => [...xs, '']);
-  const updateStory = (i: number, v: string) => setStory((xs) => xs.map((x, idx) => (idx === i ? v : x)));
-  const removeStory = (i: number) => setStory((xs) => xs.filter((_, idx) => idx !== i));
-
-  const addCommitment = () =>
-    setCommitments((xs) => [...xs, { num: String(xs.length + 1).padStart(2, '0'), title: '', desc: '' }]);
-  const updateCommitment = (i: number, key: 'num' | 'title' | 'desc', v: string) =>
-    setCommitments((xs) => xs.map((x, idx) => (idx === i ? { ...x, [key]: v } : x)));
-  const removeCommitment = (i: number) => setCommitments((xs) => xs.filter((_, idx) => idx !== i));
 
   return (
     <form action={formAction} className="bg-white rounded-2xl border border-green-100 overflow-hidden">
@@ -104,12 +96,12 @@ export default function SettingsForm({
           </section>
 
           <section>
-            <SectionHead title="Số liệu hiển thị" hint="Hiện ở hero & trang About." />
-            <div className="grid md:grid-cols-4 gap-4">
-              <L label="Nông dân" required><input name="statFarmers" defaultValue={d.statFarmers} required className={inputCls} /></L>
-              <L label="Sản phẩm" required><input name="statProducts" defaultValue={d.statProducts} required className={inputCls} /></L>
-              <L label="Khách hàng" required><input name="statCustomers" defaultValue={d.statCustomers} required className={inputCls} /></L>
-              <L label="Năm hoạt động" required><input name="statYears" defaultValue={d.statYears} required className={inputCls} /></L>
+            <SectionHead title="Số liệu hiển thị" hint="Bốn ô số ở hero trang chủ. Cột trái là con số, cột phải là chữ ghi dưới số." />
+            <div className="grid md:grid-cols-2 gap-4">
+              <StatPair valueName="statFarmers" valueDefault={d.statFarmers} labelName="statFarmersLabel" labelDefault={d.statFarmersLabel} inputCls={inputCls} />
+              <StatPair valueName="statProducts" valueDefault={d.statProducts} labelName="statProductsLabel" labelDefault={d.statProductsLabel} inputCls={inputCls} />
+              <StatPair valueName="statCustomers" valueDefault={d.statCustomers} labelName="statCustomersLabel" labelDefault={d.statCustomersLabel} inputCls={inputCls} />
+              <StatPair valueName="statYears" valueDefault={d.statYears} labelName="statYearsLabel" labelDefault={d.statYearsLabel} inputCls={inputCls} />
             </div>
           </section>
         </div>
@@ -137,6 +129,16 @@ export default function SettingsForm({
               </L>
               <L label="Mã số thuế">
                 <input name="taxCode" defaultValue={d.taxCode} className={inputCls} placeholder="VD: 0123456789" />
+              </L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Tiêu đề trang Liên hệ" hint="Phần chữ lớn trên cùng trang /contact." />
+            <div className="grid gap-4">
+              <L label="Tiêu đề" required><input name="contactTitle" defaultValue={d.contactTitle} required className={inputCls} /></L>
+              <L label="Mô tả ngắn" required>
+                <textarea name="contactSubtitle" defaultValue={d.contactSubtitle} required rows={2} className={inputCls} />
               </L>
             </div>
           </section>
@@ -224,6 +226,12 @@ export default function SettingsForm({
               <L label="Cảm nhận — tiêu đề" required><input name="sectionTestimonialsTitle" defaultValue={d.sectionTestimonialsTitle} required className={inputCls} /></L>
               <L label="FAQ — tiêu đề" required><input name="sectionFaqTitle" defaultValue={d.sectionFaqTitle} required className={inputCls} /></L>
             </div>
+            <div className="mt-4">
+              <L label="FAQ — câu dưới tiêu đề" required
+                hint="Gõ {phone} để tự động chèn số điện thoại (đổi số ở tab Liên hệ là câu này cũng đổi theo).">
+                <input name="sectionFaqSubtitle" defaultValue={d.sectionFaqSubtitle} required className={inputCls} />
+              </L>
+            </div>
           </section>
         </div>
 
@@ -239,74 +247,31 @@ export default function SettingsForm({
               <L label="TikTok URL"><input name="socialTiktok" defaultValue={d.socialTiktok ?? ''} className={inputCls} placeholder="https://tiktok.com/@..." /></L>
             </div>
           </section>
+
+          <section>
+            <SectionHead title='Dòng "Xây dựng bởi" cuối trang' hint="Để trống tên → ẩn hẳn dòng này khỏi footer." />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Tên đơn vị"><input name="footerBuiltByLabel" defaultValue={d.footerBuiltByLabel} className={inputCls} placeholder="idflow.vn" /></L>
+              <L label="Liên kết (URL)"><input name="footerBuiltByUrl" defaultValue={d.footerBuiltByUrl} className={inputCls} placeholder="https://idflow.vn" /></L>
+            </div>
+          </section>
         </div>
 
         {/* ============ ABOUT ============ */}
         <div hidden={tab !== 'about'} className="space-y-6">
           <section>
-            <SectionHead title="Hero trang About" />
-            <div className="mb-4">
-              <ImageUpload name="aboutHeroImage" defaultValue={d.aboutHeroImage} label="Ảnh nền hero About" />
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <L label="Badge" required><input name="aboutHeroBadge" defaultValue={d.aboutHeroBadge} required className={inputCls} /></L>
-              <L label="Tiêu đề" required><input name="aboutHeroTitle" defaultValue={d.aboutHeroTitle} required className={inputCls} /></L>
-              <L label="Tiêu đề khối số liệu" required><input name="aboutStatsTitle" defaultValue={d.aboutStatsTitle} required className={inputCls} /></L>
-            </div>
-          </section>
-
-          <section>
-            <SectionHead title="Câu chuyện" hint="Mỗi dòng là 1 đoạn văn." />
-            <div className="space-y-2">
-              {story.map((s, i) => (
-                <div key={i} className="flex gap-2">
-                  <textarea name="aboutStory" value={s} onChange={(e) => updateStory(i, e.target.value)} rows={3} className={inputCls} />
-                  <button type="button" onClick={() => removeStory(i)}
-                    className="px-3 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 h-fit">Xoá</button>
-                </div>
-              ))}
-              <button type="button" onClick={addStory} className="text-sm text-green-700 font-semibold hover:underline">
-                + Thêm đoạn văn
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <SectionHead title="Cam kết" hint="Mỗi cam kết gồm số, tiêu đề, mô tả." />
-            <L label="Tiêu đề khối cam kết" required>
-              <input name="aboutCommitmentsTitle" defaultValue={d.aboutCommitmentsTitle} required className={inputCls} />
-            </L>
-            <div className="space-y-3 mt-3">
-              {commitments.map((c, i) => (
-                <div key={i} className="border border-green-100 rounded-lg p-3 space-y-2">
-                  <div className="flex gap-2">
-                    <input name="aboutCommitmentNum" value={c.num} onChange={(e) => updateCommitment(i, 'num', e.target.value)}
-                      placeholder="01" className="w-20 border border-green-200 rounded px-3 py-2 font-mono text-center" />
-                    <input name="aboutCommitmentTitle" value={c.title} onChange={(e) => updateCommitment(i, 'title', e.target.value)}
-                      placeholder="Tiêu đề cam kết" className={inputCls} />
-                    <button type="button" onClick={() => removeCommitment(i)}
-                      className="px-3 py-2 text-sm text-red-600 border border-red-200 rounded hover:bg-red-50 h-fit">Xoá</button>
-                  </div>
-                  <textarea name="aboutCommitmentDesc" value={c.desc} onChange={(e) => updateCommitment(i, 'desc', e.target.value)}
-                    rows={2} placeholder="Mô tả ngắn" className={inputCls} />
-                </div>
-              ))}
-              <button type="button" onClick={addCommitment} className="text-sm text-green-700 font-semibold hover:underline">
-                + Thêm cam kết
-              </button>
-            </div>
-          </section>
-
-          <section>
-            <SectionHead title="CTA cuối trang" />
-            <div className="grid md:grid-cols-2 gap-4">
-              <L label="Tiêu đề" required><input name="aboutCtaTitle" defaultValue={d.aboutCtaTitle} required className={inputCls} /></L>
-              <L label="Nhãn nút" required><input name="aboutCtaLabel" defaultValue={d.aboutCtaLabel} required className={inputCls} /></L>
-            </div>
-            <div className="mt-4">
-              <L label="Mô tả" required>
-                <textarea name="aboutCtaSubtitle" defaultValue={d.aboutCtaSubtitle} required rows={2} className={inputCls} />
-              </L>
+            <SectionHead
+              title="Trang Câu chuyện đã chuyển sang mục Trang"
+              hint="Nội dung trang này giờ xếp theo khối, sửa được thứ tự và ẩn/hiện từng phần."
+            />
+            <div className="rounded-xl border border-green-200 bg-green-50/60 p-5">
+              <p className="text-sm text-green-950 mb-3">
+                Trước đây trang Câu chuyện sửa ở đây. Giờ nó là một trang bình thường trong mục{' '}
+                <b>Trang</b>, nên bạn sửa được cả bố cục chứ không chỉ chữ.
+              </p>
+              <Link href="/admin/pages/about" className="admin-btn-primary inline-flex">
+                Mở trang Câu chuyện →
+              </Link>
             </div>
           </section>
         </div>
@@ -385,6 +350,143 @@ export default function SettingsForm({
           <TestMailBox />
         </div>
 
+        {/* ============ PAGES (Trang phụ) ============ */}
+        <div hidden={tab !== 'pages'} className="space-y-6">
+          <section>
+            <SectionHead title="Thanh điều hướng" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Nút mua hàng trên đầu trang" required hint="Nút xanh góc phải navbar.">
+                <input name="navbarCta" defaultValue={d.navbarCta} required className={inputCls} />
+              </L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Trang Nông sản (danh sách sản phẩm)" hint="Tiêu đề khi khách xem /products." />
+            <div className="grid gap-4">
+              <L label="Tiêu đề" required><input name="productsPageTitle" defaultValue={d.productsPageTitle} required className={inputCls} /></L>
+              <L label="Mô tả ngắn" required>
+                <textarea name="productsPageSubtitle" defaultValue={d.productsPageSubtitle} required rows={2} className={inputCls} />
+              </L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Trang Nông dân" hint="Phần đầu trang /farmers." />
+            <div className="mb-4">
+              <ImageUpload name="farmersHeroImage" defaultValue={d.farmersHeroImage} label="Ảnh nền" />
+            </div>
+            <div className="grid gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <L label="Chữ nhỏ phía trên (eyebrow)" required><input name="farmersHeroEyebrow" defaultValue={d.farmersHeroEyebrow} required className={inputCls} /></L>
+                <L label="Tiêu đề" required><input name="farmersHeroTitle" defaultValue={d.farmersHeroTitle} required className={inputCls} /></L>
+              </div>
+              <L label="Mô tả ngắn" required hint="Gõ {count} để tự chèn số nông dân.">
+                <textarea name="farmersHeroSubtitle" defaultValue={d.farmersHeroSubtitle} required rows={2} className={inputCls} />
+              </L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Trang Tin tức" hint="Tiêu đề mặc định của /tin-tuc (khi không lọc chuyên mục)." />
+            <div className="grid gap-4">
+              <L label="Tiêu đề" required><input name="newsTitle" defaultValue={d.newsTitle} required className={inputCls} /></L>
+              <L label="Mô tả ngắn" required>
+                <textarea name="newsSubtitle" defaultValue={d.newsSubtitle} required rows={2} className={inputCls} />
+              </L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Sau khi đặt hàng" hint="Câu hiện trong khung 'Đặt hàng thành công'." />
+            <div className="grid gap-4">
+              <L label="Lời nhắn cảm ơn" required>
+                <textarea name="orderSuccessNote" defaultValue={d.orderSuccessNote} required rows={2} className={inputCls} />
+              </L>
+            </div>
+          </section>
+        </div>
+
+        {/* ============ COPY (Nội dung khác) ============ */}
+        <div hidden={tab !== 'copy'} className="space-y-6">
+          <section>
+            <SectionHead title="Nút 'xem tất cả' trên trang chủ" />
+            <div className="grid md:grid-cols-3 gap-4">
+              <L label="Mục Danh mục" required><input name="sectionCategoriesLinkLabel" defaultValue={d.sectionCategoriesLinkLabel} required className={inputCls} /></L>
+              <L label="Mục Nổi bật" required><input name="sectionFeaturedLinkLabel" defaultValue={d.sectionFeaturedLinkLabel} required className={inputCls} /></L>
+              <L label="Mục Nông dân" required><input name="sectionFarmersLinkLabel" defaultValue={d.sectionFarmersLinkLabel} required className={inputCls} /></L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Tiêu đề các mục" hint="Chữ tiêu đề hiện ở trang chi tiết sản phẩm, nông dân, tin tức." />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Badge trên trang Nông sản" required><input name="listingBadge" defaultValue={d.listingBadge} required className={inputCls} /></L>
+              <L label="Nhãn 'Trồng bởi' (dưới ảnh sản phẩm)" required><input name="grownByLabel" defaultValue={d.grownByLabel} required className={inputCls} /></L>
+              <L label="Mục chi tiết sản phẩm" required><input name="productDetailHeading" defaultValue={d.productDetailHeading} required className={inputCls} /></L>
+              <L label="Mục sản phẩm liên quan" required><input name="relatedProductsHeading" defaultValue={d.relatedProductsHeading} required className={inputCls} /></L>
+              <L label="Mục câu chuyện nông trại" required><input name="farmerStoryHeading" defaultValue={d.farmerStoryHeading} required className={inputCls} /></L>
+              <L label="Mục sản phẩm của nông dân" required hint="Gõ {name} để chèn tên nông dân."><input name="farmerProductsHeading" defaultValue={d.farmerProductsHeading} required className={inputCls} /></L>
+              <L label="Mục bài viết liên quan" required><input name="relatedPostsHeading" defaultValue={d.relatedPostsHeading} required className={inputCls} /></L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Khi giỏ hàng / đơn hàng trống" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Giỏ trống — tiêu đề" required><input name="cartEmptyTitle" defaultValue={d.cartEmptyTitle} required className={inputCls} /></L>
+              <L label="Giỏ trống — mô tả" required><input name="cartEmptyText" defaultValue={d.cartEmptyText} required className={inputCls} /></L>
+              <L label="Chưa có đơn — tiêu đề" required><input name="ordersEmptyTitle" defaultValue={d.ordersEmptyTitle} required className={inputCls} /></L>
+              <L label="Chưa có đơn — mô tả" required><input name="ordersEmptyText" defaultValue={d.ordersEmptyText} required className={inputCls} /></L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Trang thanh toán" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <L label="Ghi chú dưới khung giờ giao" required><input name="checkoutSlotNote" defaultValue={d.checkoutSlotNote} required className={inputCls} /></L>
+              <L label="Nhãn phí giao hàng" required hint="VD: Miễn phí, hoặc 15.000đ."><input name="shippingLabel" defaultValue={d.shippingLabel} required className={inputCls} /></L>
+            </div>
+            <p className="text-xs text-green-900/60 mt-2">
+              Nhãn phương thức thanh toán (Tiền mặt / Chuyển khoản) sửa ở mục{' '}
+              <Link href="/admin/payment-methods" className="text-green-700 hover:underline">Thanh toán</Link>.
+            </p>
+          </section>
+        </div>
+
+        {/* ============ SEO & TRACKING ============ */}
+        <div hidden={tab !== 'seo'} className="space-y-6">
+          <section>
+            <SectionHead title="Địa chỉ website" hint="URL công khai của trang, ví dụ https://vacu.vn. Dùng cho ảnh chia sẻ mạng xã hội và Google. Để trống cũng được." />
+            <div className="grid gap-4">
+              <L label="Địa chỉ website"><input name="siteUrl" defaultValue={d.siteUrl} className={inputCls} placeholder="https://vacu.vn" /></L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Google Analytics" hint="Dán mã đo lường GA4 (dạng G-XXXXXXX). Để trống thì không chạy theo dõi." />
+            <div className="grid gap-4">
+              <L label="Mã đo lường (Measurement ID)"><input name="gaMeasurementId" defaultValue={d.gaMeasurementId} className={inputCls} placeholder="G-XXXXXXXXXX" /></L>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="Xác minh quyền sở hữu website"
+              hint="Mỗi nền tảng cấp một mã xác minh. Dán CHỈ phần mã (không dán cả thẻ meta). Để trống nền tảng nào không dùng." />
+            <div className="grid gap-4">
+              <L label="Google Search Console" hint='Trong thẻ họ đưa: content="ABC123" → chỉ dán ABC123.'>
+                <input name="verificationGoogle" defaultValue={d.verificationGoogle} className={inputCls} />
+              </L>
+              <L label="Bing Webmaster (msvalidate.01)">
+                <input name="verificationBing" defaultValue={d.verificationBing} className={inputCls} />
+              </L>
+              <L label="Facebook Domain Verification">
+                <input name="verificationFacebook" defaultValue={d.verificationFacebook} className={inputCls} />
+              </L>
+            </div>
+          </section>
+        </div>
+
         {/* ============ BANK ============ */}
         <div hidden={tab !== 'bank'} className="space-y-6">
           <section>
@@ -438,10 +540,11 @@ export default function SettingsForm({
 
 const inputCls = 'w-full border border-green-200 rounded px-3 py-2';
 
-function L({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function L({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="text-sm font-medium text-green-950">{label}{required && <span className="text-red-500"> *</span>}</span>
+      {hint && <span className="block text-xs text-green-900/60 mt-0.5">{hint}</span>}
       <div className="mt-1">{children}</div>
     </label>
   );
@@ -452,6 +555,28 @@ function SectionHead({ title, hint }: { title: string; hint?: string }) {
     <div className="mb-3">
       <h2 className="font-bold text-green-950">{title}</h2>
       {hint && <p className="text-xs text-green-900/60 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+/** One hero stat: the number and the label under it, side by side. */
+function StatPair({
+  valueName, valueDefault, labelName, labelDefault, inputCls,
+}: {
+  valueName: string; valueDefault: string;
+  labelName: string; labelDefault: string;
+  inputCls: string;
+}) {
+  return (
+    <div className="grid grid-cols-[1fr_1.4fr] gap-2 items-end">
+      <label className="block">
+        <span className="text-xs text-green-900/60">Số</span>
+        <input name={valueName} defaultValue={valueDefault} required className={`${inputCls} mt-1`} />
+      </label>
+      <label className="block">
+        <span className="text-xs text-green-900/60">Nhãn</span>
+        <input name={labelName} defaultValue={labelDefault} required className={`${inputCls} mt-1`} />
+      </label>
     </div>
   );
 }

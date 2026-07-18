@@ -59,6 +59,10 @@ function baseForm(): FormData {
   set('statProducts', '200+');
   set('statCustomers', '28k+');
   set('statYears', '12');
+  set('statFarmersLabel', 'Nông dân');
+  set('statProductsLabel', 'Sản phẩm');
+  set('statCustomersLabel', 'Khách hàng');
+  set('statYearsLabel', 'Năm');
 
   set('heroBadge', 'Badge');
   set('heroImage', '/farm/hero.jpg');
@@ -81,20 +85,44 @@ function baseForm(): FormData {
   set('sectionFarmersTitle', 'Farmers');
   set('sectionTestimonialsTitle', 'Testimonials');
   set('sectionFaqTitle', 'FAQ');
+  set('sectionFaqSubtitle', 'Gọi {phone} nhé');
 
   set('footerTagline', 'Clean rau.');
 
+  // Storefront copy — required in siteInfoSchema.
+  set('navbarCta', 'Mua nông sản →');
+  set('productsPageTitle', 'Toàn bộ nông sản');
+  set('productsPageSubtitle', 'Rau củ, trái cây.');
+  set('farmersHeroImage', '/farm/hero.jpg');
+  set('farmersHeroEyebrow', 'Hậu phương');
+  set('farmersHeroTitle', 'Người trồng rau');
+  set('farmersHeroSubtitle', '{count} bà con nông dân.');
+  set('newsTitle', 'Chuyện nhà nông');
+  set('newsSubtitle', 'Mẹo hay.');
+  set('contactTitle', 'Chúng tôi luôn lắng nghe');
+  set('contactSubtitle', 'Gửi vài dòng.');
+  set('orderSuccessNote', 'Cảm ơn bạn.');
+
+  // Secondary UI copy — required in siteInfoSchema.
+  set('sectionCategoriesLinkLabel', 'Tất cả');
+  set('sectionFeaturedLinkLabel', 'Xem tất cả');
+  set('sectionFarmersLinkLabel', 'Toàn bộ');
+  set('listingBadge', 'Chợ nông trại');
+  set('grownByLabel', 'Trồng bởi');
+  set('productDetailHeading', 'Chi tiết sản phẩm');
+  set('relatedProductsHeading', 'Có thể bạn thích');
+  set('farmerStoryHeading', 'Câu chuyện nông trại');
+  set('farmerProductsHeading', 'Sản phẩm của {name}');
+  set('relatedPostsHeading', 'Bài viết khác');
+  set('cartEmptyTitle', 'Giỏ trống');
+  set('cartEmptyText', 'Chọn rau đi nào.');
+  set('ordersEmptyTitle', 'Chưa có đơn nào');
+  set('ordersEmptyText', 'Rau đang chờ bạn.');
+  set('checkoutSlotNote', 'Rau thu hoạch sáng cùng ngày.');
+  set('shippingLabel', 'Miễn phí');
+
   set('contactDemoTitle', 'Demo');
   set('contactDemoText', 'Demo text');
-
-  set('aboutHeroBadge', 'About');
-  set('aboutHeroTitle', 'About title');
-  set('aboutHeroImage', '/farm/about.jpg');
-  set('aboutCommitmentsTitle', 'Commitments');
-  set('aboutStatsTitle', 'Stats');
-  set('aboutCtaTitle', 'CTA title');
-  set('aboutCtaSubtitle', 'CTA subtitle');
-  set('aboutCtaLabel', 'CTA label');
 
   return fd;
 }
@@ -108,12 +136,6 @@ describe('updateSiteInfo', () => {
 
   it('happy path: full valid payload returns { ok: true } and persists', async () => {
     const fd = baseForm();
-    // One story item, one commitment
-    fd.append('aboutStory', 'Câu chuyện một.');
-    fd.append('aboutStory', 'Câu chuyện hai.');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 'Trung thực');
-    fd.append('aboutCommitmentDesc', 'Luôn minh bạch.');
     fd.append('subBoxFeatures', 'Tự gia hạn');
     fd.append('subBoxFeatures', 'Tham quan vườn');
 
@@ -126,78 +148,69 @@ describe('updateSiteInfo', () => {
     const { eq } = await import('drizzle-orm');
     const [row] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
     expect(row.name).toBe('Vacu');
-    expect(row.aboutStory).toEqual(['Câu chuyện một.', 'Câu chuyện hai.']);
-    expect(row.aboutCommitments).toEqual([{ num: '01', title: 'Trung thực', desc: 'Luôn minh bạch.' }]);
     expect(row.subBoxFeatures).toEqual(['Tự gia hạn', 'Tham quan vườn']);
+    // Newly editable hero stat labels + FAQ subtitle round-trip.
+    expect(row.statFarmersLabel).toBe('Nông dân');
+    expect(row.statCustomersLabel).toBe('Khách hàng');
+    expect(row.sectionFaqSubtitle).toBe('Gọi {phone} nhé');
+  });
+
+  it('rejects a blank hero stat label', async () => {
+    const fd = baseForm();
+    fd.set('statFarmersLabel', '');
+    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
+    expect((await updateSiteInfo(null, fd))?.error).toBeTruthy();
+  });
+
+  it('persists SEO/tracking fields and leaves them empty by default', async () => {
+    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
+    const { db } = await import('@/db/client');
+    const { siteInfo } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // Empty by default (optional fields absent from the form).
+    expect(await updateSiteInfo(null, baseForm())).toEqual({ ok: true });
+    const [blank] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
+    expect(blank.gaMeasurementId).toBe('');
+    expect(blank.verificationGoogle).toBe('');
+    expect(blank.siteUrl).toBe('');
+
+    const fd = baseForm();
+    fd.set('siteUrl', 'https://vacu.vn');
+    fd.set('gaMeasurementId', 'G-ABC12345');
+    fd.set('verificationGoogle', 'google-token');
+    fd.set('verificationBing', 'bing-token');
+    fd.set('verificationFacebook', 'fb-token');
+    fd.set('footerBuiltByLabel', 'idflow.vn');
+    fd.set('footerBuiltByUrl', 'https://idflow.vn');
+    expect(await updateSiteInfo(null, fd)).toEqual({ ok: true });
+
+    const [row] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
+    expect(row.gaMeasurementId).toBe('G-ABC12345');
+    expect(row.verificationGoogle).toBe('google-token');
+    expect(row.verificationBing).toBe('bing-token');
+    expect(row.verificationFacebook).toBe('fb-token');
+    expect(row.siteUrl).toBe('https://vacu.vn');
+    expect(row.footerBuiltByUrl).toBe('https://idflow.vn');
+  });
+
+  it('rejects blank required storefront copy', async () => {
+    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
+    const fd = baseForm();
+    fd.set('navbarCta', '');
+    expect((await updateSiteInfo(null, fd))?.error).toBeTruthy();
   });
 
   it('rejects invalid email', async () => {
     const fd = baseForm();
     fd.set('email', 'not-an-email');
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     const { updateSiteInfo } = await import('@/app/admin/actions/settings');
     const res = await updateSiteInfo(null, fd);
     expect(res?.error).toBeTruthy();
   });
 
-  it('drops blank aboutStory entries and does not count them', async () => {
-    const fd = baseForm();
-    fd.append('aboutStory', 'Real 1');
-    fd.append('aboutStory', '   ');
-    fd.append('aboutStory', '');
-    fd.append('aboutStory', 'Real 2');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
-
-    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
-    const res = await updateSiteInfo(null, fd);
-    expect(res).toEqual({ ok: true });
-    const { db } = await import('@/db/client');
-    const { siteInfo } = await import('@/db/schema');
-    const { eq } = await import('drizzle-orm');
-    const [row] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
-    expect(row.aboutStory).toEqual(['Real 1', 'Real 2']);
-  });
-
-  it('commitments row is included only when all three fields (num/title/desc) non-empty', async () => {
-    const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    // Row 0: all three set → kept
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 'Title 1');
-    fd.append('aboutCommitmentDesc', 'Desc 1');
-    // Row 1: desc blank → dropped
-    fd.append('aboutCommitmentNum', '02');
-    fd.append('aboutCommitmentTitle', 'Title 2');
-    fd.append('aboutCommitmentDesc', '');
-    // Row 2: all three set → kept
-    fd.append('aboutCommitmentNum', '03');
-    fd.append('aboutCommitmentTitle', 'Title 3');
-    fd.append('aboutCommitmentDesc', 'Desc 3');
-
-    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
-    const res = await updateSiteInfo(null, fd);
-    expect(res).toEqual({ ok: true });
-    const { db } = await import('@/db/client');
-    const { siteInfo } = await import('@/db/schema');
-    const { eq } = await import('drizzle-orm');
-    const [row] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
-    expect(row.aboutCommitments).toEqual([
-      { num: '01', title: 'Title 1', desc: 'Desc 1' },
-      { num: '03', title: 'Title 3', desc: 'Desc 3' },
-    ]);
-  });
-
   it('smtpEnabled / bankEnabled truthy checkbox values toggle on; absence → off', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     fd.set('smtpEnabled', 'on');
     fd.set('smtpHost', 'smtp.example.com');
     fd.set('smtpPort', '465');
@@ -223,10 +236,6 @@ describe('updateSiteInfo', () => {
 
     // Now omit toggles — should flip back to false
     const off = baseForm();
-    off.append('aboutStory', 'x');
-    off.append('aboutCommitmentNum', '01');
-    off.append('aboutCommitmentTitle', 't');
-    off.append('aboutCommitmentDesc', 'd');
     // No smtpEnabled / bankEnabled fields at all
     expect(await updateSiteInfo(null, off)).toEqual({ ok: true });
     const [row2] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1));
@@ -238,22 +247,7 @@ describe('updateSiteInfo', () => {
 
   it('rejects subBoxFeatures length > 8', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     for (let i = 0; i < 9; i++) fd.append('subBoxFeatures', `f${i}`);
-    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
-    const res = await updateSiteInfo(null, fd);
-    expect(res?.error).toBeTruthy();
-  });
-
-  it('rejects aboutStory length > 10', async () => {
-    const fd = baseForm();
-    for (let i = 0; i < 11; i++) fd.append('aboutStory', `p${i}`);
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     const { updateSiteInfo } = await import('@/app/admin/actions/settings');
     const res = await updateSiteInfo(null, fd);
     expect(res?.error).toBeTruthy();
@@ -261,10 +255,6 @@ describe('updateSiteInfo', () => {
 
   it('persists taxCode + businessName (legal footer info)', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     fd.set('businessName', 'Hợp tác xã Nông nghiệp OCOP Việt Nam');
     fd.set('taxCode', '0123456789');
 
@@ -281,10 +271,6 @@ describe('updateSiteInfo', () => {
 
   it('taxCode / businessName default to empty when field absent', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     // intentionally no taxCode / businessName fields
 
     const { updateSiteInfo } = await import('@/app/admin/actions/settings');
@@ -300,29 +286,17 @@ describe('updateSiteInfo', () => {
 
   it('rejects taxCode > 40 chars and businessName > 200 chars', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     fd.set('taxCode', 't'.repeat(41));
     const { updateSiteInfo } = await import('@/app/admin/actions/settings');
     expect((await updateSiteInfo(null, fd))?.error).toBeTruthy();
 
     const fd2 = baseForm();
-    fd2.append('aboutStory', 'x');
-    fd2.append('aboutCommitmentNum', '01');
-    fd2.append('aboutCommitmentTitle', 't');
-    fd2.append('aboutCommitmentDesc', 'd');
     fd2.set('businessName', 'b'.repeat(201));
     expect((await updateSiteInfo(null, fd2))?.error).toBeTruthy();
   });
 
   it('rejects smtpPort out of [1,65535]', async () => {
     const fd = baseForm();
-    fd.append('aboutStory', 'x');
-    fd.append('aboutCommitmentNum', '01');
-    fd.append('aboutCommitmentTitle', 't');
-    fd.append('aboutCommitmentDesc', 'd');
     fd.set('smtpEnabled', 'on');
     fd.set('smtpPort', '99999');
     const { updateSiteInfo } = await import('@/app/admin/actions/settings');

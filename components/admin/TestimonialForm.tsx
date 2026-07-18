@@ -23,6 +23,16 @@ export default function TestimonialForm({
         <L label="Vai trò / Mô tả ngắn" required>
           <input name="role" defaultValue={d.role ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
         </L>
+        <L label="Số sao">
+          <select name="rating" defaultValue={String(d.rating ?? 5)}
+            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            <option value="5">★★★★★ (5 sao)</option>
+            <option value="4">★★★★ (4 sao)</option>
+            <option value="3">★★★ (3 sao)</option>
+            <option value="2">★★ (2 sao)</option>
+            <option value="1">★ (1 sao)</option>
+          </select>
+        </L>
         <L label="Thứ tự">
           <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0} className="w-full border border-green-200 rounded px-3 py-2" />
         </L>

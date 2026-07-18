@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
 
-export default function CartDrawer() {
+export default function CartDrawer({
+  emptyTitle, emptyText, shippingLabel,
+}: {
+  emptyTitle: string;
+  emptyText: string;
+  shippingLabel: string;
+}) {
   const { items, total, open, setOpen, setQty, remove } = useCart();
 
   return (
@@ -38,8 +44,8 @@ export default function CartDrawer() {
           {items.length === 0 ? (
             <div className="text-center text-green-900/60 py-16">
               <div className="text-6xl mb-3">🧺</div>
-              <p className="font-semibold">Giỏ nông sản còn trống</p>
-              <p className="text-sm mt-1">Hãy đi chợ và chọn vài loại rau tươi nhé!</p>
+              <p className="font-semibold wrap-anywhere">{emptyTitle}</p>
+              <p className="text-sm mt-1 wrap-anywhere">{emptyText}</p>
               <Link
                 href="/products"
                 onClick={() => setOpen(false)}
@@ -106,7 +112,7 @@ export default function CartDrawer() {
             </div>
             <div className="flex justify-between text-sm text-green-900/70">
               <span>Phí giao nội thành</span>
-              <span className="text-green-700 font-semibold">Miễn phí</span>
+              <span className="text-green-700 font-semibold wrap-anywhere">{shippingLabel}</span>
             </div>
             <div className="flex justify-between text-lg pt-3 border-t border-green-200">
               <span className="text-green-950 font-semibold">Tổng cộng</span>

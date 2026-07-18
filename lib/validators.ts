@@ -1,6 +1,9 @@
 import { z } from 'zod';
+// Side-effect import: installs the global Vietnamese error map so every schema
+// below produces admin-friendly messages instead of Zod's English defaults.
+import './zod-vi';
 
-const slug = z.string().min(1).max(80).regex(/^[a-z0-9-]+$/, 'Slug kiểu: chữ thường, số, gạch ngang');
+const slug = z.string().min(1).max(80).regex(/^[a-z0-9-]+$/, 'Đường dẫn chỉ gồm chữ thường, số và gạch ngang');
 const url = z.string().min(1).max(500);
 const optUrl = z
   .string()
@@ -50,18 +53,56 @@ export const farmerSchema = z.object({
 
 export const productSchema = z.object({
   id: slug,
-  name: z.string().min(1).max(200),
-  categoryId: slug,
-  unit: z.string().min(1).max(60),
-  price: z.coerce.number().int().positive(),
+  name: z.string().min(1, 'Vui lòng nhập tên sản phẩm').max(200),
+  categoryId: z.string().min(1, 'Vui lòng chọn danh mục').regex(/^[a-z0-9-]+$/, 'Vui lòng chọn danh mục'),
+  unit: z.string().min(1, 'Vui lòng nhập đơn vị bán').max(60),
+  price: z.coerce.number({ message: 'Vui lòng nhập giá bán' }).int().positive('Giá bán phải lớn hơn 0'),
   oldPrice: z.coerce.number().int().positive().optional().nullable(),
-  image: url,
+  image: z.string().min(1, 'Vui lòng chọn ảnh đại diện cho sản phẩm').max(500),
   farmerId: slug.optional().nullable(),
-  description: z.string().min(1).max(2000),
-  body: z.string().max(20000).default(''),
+  description: z.string().min(1, 'Vui lòng nhập mô tả ngắn').max(2000),
+  // Rich-text HTML from the editor (sanitized server-side before storage).
+  // Roomier than the old Markdown cap since HTML carries its own markup.
+  body: z.string().max(200000).default(''),
   tags: z.array(z.string()).default([]),
   featured: z.coerce.boolean().default(false),
   inStock: z.coerce.boolean().default(true),
+  // Extra gallery images; products.image remains the primary thumbnail.
+  gallery: z.array(url).max(12).default([]),
+});
+
+export const postCategorySchema = z.object({
+  id: slug,
+  name: z.string().min(1).max(120),
+  description: z.string().max(300).default(''),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+/**
+ * `publishedAt` arrives as a full ISO string with offset (the form converts the
+ * admin's local datetime-local value before submitting), so scheduling means
+ * the same instant regardless of the server's timezone.
+ */
+const publishedAt = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v && v.length ? new Date(v) : null))
+  .refine((d) => d === null || !Number.isNaN(d.getTime()), 'Thời gian đăng không hợp lệ');
+
+export const postSchema = z.object({
+  id: slug,
+  title: z.string().min(1).max(200),
+  excerpt: z.string().max(500).default(''),
+  coverImage: optUrl,
+  contentHtml: z.string().max(200000).default(''),
+  categoryId: optParentSlug,
+  status: z.enum(['draft', 'published']).default('draft'),
+  publishedAt,
+  featured: z.coerce.boolean().default(false),
+  tags: z.array(z.string().min(1).max(60)).max(12).default([]),
+  metaTitle: z.string().max(200).default(''),
+  metaDescription: z.string().max(300).default(''),
 });
 
 export const testimonialSchema = z.object({
@@ -70,6 +111,7 @@ export const testimonialSchema = z.object({
   role: z.string().min(1).max(120),
   avatar: url,
   content: z.string().min(1).max(1000),
+  rating: z.coerce.number().int().min(1).max(5).default(5),
   sortOrder: z.coerce.number().int().default(0),
 });
 
@@ -103,6 +145,10 @@ export const siteInfoSchema = z.object({
   statProducts: z.string().min(1),
   statCustomers: z.string().min(1),
   statYears: z.string().min(1),
+  statFarmersLabel: z.string().min(1).max(60),
+  statProductsLabel: z.string().min(1).max(60),
+  statCustomersLabel: z.string().min(1).max(60),
+  statYearsLabel: z.string().min(1).max(60),
 
   heroBadge: z.string().min(1).max(200),
   heroImage: z.string().min(1).max(500),
@@ -126,6 +172,7 @@ export const siteInfoSchema = z.object({
   sectionFarmersTitle: z.string().min(1).max(200),
   sectionTestimonialsTitle: z.string().min(1).max(200),
   sectionFaqTitle: z.string().min(1).max(200),
+  sectionFaqSubtitle: z.string().min(1).max(300),
 
   footerTagline: z.string().min(1).max(200),
   socialFacebook: optUrlOrPath,
@@ -136,20 +183,9 @@ export const siteInfoSchema = z.object({
   contactDemoTitle: z.string().min(1).max(120),
   contactDemoText: z.string().min(1).max(800),
 
-  aboutHeroBadge: z.string().min(1).max(120),
-  aboutHeroTitle: z.string().min(1).max(200),
-  aboutHeroImage: z.string().min(1).max(500),
-  aboutStory: z.array(z.string().min(1).max(2000)).max(10),
-  aboutCommitmentsTitle: z.string().min(1).max(200),
-  aboutCommitments: z.array(z.object({
-    num: z.string().min(1).max(10),
-    title: z.string().min(1).max(120),
-    desc: z.string().min(1).max(500),
-  })).max(6),
-  aboutStatsTitle: z.string().min(1).max(200),
-  aboutCtaTitle: z.string().min(1).max(200),
-  aboutCtaSubtitle: z.string().min(1).max(400),
-  aboutCtaLabel: z.string().min(1).max(80),
+  // The About page moved to the page builder (/admin/pages), so its content no
+  // longer lives in site_info. The columns remain because db/seed.ts reads them
+  // once to build the page's blocks on existing installs.
 
   bankEnabled: z.coerce.boolean().default(false),
   bankBin: z.string().max(10).default(''),
@@ -171,6 +207,60 @@ export const siteInfoSchema = z.object({
 
   emailHeaderHtml: z.string().max(8000).default(''),
   emailFooterHtml: z.string().max(8000).default(''),
+
+  // SEO & tracking — all optional (empty = feature off).
+  siteUrl: z.string().trim().max(300).default(''),
+  gaMeasurementId: z.string().trim().max(40).default(''),
+  verificationGoogle: z.string().trim().max(200).default(''),
+  verificationBing: z.string().trim().max(200).default(''),
+  verificationFacebook: z.string().trim().max(200).default(''),
+
+  // Storefront copy — required (a blank hero title is worse than a default one).
+  navbarCta: z.string().min(1).max(60),
+  productsPageTitle: z.string().min(1).max(120),
+  productsPageSubtitle: z.string().min(1).max(400),
+  farmersHeroImage: z.string().min(1).max(500),
+  farmersHeroEyebrow: z.string().min(1).max(80),
+  farmersHeroTitle: z.string().min(1).max(200),
+  farmersHeroSubtitle: z.string().min(1).max(400),
+  newsTitle: z.string().min(1).max(120),
+  newsSubtitle: z.string().min(1).max(400),
+  contactTitle: z.string().min(1).max(120),
+  contactSubtitle: z.string().min(1).max(400),
+  orderSuccessNote: z.string().min(1).max(400),
+  footerBuiltByLabel: z.string().max(120).default(''),
+  footerBuiltByUrl: z.string().trim().max(300).default(''),
+
+  // Secondary UI copy — all required (a blank heading is worse than a default).
+  sectionCategoriesLinkLabel: z.string().min(1).max(40),
+  sectionFeaturedLinkLabel: z.string().min(1).max(40),
+  sectionFarmersLinkLabel: z.string().min(1).max(40),
+  listingBadge: z.string().min(1).max(60),
+  grownByLabel: z.string().min(1).max(60),
+  productDetailHeading: z.string().min(1).max(120),
+  relatedProductsHeading: z.string().min(1).max(120),
+  farmerStoryHeading: z.string().min(1).max(120),
+  farmerProductsHeading: z.string().min(1).max(120),
+  relatedPostsHeading: z.string().min(1).max(120),
+  cartEmptyTitle: z.string().min(1).max(120),
+  cartEmptyText: z.string().min(1).max(200),
+  ordersEmptyTitle: z.string().min(1).max(120),
+  ordersEmptyText: z.string().min(1).max(200),
+  checkoutSlotNote: z.string().min(1).max(200),
+  shippingLabel: z.string().min(1).max(60),
+});
+
+export const heroSlideSchema = z.object({
+  badge: z.string().max(200).default(''),
+  title: z.string().min(1, 'Vui lòng nhập tiêu đề slide').max(200),
+  subtitle: z.string().max(800).default(''),
+  image: z.string().min(1, 'Vui lòng chọn ảnh nền cho slide').max(500),
+  ctaPrimaryLabel: z.string().max(80).default(''),
+  ctaPrimaryHref: z.string().max(500).default(''),
+  ctaSecondaryLabel: z.string().max(80).default(''),
+  ctaSecondaryHref: z.string().max(500).default(''),
+  active: z.coerce.boolean().default(true),
+  sortOrder: z.coerce.number().int().default(0),
 });
 
 export const valuePropSchema = z.object({
@@ -189,6 +279,7 @@ export const deliverySlotSchema = z.object({
 export const paymentMethodSchema = z.object({
   id: slug,
   label: z.string().min(1).max(120),
+  hint: z.string().max(200).default(''),
   active: z.coerce.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 });

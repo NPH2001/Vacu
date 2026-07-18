@@ -15,27 +15,6 @@ function parseFeatures(fd: FormData): string[] {
     .filter((v) => v.length > 0);
 }
 
-function parseStory(fd: FormData): string[] {
-  const raw = fd.getAll('aboutStory');
-  return raw
-    .map((v) => (typeof v === 'string' ? v.trim() : ''))
-    .filter((v) => v.length > 0);
-}
-
-function parseCommitments(fd: FormData): Array<{ num: string; title: string; desc: string }> {
-  const nums = fd.getAll('aboutCommitmentNum');
-  const titles = fd.getAll('aboutCommitmentTitle');
-  const descs = fd.getAll('aboutCommitmentDesc');
-  const out: Array<{ num: string; title: string; desc: string }> = [];
-  for (let i = 0; i < nums.length; i++) {
-    const num = typeof nums[i] === 'string' ? (nums[i] as string).trim() : '';
-    const title = typeof titles[i] === 'string' ? (titles[i] as string).trim() : '';
-    const desc = typeof descs[i] === 'string' ? (descs[i] as string).trim() : '';
-    if (num && title && desc) out.push({ num, title, desc });
-  }
-  return out;
-}
-
 export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Promise<SettingsFormState> {
   await requireAdmin();
   const parsed = siteInfoSchema.safeParse({
@@ -53,6 +32,10 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
     statProducts: fd.get('statProducts'),
     statCustomers: fd.get('statCustomers'),
     statYears: fd.get('statYears'),
+    statFarmersLabel: fd.get('statFarmersLabel'),
+    statProductsLabel: fd.get('statProductsLabel'),
+    statCustomersLabel: fd.get('statCustomersLabel'),
+    statYearsLabel: fd.get('statYearsLabel'),
 
     heroBadge: fd.get('heroBadge'),
     heroImage: fd.get('heroImage'),
@@ -76,6 +59,7 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
     sectionFarmersTitle: fd.get('sectionFarmersTitle'),
     sectionTestimonialsTitle: fd.get('sectionTestimonialsTitle'),
     sectionFaqTitle: fd.get('sectionFaqTitle'),
+    sectionFaqSubtitle: fd.get('sectionFaqSubtitle'),
 
     footerTagline: fd.get('footerTagline'),
     socialFacebook: fd.get('socialFacebook') ?? undefined,
@@ -86,16 +70,7 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
     contactDemoTitle: fd.get('contactDemoTitle'),
     contactDemoText: fd.get('contactDemoText'),
 
-    aboutHeroBadge: fd.get('aboutHeroBadge'),
-    aboutHeroTitle: fd.get('aboutHeroTitle'),
-    aboutHeroImage: fd.get('aboutHeroImage'),
-    aboutStory: parseStory(fd),
-    aboutCommitmentsTitle: fd.get('aboutCommitmentsTitle'),
-    aboutCommitments: parseCommitments(fd),
-    aboutStatsTitle: fd.get('aboutStatsTitle'),
-    aboutCtaTitle: fd.get('aboutCtaTitle'),
-    aboutCtaSubtitle: fd.get('aboutCtaSubtitle'),
-    aboutCtaLabel: fd.get('aboutCtaLabel'),
+    // About content is edited in the page builder now — see lib/validators.ts.
 
     bankEnabled: fd.get('bankEnabled') ? true : false,
     bankBin: fd.get('bankBin') ?? '',
@@ -116,6 +91,44 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
     smtpFromName: fd.get('smtpFromName') ?? '',
     emailHeaderHtml: fd.get('emailHeaderHtml') ?? '',
     emailFooterHtml: fd.get('emailFooterHtml') ?? '',
+
+    siteUrl: fd.get('siteUrl') ?? '',
+    gaMeasurementId: fd.get('gaMeasurementId') ?? '',
+    verificationGoogle: fd.get('verificationGoogle') ?? '',
+    verificationBing: fd.get('verificationBing') ?? '',
+    verificationFacebook: fd.get('verificationFacebook') ?? '',
+
+    navbarCta: fd.get('navbarCta'),
+    productsPageTitle: fd.get('productsPageTitle'),
+    productsPageSubtitle: fd.get('productsPageSubtitle'),
+    farmersHeroImage: fd.get('farmersHeroImage'),
+    farmersHeroEyebrow: fd.get('farmersHeroEyebrow'),
+    farmersHeroTitle: fd.get('farmersHeroTitle'),
+    farmersHeroSubtitle: fd.get('farmersHeroSubtitle'),
+    newsTitle: fd.get('newsTitle'),
+    newsSubtitle: fd.get('newsSubtitle'),
+    contactTitle: fd.get('contactTitle'),
+    contactSubtitle: fd.get('contactSubtitle'),
+    orderSuccessNote: fd.get('orderSuccessNote'),
+    footerBuiltByLabel: fd.get('footerBuiltByLabel') ?? '',
+    footerBuiltByUrl: fd.get('footerBuiltByUrl') ?? '',
+
+    sectionCategoriesLinkLabel: fd.get('sectionCategoriesLinkLabel'),
+    sectionFeaturedLinkLabel: fd.get('sectionFeaturedLinkLabel'),
+    sectionFarmersLinkLabel: fd.get('sectionFarmersLinkLabel'),
+    listingBadge: fd.get('listingBadge'),
+    grownByLabel: fd.get('grownByLabel'),
+    productDetailHeading: fd.get('productDetailHeading'),
+    relatedProductsHeading: fd.get('relatedProductsHeading'),
+    farmerStoryHeading: fd.get('farmerStoryHeading'),
+    farmerProductsHeading: fd.get('farmerProductsHeading'),
+    relatedPostsHeading: fd.get('relatedPostsHeading'),
+    cartEmptyTitle: fd.get('cartEmptyTitle'),
+    cartEmptyText: fd.get('cartEmptyText'),
+    ordersEmptyTitle: fd.get('ordersEmptyTitle'),
+    ordersEmptyText: fd.get('ordersEmptyText'),
+    checkoutSlotNote: fd.get('checkoutSlotNote'),
+    shippingLabel: fd.get('shippingLabel'),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {

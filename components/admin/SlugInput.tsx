@@ -40,7 +40,11 @@ export default function SlugInput({
       value={value}
       readOnly={editing}
       required
-      pattern="[a-z0-9-]+"
+      // Escaped hyphen: modern browsers compile the pattern attribute with the
+      // RegExp `v` flag, under which an unescaped trailing "-" in a character
+      // class ("[a-z0-9-]") is a syntax error and the whole pattern is ignored.
+      pattern="[a-z0-9\-]+"
+      title="Chỉ gồm chữ thường, số và dấu gạch ngang"
       placeholder={placeholder}
       className={`${className ?? DEFAULT_CLASS}${mono ? ' font-mono' : ''}`}
       onChange={(e) => {

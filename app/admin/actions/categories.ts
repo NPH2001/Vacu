@@ -7,24 +7,9 @@ import { categories } from '@/db/schema';
 import { categorySchema } from '@/lib/validators';
 import { requireAdmin } from '@/lib/session';
 import { getDescendantIds } from '@/lib/categories';
+import { isFkViolation, isUniqueViolation } from '@/lib/db-errors';
 
 export type CategoryFormState = { error?: string } | null;
-
-type PgErr = { message?: string; code?: string; cause?: { message?: string; code?: string } };
-
-function isFkViolation(e: unknown): boolean {
-  const err = e as PgErr;
-  if (err.code === '23503' || err.cause?.code === '23503') return true;
-  const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
-  return /violates foreign key|restrict/i.test(msg);
-}
-
-function isUniqueViolation(e: unknown): boolean {
-  const err = e as PgErr;
-  if (err.code === '23505' || err.cause?.code === '23505') return true;
-  const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
-  return /duplicate key|unique constraint/i.test(msg);
-}
 
 function friendlyWriteError(e: unknown): string {
   if (isUniqueViolation(e)) return 'Slug đã tồn tại — chọn slug khác.';
@@ -107,12 +92,15 @@ export async function updateCategory(originalId: string, _prev: CategoryFormStat
   redirect('/admin/categories');
 }
 
+// A blocked delete is an ordinary outcome, not a crash: it redirects back with
+// a code the list page turns into an explanation. Throwing here would surface
+// in production as a generic "Application error" — see lib/admin/flash.ts.
 export async function deleteCategory(id: string): Promise<void> {
   await requireAdmin();
   try {
     await db.delete(categories).where(eq(categories.id, id));
   } catch (e) {
-    if (isFkViolation(e)) throw new Error('Không thể xóa: danh mục đang được sản phẩm sử dụng hoặc có danh mục con.');
+    if (isFkViolation(e)) redirect('/admin/categories?loi=danh-muc-dang-dung');
     throw e;
   }
   revalidatePath('/admin/categories');
@@ -126,7 +114,7 @@ export async function bulkDeleteCategories(fd: FormData): Promise<void> {
   try {
     await db.delete(categories).where(inArray(categories.id, ids));
   } catch (e) {
-    if (isFkViolation(e)) throw new Error('Không thể xóa: có danh mục đang được sản phẩm sử dụng hoặc có danh mục con.');
+    if (isFkViolation(e)) redirect('/admin/categories?loi=danh-muc-dang-dung-nhieu');
     throw e;
   }
   revalidatePath('/admin/categories');

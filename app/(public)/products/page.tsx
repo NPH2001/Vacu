@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { permanentRedirect } from 'next/navigation';
-import { getAllCategories, getAllProducts } from '@/lib/data';
+import { getAllCategories, getAllProducts, getSiteInfo } from '@/lib/data';
 import CategoryListing from '@/components/CategoryListing';
 
 type SearchParams = Promise<{ c?: string }>;
@@ -10,9 +10,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const { c } = await searchParams;
   if (c && /^[a-z0-9-]+$/.test(c)) permanentRedirect(`/danh-muc/${c}`);
 
-  const [allCategories, allProducts] = await Promise.all([
+  const [allCategories, allProducts, info] = await Promise.all([
     getAllCategories(),
     getAllProducts(),
+    getSiteInfo(),
   ]);
   const topLevel = allCategories.filter((cat) => !cat.parentId);
   return (
@@ -23,6 +24,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       allProducts={allProducts}
       activeCategory={null}
       allCategories={allCategories}
+      rootTitle={info.productsPageTitle}
+      rootSubtitle={info.productsPageSubtitle}
+      badge={info.listingBadge}
     />
   );
 }

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
@@ -36,12 +37,16 @@ export async function getSession(): Promise<SessionClaims | null> {
   }
 }
 
-export async function getCurrentUser(): Promise<UserRow | null> {
+/**
+ * Cached per request: a single render can ask who the user is several times
+ * (layout, page, generateMetadata, requireAdmin), and each was its own query.
+ */
+export const getCurrentUser = cache(async (): Promise<UserRow | null> => {
   const s = await getSession();
   if (!s) return null;
   const rows = await db.select().from(users).where(eq(users.id, s.sub)).limit(1);
   return rows[0] ?? null;
-}
+});
 
 export async function requireAdmin(): Promise<UserRow> {
   const u = await getCurrentUser();

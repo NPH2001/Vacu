@@ -28,9 +28,6 @@ vi.mock('@/lib/uploads', async (importOriginal) => {
     deleteUpload: async (url: string | null | undefined) => {
       uploadCalls.push({ fn: 'deleteUpload', args: [url] });
     },
-    deleteUploadIfReplaced: async (prev: string | null | undefined, next: string | null | undefined) => {
-      uploadCalls.push({ fn: 'deleteUploadIfReplaced', args: [prev, next] });
-    },
   };
 });
 
@@ -343,12 +340,14 @@ describe('payment-methods actions', () => {
     const fd = new FormData();
     fd.set('id', pmId);
     fd.set('label', 'ZaloPay');
+    fd.set('hint', 'Quét mã trong app ZaloPay');
     fd.set('active', 'on');
     fd.set('sortOrder', '1');
     await expect(createPaymentMethod(null, fd)).rejects.toThrow();
 
     const [row] = await db.select().from(paymentMethods).where(eq(paymentMethods.id, pmId));
     expect(row.label).toBe('ZaloPay');
+    expect(row.hint).toBe('Quét mã trong app ZaloPay');
     expect(row.active).toBe(true);
     expect(row.sortOrder).toBe(1);
 
@@ -1121,9 +1120,54 @@ describe('categories actions', () => {
     expect(res?.error).toBeTruthy();
   });
 
-  it('rejects oversize icon (>10)', async () => {
+  // The icon field holds either a short emoji or a path to an uploaded image,
+  // so it is capped at 500 rather than a handful of characters. An earlier
+  // version of these tests asserted a >10 limit; it only passed because the id
+  // it used ('leafy') collided with a seeded row, so the duplicate-slug check
+  // produced the error it was looking for.
+  it('accepts an emoji icon', async () => {
     const { createCategory } = await import('@/app/admin/actions/categories');
-    const res = await createCategory(null, catForm({ id: 'leafy', name: 'Rau ăn lá', icon: 'i'.repeat(11), description: 'd' }));
+    const { db } = await import('@/db/client');
+    const { categories } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    await expect(createCategory(null, catForm({
+      id: 'icon-emoji', name: 'Rau ăn lá', icon: '🥬', description: 'd',
+    }))).rejects.toThrow();
+
+    const [row] = await db.select().from(categories).where(eq(categories.id, 'icon-emoji'));
+    expect(row.icon).toBe('🥬');
+  });
+
+  it('accepts an uploaded image path as the icon', async () => {
+    const { createCategory } = await import('@/app/admin/actions/categories');
+    const { db } = await import('@/db/client');
+    const { categories } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // This is why the cap is not a handful of characters.
+    const path = '/uploads/2026/07/610f3654-7b48-409f-af39-d575024b70bc.webp';
+    await expect(createCategory(null, catForm({
+      id: 'icon-anh', name: 'Củ quả', icon: path, description: 'd',
+    }))).rejects.toThrow();
+
+    const [row] = await db.select().from(categories).where(eq(categories.id, 'icon-anh'));
+    expect(row.icon).toBe(path);
+  });
+
+  it('rejects an icon longer than 500 chars', async () => {
+    const { createCategory } = await import('@/app/admin/actions/categories');
+    const res = await createCategory(null, catForm({
+      id: 'icon-qua-dai', name: 'X', icon: 'i'.repeat(501), description: 'd',
+    }));
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('rejects an empty icon', async () => {
+    const { createCategory } = await import('@/app/admin/actions/categories');
+    const res = await createCategory(null, catForm({
+      id: 'icon-rong', name: 'X', icon: '', description: 'd',
+    }));
     expect(res?.error).toBeTruthy();
   });
 
@@ -1153,7 +1197,10 @@ describe('categories actions', () => {
     expect(gone).toHaveLength(0);
   });
 
-  it('delete rejects with Vietnamese message when a product references it (FK restrict)', async () => {
+  // Blocked deletes redirect with a flash code instead of throwing: Next
+  // redacts server error messages in production, so a thrown explanation
+  // reached the admin as a generic "Application error". See lib/admin/flash.ts.
+  it('delete of a category a product references explains why on the list page', async () => {
     const { db } = await import('@/db/client');
     const { categories, products } = await import('@/db/schema');
     const { eq } = await import('drizzle-orm');
@@ -1165,11 +1212,20 @@ describe('categories actions', () => {
     });
 
     const { deleteCategory, bulkDeleteCategories } = await import('@/app/admin/actions/categories');
-    await expect(deleteCategory('cat-fk')).rejects.toThrow(/sản phẩm sử dụng/);
+    await expect(deleteCategory('cat-fk')).rejects.toMatchObject({
+      digest: expect.stringContaining('/admin/categories?loi=danh-muc-dang-dung'),
+    });
 
     const fd = new FormData();
     fd.append('ids', 'cat-fk');
-    await expect(bulkDeleteCategories(fd)).rejects.toThrow(/sản phẩm sử dụng/);
+    await expect(bulkDeleteCategories(fd)).rejects.toMatchObject({
+      digest: expect.stringContaining('/admin/categories?loi=danh-muc-dang-dung-nhieu'),
+    });
+
+    // Both codes must resolve to real text, or the banner would render blank.
+    const { flashOf } = await import('@/lib/admin/flash');
+    expect(flashOf('danh-muc-dang-dung')?.text).toMatch(/sản phẩm/i);
+    expect(flashOf('danh-muc-dang-dung-nhieu')?.text).toMatch(/sản phẩm/i);
 
     // row still present
     const [still] = await db.select().from(categories).where(eq(categories.id, 'cat-fk'));
@@ -1415,7 +1471,7 @@ describe('farmers actions', () => {
     expect(r2?.error).toBeTruthy();
   });
 
-  it('creates, updates (triggers deleteUploadIfReplaced x2), deletes (triggers deleteUpload x2)', async () => {
+  it('creates, updates and deletes without touching shared upload files', async () => {
     const { createFarmer, updateFarmer, deleteFarmer } = await import('@/app/admin/actions/farmers');
     const { db } = await import('@/db/client');
     const { farmers } = await import('@/db/schema');
@@ -1435,16 +1491,16 @@ describe('farmers actions', () => {
       years: '11',
     }))).rejects.toThrow();
 
-    const replaced = uploadCalls.filter((c) => c.fn === 'deleteUploadIfReplaced');
-    expect(replaced).toHaveLength(2);
-    expect(replaced[0].args).toEqual(['/uploads/a.webp', '/uploads/a2.webp']);
-    expect(replaced[1].args).toEqual(['/uploads/b.webp', '/uploads/b.webp']);
+    const [updated] = await db.select().from(farmers).where(eq(farmers.id, 'farmer-t1'));
+    expect(updated.avatar).toBe('/uploads/a2.webp');
+    expect(updated.years).toBe(11);
+    // Media is shared across content, so the old avatar stays on disk; only
+    // /admin/media deletes files, and only after a usage check.
+    expect(uploadCalls).toHaveLength(0);
 
     uploadCalls.length = 0;
     await expect(deleteFarmer('farmer-t1')).rejects.toThrow();
-    const dels = uploadCalls.filter((c) => c.fn === 'deleteUpload');
-    expect(dels).toHaveLength(2);
-    expect(new Set(dels.flatMap((c) => c.args))).toEqual(new Set(['/uploads/a2.webp', '/uploads/b.webp']));
+    expect(uploadCalls).toHaveLength(0);
 
     const gone = await db.select().from(farmers).where(eq(farmers.id, 'farmer-t1'));
     expect(gone).toHaveLength(0);
@@ -1474,7 +1530,7 @@ describe('farmers actions', () => {
     expect(row.certifications).toEqual(['VietGAP', 'PGS', 'Organic']);
   });
 
-  it('bulkDelete removes all and triggers deleteUpload per avatar/cover pair', async () => {
+  it('bulkDelete removes all rows without deleting avatar/cover files', async () => {
     const { bulkDeleteFarmers } = await import('@/app/admin/actions/farmers');
     const { db } = await import('@/db/client');
     const { farmers } = await import('@/db/schema');
@@ -1490,8 +1546,7 @@ describe('farmers actions', () => {
     fd.append('ids', 'f-bulk-1');
     fd.append('ids', 'f-bulk-2');
     await expect(bulkDeleteFarmers(fd)).rejects.toThrow();
-    const urls = uploadCalls.filter((c) => c.fn === 'deleteUpload').flatMap((c) => c.args);
-    expect(new Set(urls)).toEqual(new Set(['/u/a1', '/u/b1', '/u/a2', '/u/b2']));
+    expect(uploadCalls).toHaveLength(0);
 
     const remaining = await db.select().from(farmers).where(inArray(farmers.id, ['f-bulk-1', 'f-bulk-2']));
     expect(remaining).toHaveLength(0);
@@ -1517,13 +1572,35 @@ describe('testimonials actions', () => {
     sortOrder: '0',
   });
 
-  function tForm(v: Partial<Record<'name' | 'role' | 'avatar' | 'content' | 'sortOrder', string>>) {
+  function tForm(v: Partial<Record<'name' | 'role' | 'avatar' | 'content' | 'rating' | 'sortOrder', string>>) {
     const fd = new FormData();
     for (const [k, val] of Object.entries(v)) fd.set(k, val as string);
     return fd;
   }
 
   beforeEach(() => { uploadCalls.length = 0; });
+
+  it('defaults rating to 5 when the field is absent, and stores a chosen rating', async () => {
+    const { createTestimonial } = await import('@/app/admin/actions/testimonials');
+    const { db } = await import('@/db/client');
+    const { testimonials } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // No rating field — old forms and the default should land on 5.
+    await expect(createTestimonial(null, tForm({ ...valid(), name: 'Mặc định' }))).rejects.toThrow();
+    const [def] = await db.select().from(testimonials).where(eq(testimonials.name, 'Mặc định'));
+    expect(def.rating).toBe(5);
+
+    await expect(createTestimonial(null, tForm({ ...valid(), name: 'Ba sao', rating: '3' }))).rejects.toThrow();
+    const [three] = await db.select().from(testimonials).where(eq(testimonials.name, 'Ba sao'));
+    expect(three.rating).toBe(3);
+  });
+
+  it('rejects a rating outside 1–5', async () => {
+    const { createTestimonial } = await import('@/app/admin/actions/testimonials');
+    expect((await createTestimonial(null, tForm({ ...valid(), rating: '0' })))?.error).toBeTruthy();
+    expect((await createTestimonial(null, tForm({ ...valid(), rating: '6' })))?.error).toBeTruthy();
+  });
 
   it('blocks unauth', async () => {
     authed = false;
@@ -1547,7 +1624,7 @@ describe('testimonials actions', () => {
     expect(res?.error).toBeTruthy();
   });
 
-  it('creates, updates (triggers deleteUploadIfReplaced), deletes (triggers deleteUpload)', async () => {
+  it('creates, updates and deletes without touching shared avatar files', async () => {
     const { createTestimonial, updateTestimonial, deleteTestimonial } =
       await import('@/app/admin/actions/testimonials');
     const { db } = await import('@/db/client');
@@ -1560,19 +1637,19 @@ describe('testimonials actions', () => {
 
     uploadCalls.length = 0;
     await expect(updateTestimonial(row.id, null, tForm({ ...valid(), avatar: '/uploads/t2.webp' }))).rejects.toThrow();
-    const repl = uploadCalls.filter((c) => c.fn === 'deleteUploadIfReplaced');
-    expect(repl).toHaveLength(1);
-    expect(repl[0].args).toEqual(['/uploads/t1.webp', '/uploads/t2.webp']);
+    const [updated] = await db.select().from(testimonials).where(eq(testimonials.id, row.id));
+    expect(updated.avatar).toBe('/uploads/t2.webp');
+    expect(uploadCalls).toHaveLength(0);
 
     uploadCalls.length = 0;
     await expect(deleteTestimonial(row.id)).rejects.toThrow();
-    expect(uploadCalls.filter((c) => c.fn === 'deleteUpload')[0]?.args).toEqual(['/uploads/t2.webp']);
+    expect(uploadCalls).toHaveLength(0);
 
     const gone = await db.select().from(testimonials).where(eq(testimonials.id, row.id));
     expect(gone).toHaveLength(0);
   });
 
-  it('bulkDelete removes and calls deleteUpload per avatar', async () => {
+  it('bulkDelete removes all rows without deleting avatar files', async () => {
     const { bulkDeleteTestimonials } = await import('@/app/admin/actions/testimonials');
     const { db } = await import('@/db/client');
     const { testimonials } = await import('@/db/schema');
@@ -1588,8 +1665,7 @@ describe('testimonials actions', () => {
     const fd = new FormData();
     ids.forEach((id) => fd.append('ids', String(id)));
     await expect(bulkDeleteTestimonials(fd)).rejects.toThrow();
-    const urls = uploadCalls.filter((c) => c.fn === 'deleteUpload').flatMap((c) => c.args);
-    expect(new Set(urls)).toEqual(new Set(['/u/tt1', '/u/tt2']));
+    expect(uploadCalls).toHaveLength(0);
     const rem = await db.select().from(testimonials).where(inArray(testimonials.id, ids));
     expect(rem).toHaveLength(0);
   });
@@ -1698,6 +1774,148 @@ describe('menu actions', () => {
     ids.forEach((id) => fd.append('ids', String(id)));
     await expect(bulkDeleteMenuItems(fd)).rejects.toThrow();
     const remaining = await db.select().from(menuItems).where(inArray(menuItems.id, ids));
+    expect(remaining).toHaveLength(0);
+  });
+});
+
+// =====================================================================
+// hero-slides — CRUD for the homepage slider
+// =====================================================================
+describe('hero-slides actions', () => {
+  function slideForm(values: Record<string, string>) {
+    const fd = new FormData();
+    for (const [k, v] of Object.entries(values)) fd.set(k, v);
+    return fd;
+  }
+
+  it('blocks unauthenticated create/update/delete/bulk', async () => {
+    authed = false;
+    const mod = await import('@/app/admin/actions/hero-slides');
+    await expect(mod.createHeroSlide(null, slideForm({ title: 'x', image: '/a.webp' }))).rejects.toThrow();
+    await expect(mod.updateHeroSlide(1, null, slideForm({ title: 'x', image: '/a.webp' }))).rejects.toThrow();
+    await expect(mod.deleteHeroSlide(1)).rejects.toThrow();
+    const b = new FormData();
+    b.append('ids', '1');
+    await expect(mod.bulkDeleteHeroSlides(b)).rejects.toThrow();
+  });
+
+  it('rejects empty title', async () => {
+    const { createHeroSlide } = await import('@/app/admin/actions/hero-slides');
+    const res = await createHeroSlide(null, slideForm({ title: '', image: '/a.webp' }));
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('rejects empty image', async () => {
+    const { createHeroSlide } = await import('@/app/admin/actions/hero-slides');
+    const res = await createHeroSlide(null, slideForm({ title: 'Có tiêu đề', image: '' }));
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('creates with all fields, then updates, then deletes', async () => {
+    const { createHeroSlide, updateHeroSlide, deleteHeroSlide } =
+      await import('@/app/admin/actions/hero-slides');
+    const { db } = await import('@/db/client');
+    const { heroSlides } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    await expect(createHeroSlide(null, slideForm({
+      badge: 'Thu hoạch sáng nay',
+      title: 'Sản vật OCOP',
+      subtitle: 'Giao tận nhà',
+      image: '/uploads/2026/07/hero-a.webp',
+      ctaPrimaryLabel: 'Đi chợ',
+      ctaPrimaryHref: '/products',
+      ctaSecondaryLabel: 'Gặp bà con',
+      ctaSecondaryHref: '/farmers',
+      active: 'on',
+      sortOrder: '2',
+    }))).rejects.toThrow();
+
+    const [row] = await db.select().from(heroSlides).where(eq(heroSlides.title, 'Sản vật OCOP'));
+    expect(row.badge).toBe('Thu hoạch sáng nay');
+    expect(row.subtitle).toBe('Giao tận nhà');
+    expect(row.image).toBe('/uploads/2026/07/hero-a.webp');
+    expect(row.ctaPrimaryLabel).toBe('Đi chợ');
+    expect(row.ctaSecondaryHref).toBe('/farmers');
+    expect(row.active).toBe(true);
+    expect(row.sortOrder).toBe(2);
+
+    const u = slideForm({
+      title: 'Hộp rau tuần',
+      image: '/uploads/2026/07/hero-b.webp',
+      sortOrder: '5',
+      // active omitted → false; CTAs omitted → default empty
+    });
+    await expect(updateHeroSlide(row.id, null, u)).rejects.toThrow();
+    const [after] = await db.select().from(heroSlides).where(eq(heroSlides.id, row.id));
+    expect(after.title).toBe('Hộp rau tuần');
+    expect(after.active).toBe(false);
+    expect(after.sortOrder).toBe(5);
+    expect(after.ctaPrimaryLabel).toBe('');
+
+    await expect(deleteHeroSlide(row.id)).rejects.toThrow();
+    const gone = await db.select().from(heroSlides).where(eq(heroSlides.id, row.id));
+    expect(gone).toHaveLength(0);
+  });
+
+  it('active checkbox: "on" → true, absent → false', async () => {
+    const { createHeroSlide } = await import('@/app/admin/actions/hero-slides');
+    const { db } = await import('@/db/client');
+    const { heroSlides } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    await expect(createHeroSlide(null, slideForm({ title: 'HS-on', image: '/x.webp', active: 'on' }))).rejects.toThrow();
+    await expect(createHeroSlide(null, slideForm({ title: 'HS-off', image: '/x.webp' }))).rejects.toThrow();
+    const [on] = await db.select().from(heroSlides).where(eq(heroSlides.title, 'HS-on'));
+    const [off] = await db.select().from(heroSlides).where(eq(heroSlides.title, 'HS-off'));
+    expect(on.active).toBe(true);
+    expect(off.active).toBe(false);
+  });
+
+  it('getActiveHeroSlides returns only active rows, ordered by sortOrder then id', async () => {
+    const { db } = await import('@/db/client');
+    const { heroSlides } = await import('@/db/schema');
+    const { getActiveHeroSlides } = await import('@/lib/data');
+    const { inArray } = await import('drizzle-orm');
+
+    // clear any leftovers so ordering assertions are deterministic
+    await db.delete(heroSlides);
+    await db.insert(heroSlides).values([
+      { title: 'S-third', image: '/c.webp', active: true, sortOrder: 3 },
+      { title: 'S-first', image: '/a.webp', active: true, sortOrder: 1 },
+      { title: 'S-hidden', image: '/h.webp', active: false, sortOrder: 0 },
+      { title: 'S-second', image: '/b.webp', active: true, sortOrder: 2 },
+    ]);
+
+    const rows = await getActiveHeroSlides();
+    expect(rows.map((r) => r.title)).toEqual(['S-first', 'S-second', 'S-third']);
+
+    await db.delete(heroSlides).where(inArray(heroSlides.title, ['S-third', 'S-first', 'S-hidden', 'S-second']));
+  });
+
+  it('bulk-deletes; empty short-circuits', async () => {
+    const { bulkDeleteHeroSlides } = await import('@/app/admin/actions/hero-slides');
+    const { db } = await import('@/db/client');
+    const { heroSlides } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+
+    const rows = await db
+      .insert(heroSlides)
+      .values([
+        { title: 'HS-bulk-1', image: '/1.webp' },
+        { title: 'HS-bulk-2', image: '/2.webp' },
+      ])
+      .returning();
+    const ids = rows.map((r) => r.id);
+
+    await expect(bulkDeleteHeroSlides(new FormData())).rejects.toThrow();
+    const still = await db.select().from(heroSlides).where(inArray(heroSlides.id, ids));
+    expect(still).toHaveLength(2);
+
+    const fd = new FormData();
+    ids.forEach((id) => fd.append('ids', String(id)));
+    await expect(bulkDeleteHeroSlides(fd)).rejects.toThrow();
+    const remaining = await db.select().from(heroSlides).where(inArray(heroSlides.id, ids));
     expect(remaining).toHaveLength(0);
   });
 });
