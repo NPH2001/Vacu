@@ -36,10 +36,13 @@ function parseForm(fd: FormData) {
  * wholesale rather than diffed — the form is the single source of truth for
  * both membership and order.
  */
-async function replaceGallery(productId: string, urls: string[]) {
-  await db.delete(productImages).where(eq(productImages.productId, productId));
+// `exec` is the db or a transaction handle so the product row and its gallery
+// are written atomically (a failed insert must not wipe the existing gallery).
+type Executor = typeof db;
+async function replaceGallery(exec: Executor, productId: string, urls: string[]) {
+  await exec.delete(productImages).where(eq(productImages.productId, productId));
   if (urls.length === 0) return;
-  await db.insert(productImages).values(
+  await exec.insert(productImages).values(
     urls.map((url, i) => ({ productId, url, sortOrder: i * 10 })),
   );
 }
@@ -50,14 +53,16 @@ export async function createProduct(_prev: ProductFormState, fd: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   const { gallery, ...data } = parsed.data;
   try {
-    await db.insert(products).values({
-      ...data,
-      // Editor HTML arrives as a plain form field and can be forged.
-      body: sanitizeRichText(data.body),
-      oldPrice: data.oldPrice ?? null,
-      farmerId: data.farmerId ?? null,
+    await db.transaction(async (tx) => {
+      await tx.insert(products).values({
+        ...data,
+        // Editor HTML arrives as a plain form field and can be forged.
+        body: sanitizeRichText(data.body),
+        oldPrice: data.oldPrice ?? null,
+        farmerId: data.farmerId ?? null,
+      });
+      await replaceGallery(tx as unknown as Executor, data.id, gallery);
     });
-    await replaceGallery(data.id, gallery);
   } catch (e) {
     return { error: friendlyWriteError(e) };
   }
@@ -72,14 +77,16 @@ export async function updateProduct(originalId: string, _prev: ProductFormState,
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   const { gallery, ...data } = parsed.data;
   try {
-    await db.update(products).set({
-      ...data,
-      body: sanitizeRichText(data.body),
-      oldPrice: data.oldPrice ?? null,
-      farmerId: data.farmerId ?? null,
-      updatedAt: new Date(),
-    }).where(eq(products.id, originalId));
-    await replaceGallery(originalId, gallery);
+    await db.transaction(async (tx) => {
+      await tx.update(products).set({
+        ...data,
+        body: sanitizeRichText(data.body),
+        oldPrice: data.oldPrice ?? null,
+        farmerId: data.farmerId ?? null,
+        updatedAt: new Date(),
+      }).where(eq(products.id, originalId));
+      await replaceGallery(tx as unknown as Executor, originalId, gallery);
+    });
   } catch (e) {
     return { error: friendlyWriteError(e) };
   }

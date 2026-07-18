@@ -14,14 +14,20 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
   const [q, setQ] = useState(urlQ);
   const [lastUrlQ, setLastUrlQ] = useState(urlQ);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The last value our own debounce pushed to the URL. When urlQ catches up to
+  // it, that change is our echo — not an external navigation — so we must NOT
+  // re-sync the box, or a keystroke typed during the router.replace round-trip
+  // gets clobbered back to the older debounced value. Kept in state (not a ref)
+  // so it is safe to read during render.
+  const [lastPushed, setLastPushed] = useState(urlQ);
 
   // Re-sync the box when the URL query changes from something other than typing
   // (Back/Forward, the "Tất cả" pill, "Xem tất cả" in the empty state). This is
-  // the React "adjust state when a prop changes during render" pattern; safe vs
-  // typing because urlQ only changes after our own debounce already wrote it.
+  // the React "adjust state when a prop changes during render" pattern. We skip
+  // the case where urlQ merely echoes our own debounced write (lastPushed).
   if (urlQ !== lastUrlQ) {
     setLastUrlQ(urlQ);
-    setQ(urlQ);
+    if (urlQ !== lastPushed) setQ(urlQ);
   }
 
   const setParam = (patch: Record<string, string>) => {
@@ -36,7 +42,7 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
   useEffect(() => {
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => {
-      if ((params.get('q') ?? '') !== q) setParam({ q });
+      if ((params.get('q') ?? '') !== q) { setLastPushed(q); setParam({ q }); }
     }, 350);
     return () => { if (debounce.current) clearTimeout(debounce.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps

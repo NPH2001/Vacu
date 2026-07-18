@@ -17,6 +17,7 @@ export type MediaListParams = {
  * with "50". Backslash first — it is the escape character itself.
  */
 export async function listMedia({ q, page = 1, pageSize = 40 }: MediaListParams = {}) {
+  page = Math.max(1, Math.floor(page)); // never a negative OFFSET
   const term = q?.trim();
   const pattern = term ? `%${escapeLike(term)}%` : '';
   const where = term

@@ -1,0 +1,1 @@
+CREATE INDEX "media_created_idx" ON "media" USING btree ("created_at");

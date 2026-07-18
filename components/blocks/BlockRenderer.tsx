@@ -278,7 +278,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
               <h2 className="text-3xl md:text-5xl font-bold font-display leading-tight mb-4">{info.subBoxTitle}</h2>
               <p className="text-green-100/80 mb-6 max-w-md">{info.subBoxDescription}</p>
               <ul className="space-y-2 mb-8 text-green-100/90">
-                {info.subBoxFeatures.map((f, i) => <li key={i}>✓ {f}</li>)}
+                {(Array.isArray(info.subBoxFeatures) ? info.subBoxFeatures : []).map((f, i) => <li key={i}>✓ {f}</li>)}
               </ul>
               <Link href={info.subBoxLink}
                 className="bg-amber-400 hover:bg-amber-500 text-green-950 font-bold px-7 py-3.5 rounded-full transition w-fit">

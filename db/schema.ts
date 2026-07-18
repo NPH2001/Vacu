@@ -35,7 +35,7 @@ export const media = pgTable('media', {
   mime: text('mime').notNull().default('image/webp'),
   uploadedBy: uuid('uploaded_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [index('media_created_idx').on(t.createdAt)]);
 
 export const categories = pgTable('categories', {
   id: text('id').primaryKey(),
