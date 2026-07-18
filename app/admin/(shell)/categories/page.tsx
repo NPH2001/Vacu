@@ -55,7 +55,7 @@ export default async function CategoriesAdminPage({
     const tree = buildCategoryTree(allRows);
     const flat: Array<CategoryRow & { level: number }> = [];
     const walk = (nodes: CategoryNode[], level: number) => {
-      const sorted = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+      const sorted = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'vi'));
       for (const n of sorted) {
         const { children, ...row } = n;
         flat.push({ ...row, level });

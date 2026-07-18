@@ -122,7 +122,13 @@ export const getCategory = cache(async (id: string) => {
   return rows[0] ?? null;
 });
 export async function getAllFarmers() {
-  return db.select().from(farmers).orderBy(asc(farmers.name));
+  // Re-sort by name in JS with the Vietnamese locale: the DB is en_US-collated,
+  // which folds Đ→D and so orders "Đào" before "Dưa" — wrong, since Đ is a
+  // distinct letter that sorts after D. localeCompare('vi') gets it right, and
+  // (unlike a DB COLLATE) doesn't depend on the external DB having ICU. The
+  // public /farmers page renders this order directly.
+  const rows = await db.select().from(farmers);
+  return rows.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
 }
 // Cached per request: ProductCard resolves the farmer for every card, so a
 // listing of N products that share a handful of farmers collapses to one query

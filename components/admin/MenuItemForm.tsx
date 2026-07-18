@@ -25,7 +25,7 @@ function inferType(href: string): LinkType {
 function flattenForSelect(tree: CategoryNode[]): { id: string; name: string; level: number }[] {
   const out: { id: string; name: string; level: number }[] = [];
   const walk = (nodes: CategoryNode[], level: number) => {
-    const sorted = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+    const sorted = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'vi'));
     for (const n of sorted) {
       out.push({ id: n.id, name: n.name, level });
       walk(n.children, level + 1);
