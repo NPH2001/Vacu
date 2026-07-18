@@ -6,15 +6,20 @@ import {
 } from '@/lib/data';
 import { getDescendantIds, getAncestors } from '@/lib/categories';
 import CategoryListing from '@/components/CategoryListing';
+import { seoMeta } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const cat = await getCategory(slug);
+  const [cat, info] = await Promise.all([getCategory(slug), getSiteInfo()]);
   if (!cat) return {};
-  return {
-    title: `${cat.name} — ${cat.description}`,
+  // Title is the category name + site name — not the full description, which
+  // bloats the tag and duplicates the meta description.
+  return seoMeta({
+    title: `${cat.name} — ${info.name}`,
     description: cat.description,
-  };
+    canonical: `/danh-muc/${cat.id}`,
+    image: cat.coverImage ?? undefined,
+  });
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPublishedPage, getAnyPage } from '@/lib/pages';
 import { getSiteInfo } from '@/lib/data';
+import { seoMeta } from '@/lib/seo';
 import { getCurrentUser } from '@/lib/session';
 import { HOME_PAGE_ID } from '@/lib/blocks';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
@@ -35,8 +36,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const info = await getSiteInfo();
   return {
-    title: `${page.metaTitle || page.title} — ${info.name}`,
-    description: page.metaDescription || undefined,
+    ...seoMeta({
+      title: `${page.metaTitle || page.title} — ${info.name}`,
+      description: page.metaDescription || undefined,
+      canonical: `/${slug}`,
+    }),
     robots: previewing && page.status !== 'published' ? { index: false, follow: false } : undefined,
   };
 }

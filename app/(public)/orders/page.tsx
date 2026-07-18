@@ -1,5 +1,9 @@
 export const dynamic = 'force-dynamic';
 
+// Contains a customer's own order data — never index it (robots.txt disallows
+// /orders too; this covers an externally-shared URL).
+export const metadata = { robots: { index: false, follow: false } };
+
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { inArray } from 'drizzle-orm';
