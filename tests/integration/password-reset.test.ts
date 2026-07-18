@@ -88,6 +88,9 @@ describe('requestPasswordReset', () => {
     const res = await requestPasswordReset(null, fd);
     expect(res?.ok).toBe(true);
 
+    // The email is sent fire-and-forget (so response timing can't leak account
+    // existence) — let the microtask flush before asserting.
+    await new Promise((r) => setTimeout(r, 50));
     expect(sendMailCalls).toHaveLength(1);
     expect(sendMailCalls[0].to).toBe('user@vacu.com.vn');
     expect(sendMailCalls[0].subject).toContain('Vacu');

@@ -265,9 +265,12 @@ export default async function BlockRenderer({ block }: { block: Block }) {
 
     case 'subBox': {
       const info = await getSiteInfo();
+      // Skip the whole promo when there is nothing to show (blank config).
+      if (!info.subBoxTitle && !info.subBoxDescription) return null;
+      const hasImage = Boolean(info.subBoxImage);
       return (
         <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
-          <div className="bg-gradient-to-br from-green-800 to-green-950 rounded-[2.5rem] overflow-hidden grid md:grid-cols-2">
+          <div className={`bg-gradient-to-br from-green-800 to-green-950 rounded-[2.5rem] overflow-hidden grid ${hasImage ? 'md:grid-cols-2' : ''}`}>
             <div className="p-10 md:p-14 text-white flex flex-col justify-center">
               <div className="inline-block bg-amber-400 text-green-950 text-xs font-bold px-3 py-1 rounded-full w-fit mb-4">
                 {info.subBoxBadge}
@@ -282,10 +285,12 @@ export default async function BlockRenderer({ block }: { block: Block }) {
                 {info.subBoxCta}
               </Link>
             </div>
-            <div className="relative min-h-[320px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={info.subBoxImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-            </div>
+            {hasImage && (
+              <div className="relative min-h-[320px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={info.subBoxImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              </div>
+            )}
           </div>
         </section>
       );
@@ -322,9 +327,11 @@ export default async function BlockRenderer({ block }: { block: Block }) {
           <HScroll itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
             {items.map((t, i) => (
               <div key={i} className="bg-white rounded-2xl border border-green-100 p-5 h-full flex flex-col">
-                <div className="text-amber-500 text-sm mb-2" aria-label={`${t.rating}/5 sao`}>
-                  {'★'.repeat(t.rating)}<span className="text-stone-300">{'★'.repeat(5 - t.rating)}</span>
-                </div>
+                {(() => { const r = Math.max(0, Math.min(5, t.rating)); return (
+                  <div className="text-amber-500 text-sm mb-2" aria-label={`${r}/5 sao`}>
+                    {'★'.repeat(r)}<span className="text-stone-300">{'★'.repeat(5 - r)}</span>
+                  </div>
+                ); })()}
                 <p className="text-green-900/80 flex-1 italic leading-relaxed wrap-anywhere">&ldquo;{t.content}&rdquo;</p>
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-green-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

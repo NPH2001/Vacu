@@ -8,7 +8,10 @@ export type ProductFilterOpts = { q?: string; sort?: string; inStockOnly?: boole
  * reused by any listing.
  */
 export function filterAndSortProducts(products: ProductRow[], opts: ProductFilterOpts): ProductRow[] {
-  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Vietnamese `\u0111` is a distinct letter (not base+combining mark), so fold it
+  // explicitly in addition to stripping accents.
+  const norm = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd');
   const needle = opts.q?.trim() ? norm(opts.q.trim()) : '';
 
   let out = products;
