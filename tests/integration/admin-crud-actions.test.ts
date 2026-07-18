@@ -20,6 +20,11 @@ vi.mock('@/lib/session', () => ({
   getSession: async () => null,
 }));
 
+// revalidatePath needs a Next request store that does not exist under vitest.
+// Redirecting actions mask the resulting error (any throw satisfies the assert),
+// but an action that returns state (e.g. saveTheme) surfaces it — stub it out.
+vi.mock('next/cache', () => ({ revalidatePath: () => {}, revalidateTag: () => {} }));
+
 const uploadCalls: Array<{ fn: string; args: unknown[] }> = [];
 vi.mock('@/lib/uploads', async (importOriginal) => {
   const orig = await importOriginal<typeof import('@/lib/uploads')>();
@@ -1775,6 +1780,65 @@ describe('menu actions', () => {
     await expect(bulkDeleteMenuItems(fd)).rejects.toThrow();
     const remaining = await db.select().from(menuItems).where(inArray(menuItems.id, ids));
     expect(remaining).toHaveLength(0);
+  });
+});
+
+// =====================================================================
+// theme — single-row upsert + reset
+// =====================================================================
+describe('theme actions', () => {
+  it('blocks unauthenticated save', async () => {
+    authed = false;
+    const { saveTheme } = await import('@/app/admin/actions/theme');
+    const fd = new FormData();
+    fd.set('brandColor', '#16a34a');
+    fd.set('accentColor', '#f59e0b');
+    fd.set('radiusScale', '1');
+    fd.set('fontBody', 'inter');
+    fd.set('fontHeading', 'fraunces');
+    await expect(saveTheme(null, fd)).rejects.toThrow();
+  });
+
+  it('rejects a non-hex brand colour', async () => {
+    const { saveTheme } = await import('@/app/admin/actions/theme');
+    const fd = new FormData();
+    fd.set('brandColor', 'red');
+    fd.set('accentColor', '#f59e0b');
+    fd.set('radiusScale', '1');
+    fd.set('fontBody', 'inter');
+    fd.set('fontHeading', 'fraunces');
+    const res = await saveTheme(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('upserts the single row and getTheme reflects it; reset restores defaults', async () => {
+    const { saveTheme, resetTheme } = await import('@/app/admin/actions/theme');
+    const { getTheme } = await import('@/lib/data');
+    const { DEFAULT_THEME } = await import('@/lib/theme');
+
+    const fd = new FormData();
+    fd.set('brandColor', '#2563eb');
+    fd.set('accentColor', '#db2777');
+    fd.set('radiusScale', '0.5');
+    fd.set('fontBody', 'be-vietnam');
+    fd.set('fontHeading', 'playfair');
+    const res = await saveTheme(null, fd);
+    expect(res?.ok).toBe(true);
+
+    const saved = await getTheme();
+    expect(saved.brandColor).toBe('#2563eb');
+    expect(saved.radiusScale).toBe(0.5);
+    expect(saved.fontHeading).toBe('playfair');
+
+    // saving again updates the same row (no duplicate id=1)
+    const { db } = await import('@/db/client');
+    const { theme } = await import('@/db/schema');
+    expect(await db.select().from(theme)).toHaveLength(1);
+
+    await expect(resetTheme()).rejects.toThrow(); // redirects
+    const back = await getTheme();
+    expect(back.brandColor).toBe(DEFAULT_THEME.brandColor);
+    expect(back.radiusScale).toBe(DEFAULT_THEME.radiusScale);
   });
 });
 

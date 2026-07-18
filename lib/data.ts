@@ -5,7 +5,7 @@ import { db } from '@/db/client';
 import {
   products, productImages, categories, farmers, testimonials, faqItems, siteInfo,
   valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
-  homeSections, heroSlides,
+  homeSections, heroSlides, theme,
   type ProductRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
   type ValuePropRow, type DeliverySlotRow, type PaymentMethodRow, type ContactTopicRow,
@@ -16,6 +16,7 @@ import {
   HOME_SECTIONS, DEFAULT_ORDER,
   type HomeSectionKey, type HomeSectionState,
 } from './home-sections';
+import { DEFAULT_THEME, type ThemeConfig } from './theme';
 
 export type Product = ProductRow;
 export type Category = CategoryRow;
@@ -169,6 +170,20 @@ export const getSiteInfo = cache(async (): Promise<SiteInfoRow> => {
   const rows = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!rows[0]) throw new Error('site_info row missing — run npm run db:seed');
   return rows[0];
+});
+
+/** Site theme (single row id=1); falls back to defaults before it is saved. */
+export const getTheme = cache(async (): Promise<ThemeConfig> => {
+  const rows = await db.select().from(theme).where(eq(theme.id, 1)).limit(1);
+  const r = rows[0];
+  if (!r) return DEFAULT_THEME;
+  return {
+    brandColor: r.brandColor,
+    accentColor: r.accentColor,
+    radiusScale: r.radiusScale,
+    fontBody: r.fontBody,
+    fontHeading: r.fontHeading,
+  };
 });
 
 export async function getActiveHeroSlides(): Promise<HeroSlideRow[]> {

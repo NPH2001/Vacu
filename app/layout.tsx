@@ -1,10 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter, Fraunces } from 'next/font/google';
-import { getSiteInfo } from '@/lib/data';
+import { Inter, Fraunces, Be_Vietnam_Pro, Playfair_Display } from 'next/font/google';
+import { getSiteInfo, getTheme } from '@/lib/data';
+import { generateThemeCss } from '@/lib/theme';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin', 'vietnamese'], variable: '--font-sans' });
-const fraunces = Fraunces({ subsets: ['latin', 'vietnamese'], variable: '--font-display' });
+// The theme picks among these by key (see FONT_VARS in lib/theme.ts). All are
+// loaded so switching fonts in the admin needs no rebuild.
+const inter = Inter({ subsets: ['latin', 'vietnamese'], variable: '--font-inter' });
+const fraunces = Fraunces({ subsets: ['latin', 'vietnamese'], variable: '--font-fraunces' });
+const beVietnam = Be_Vietnam_Pro({
+  subsets: ['latin', 'vietnamese'], weight: ['400', '500', '600', '700'], variable: '--font-be-vietnam',
+});
+const playfair = Playfair_Display({ subsets: ['latin', 'vietnamese'], variable: '--font-playfair' });
+
+const fontVars = `${inter.variable} ${fraunces.variable} ${beVietnam.variable} ${playfair.variable}`;
 
 export async function generateMetadata(): Promise<Metadata> {
   // Falls back to static defaults if the DB is unavailable (e.g. during `next build`
@@ -47,9 +56,16 @@ function safeUrl(url: string): URL | undefined {
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Admin-configurable theme: overrides the green/amber ramps, radius and fonts
+  // at :root, so the whole site (and the console) recolours with no rebuild.
+  const themeCss = generateThemeCss(await getTheme());
+
   return (
-    <html lang="vi" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
+    <html lang="vi" className={`${fontVars} h-full antialiased`}>
+      <head>
+        <style id="theme-vars" dangerouslySetInnerHTML={{ __html: themeCss }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans text-green-950">{children}</body>
     </html>
   );

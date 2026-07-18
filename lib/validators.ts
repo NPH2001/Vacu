@@ -270,6 +270,14 @@ export const valuePropSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
 });
 
+export const themeSchema = z.object({
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Màu thương hiệu phải là mã hex, ví dụ #16a34a'),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Màu nhấn phải là mã hex, ví dụ #f59e0b'),
+  radiusScale: z.coerce.number().min(0).max(1.8),
+  fontBody: z.string().min(1).max(40),
+  fontHeading: z.string().min(1).max(40),
+});
+
 export const deliverySlotSchema = z.object({
   label: z.string().min(1).max(120),
   active: z.coerce.boolean().default(true),
