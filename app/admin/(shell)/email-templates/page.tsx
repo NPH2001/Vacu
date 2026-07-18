@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { asc } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { emailTemplates } from '@/db/schema';
+import { requireRole } from '@/lib/session';
 
 export default async function EmailTemplatesAdminPage() {
+  await requireRole('admin'); // transactional/security email content — admin-only
   const rows = await db.select().from(emailTemplates).orderBy(asc(emailTemplates.name));
   return (
     <div className="space-y-5">

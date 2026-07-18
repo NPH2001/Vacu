@@ -5,7 +5,7 @@ import { and, eq, ne, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders, siteInfo } from '@/db/schema';
 import { orderStatusSchema } from '@/lib/validators';
-import { requireAdmin } from '@/lib/session';
+import { requireAdmin, requireRole } from '@/lib/session';
 import { sendTemplatedMail } from '@/lib/mail';
 import { formatPrice } from '@/lib/format';
 
@@ -72,14 +72,17 @@ export async function markOrderUnpaid(id: string): Promise<void> {
 }
 
 export async function deleteOrder(id: string): Promise<void> {
-  await requireAdmin();
+  // Admin-only: deleting an order erases a financial/audit record, which is
+  // above the staff (content-editor) tier. Fulfilment ops (status/paid) stay
+  // available to staff.
+  await requireRole('admin');
   await db.delete(orders).where(eq(orders.id, id));
   revalidatePath('/admin/orders');
   redirect('/admin/orders');
 }
 
 export async function bulkDeleteOrders(fd: FormData): Promise<void> {
-  await requireAdmin();
+  await requireRole('admin'); // erasing financial records — admin-only (see deleteOrder)
   const ids = fd.getAll('ids').map(String).filter(Boolean);
   if (ids.length === 0) { redirect('/admin/orders'); }
   await db.delete(orders).where(inArray(orders.id, ids));
