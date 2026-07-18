@@ -76,6 +76,7 @@ export default function HeroSlider({ slides, stats }: { slides: HeroSlideRow[]; 
             <div
               key={s.id}
               aria-hidden={i !== current}
+              inert={i !== current || undefined}
               className={`[grid-area:1/1] transition-opacity duration-700 ease-in-out ${
                 i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}

@@ -101,7 +101,7 @@ export default function CheckoutForm({
             <select
               value={form.slot}
               onChange={(e) => setForm({ ...form, slot: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-600"
+              className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
               disabled={slots.length === 0}
             >
               {slots.length === 0
@@ -118,7 +118,7 @@ export default function CheckoutForm({
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
               placeholder="Ví dụ: không gõ cửa, để cổng bảo vệ..."
-              className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-600 resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:border-green-600 focus:ring-2 focus:ring-green-600/40 resize-none"
             />
           </div>
 
@@ -160,7 +160,7 @@ export default function CheckoutForm({
             </div>
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p role="alert" aria-live="assertive" className="text-sm text-red-600">{error}</p>}
           <button
             type="submit"
             disabled={pending}
@@ -217,11 +217,12 @@ function Field({
       </label>
       <input
         type={type}
+        inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-600"
+        className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
       />
     </div>
   );

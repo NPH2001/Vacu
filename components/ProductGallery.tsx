@@ -18,7 +18,7 @@ export default function ProductGallery({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={current} alt={alt} className="w-full h-full object-cover" />
         {discount > 0 && (
-          <span className="absolute top-4 right-4 bg-amber-500 text-white text-sm font-bold px-3 py-1.5 rounded-full">
+          <span className="absolute top-4 right-4 bg-amber-500 text-green-950 text-sm font-bold px-3 py-1.5 rounded-full">
             -{discount}%
           </span>
         )}

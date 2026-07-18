@@ -24,8 +24,9 @@ export default async function PublicLayout({ children }: { children: React.React
   ]);
   return (
     <CartProvider>
+      <a href="#main" className="skip-link">Bỏ qua tới nội dung</a>
       <Navbar info={info} items={headerMenu} />
-      <main className="flex-1">{children}</main>
+      <main id="main" className="flex-1">{children}</main>
       <Footer info={info} categories={categories} quickLinks={footerMenu} />
       <CartDrawer
         emptyTitle={info.cartEmptyTitle}

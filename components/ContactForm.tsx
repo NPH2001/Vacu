@@ -79,7 +79,7 @@ export default function ContactForm({ topics }: { topics: ContactTopicRow[] }) {
           className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:outline-none focus:border-green-500"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" aria-live="assertive" className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={pending}

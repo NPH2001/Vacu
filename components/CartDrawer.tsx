@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
+import { useModalA11y } from "./useModalA11y";
 
 export default function CartDrawer({
   emptyTitle, emptyText, shippingLabel,
@@ -12,6 +13,7 @@ export default function CartDrawer({
   shippingLabel: string;
 }) {
   const { items, total, open, setOpen, setQty, remove } = useCart();
+  const panelRef = useModalA11y<HTMLElement>(open, () => setOpen(false));
 
   return (
     <>
@@ -22,6 +24,11 @@ export default function CartDrawer({
         }`}
       />
       <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Giỏ hàng"
+        inert={!open || undefined}
         className={`fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-[70] shadow-2xl transition-transform duration-300 flex flex-col ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
