@@ -23,6 +23,12 @@ describe('filterAndSortProducts', () => {
     expect(filterAndSortProducts(items, { q: 'RAU' }).map((x) => x.id)).toEqual(['rau']);
   });
 
+  it('folds Vietnamese đ (đ ↔ d) in search', () => {
+    const d = [p({ id: 'dau', name: 'Đậu bắp', description: '' })];
+    expect(filterAndSortProducts(d, { q: 'dau' }).map((x) => x.id)).toEqual(['dau']);
+    expect(filterAndSortProducts(d, { q: 'ĐẬU' }).map((x) => x.id)).toEqual(['dau']);
+  });
+
   it('in-stock filter drops out-of-stock', () => {
     expect(filterAndSortProducts(items, { inStockOnly: true }).map((x) => x.id).sort()).toEqual(['bo', 'ca']);
   });

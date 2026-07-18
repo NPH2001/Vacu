@@ -87,6 +87,11 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
     lines.push({ productId: p.id, name: p.name, price: p.price, qty, unit: p.unit, image: p.image });
   }
   const total = lines.reduce((s, l) => s + l.qty * l.price, 0);
+  // orders.total is a 4-byte integer; refuse an order that would overflow it
+  // rather than throwing an opaque DB error.
+  if (total > 2_147_483_647) {
+    return { ok: false, error: 'Đơn hàng quá lớn, vui lòng tách thành nhiều đơn nhỏ hơn.' };
+  }
 
   // Validate the delivery slot against the currently active ones.
   const activeSlots = await db.select({ label: deliverySlots.label }).from(deliverySlots)
@@ -101,30 +106,23 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
   const paymentMethod = meta.data.paymentMethod === 'bank' && info?.bankEnabled ? 'bank' : 'cod';
 
   const { customerEmail, ...rest } = meta.data;
-  let orderId = newOrderId();
+  const orderId = newOrderId();
   try {
     await db.transaction(async (tx) => {
-      // Retry once on the astronomically-unlikely id collision.
-      for (let attempt = 0; ; attempt++) {
-        try {
-          await tx.insert(orders).values({
-            // `...rest` first so the explicit, server-validated paymentMethod wins
-            // over the un-coerced one from the form.
-            ...rest,
-            id: orderId, total, paymentMethod,
-            customerEmail: customerEmail ?? null,
-            idempotencyKey,
-          });
-          break;
-        } catch (e) {
-          if (attempt === 0 && isUniqueViolation(e)) { orderId = newOrderId(); continue; }
-          throw e;
-        }
-      }
+      await tx.insert(orders).values({
+        // `...rest` first so the explicit, server-validated paymentMethod wins
+        // over the un-coerced one from the form.
+        ...rest,
+        id: orderId, total, paymentMethod,
+        customerEmail: customerEmail ?? null,
+        idempotencyKey,
+      });
       await tx.insert(orderItems).values(lines.map((l) => ({ orderId, ...l })));
     });
   } catch (e) {
-    // A racing duplicate idempotency key means the order already exists.
+    // A racing double-submit hits the idempotency_key unique constraint (the
+    // aborted-transaction error propagates as the original 23505). Recover to the
+    // already-placed order instead of showing a failure.
     if (isUniqueViolation(e) && idempotencyKey) {
       const [existing] = await db.select({ id: orders.id }).from(orders)
         .where(eq(orders.idempotencyKey, idempotencyKey)).limit(1);

@@ -73,13 +73,17 @@ export async function requestPasswordReset(
 
   const resetLink = `${canonicalOrigin(info.siteUrl)}/admin/reset-password?token=${rawToken}`;
 
-  const res = await sendTemplatedMail('forgot_password', user.email, {
+  // Fire-and-forget: awaiting the SMTP round-trip only for existing accounts
+  // would leak their existence via response timing, and a send error would be a
+  // positive-existence oracle. Log failures instead; the caller always gets the
+  // same generic response.
+  void sendTemplatedMail('forgot_password', user.email, {
     siteName: info.name,
     userName: user.name || user.email,
     resetLink,
     expiresInMinutes: String(TOKEN_TTL_MINUTES),
-  });
-  if (!res.ok) return { error: `Không gửi được email: ${res.error}` };
+  }).catch((e) => console.error('[password-reset] send failed:', e));
+
   return generic;
 }
 
@@ -92,6 +96,12 @@ export async function resetPassword(
     password: fd.get('password'),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+
+  // Defense-in-depth cap on token-guessing (tokens are 256-bit anyway).
+  if (!rateLimit(`reset-consume:ip:${await clientIp()}`, { limit: 10, windowMs: 15 * 60_000 }).ok) {
+    return { error: 'Thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.' };
+  }
+
   const tokenHash = hashToken(parsed.data.token);
   const now = new Date();
 
@@ -113,10 +123,12 @@ export async function resetPassword(
     await tx.update(users)
       .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, row.userId));
+    // Invalidate ALL of this user's outstanding tokens, not just the one used,
+    // so a second still-valid token can't reset the password again afterwards.
     await tx
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
-      .where(eq(passwordResetTokens.tokenHash, tokenHash));
+      .where(and(eq(passwordResetTokens.userId, row.userId), isNull(passwordResetTokens.usedAt)));
   });
 
   redirect('/admin/login?reset=1');

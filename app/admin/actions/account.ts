@@ -30,7 +30,11 @@ export async function changeOwnPassword(_prev: ChangePasswordState, fd: FormData
   if (parsed.data.current === parsed.data.next) return { error: 'Mật khẩu mới phải khác mật khẩu cũ.' };
 
   await db.update(users)
-    .set({ passwordHash: await hashPassword(parsed.data.next), updatedAt: new Date() })
+    .set({
+      passwordHash: await hashPassword(parsed.data.next),
+      passwordChangedAt: new Date(), // revoke every other existing session
+      updatedAt: new Date(),
+    })
     .where(eq(users.id, me.id));
   return { ok: true };
 }

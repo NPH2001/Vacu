@@ -53,10 +53,14 @@ function sanitizeBlock(entry: BlockEntry): BlockEntry {
   return { ...entry, data: { ...entry.data, html: sanitizeRichText(entry.data.html) } };
 }
 
-async function replaceBlocks(pageId: string, entries: BlockEntry[]) {
-  await db.delete(pageBlocks).where(eq(pageBlocks.pageId, pageId));
+// `exec` is the db or a transaction handle so the page row and its blocks are
+// written atomically (a block failure must not leave an orphan page holding the
+// slug).
+type Executor = typeof db;
+async function replaceBlocks(exec: Executor, pageId: string, entries: BlockEntry[]) {
+  await exec.delete(pageBlocks).where(eq(pageBlocks.pageId, pageId));
   if (entries.length === 0) return;
-  await db.insert(pageBlocks).values(entries.map((e, i) => {
+  await exec.insert(pageBlocks).values(entries.map((e, i) => {
     const { type, ...data } = sanitizeBlock(e).data;
     return { pageId, type, data, visible: e.visible, sortOrder: i * 10 };
   }));
@@ -74,8 +78,10 @@ export async function createPage(_prev: PageFormState, fd: FormData): Promise<Pa
   }
 
   try {
-    await db.insert(pages).values(r.meta);
-    await replaceBlocks(r.meta.id, r.blocks);
+    await db.transaction(async (tx) => {
+      await tx.insert(pages).values(r.meta);
+      await replaceBlocks(tx as unknown as Executor, r.meta.id, r.blocks);
+    });
   } catch (e) {
     if (isUniqueViolation(e)) return { error: 'Đường dẫn này đã có trang khác dùng — hãy đổi đường dẫn.' };
     return { error: friendlyWriteError(e) };
@@ -91,14 +97,16 @@ export async function updatePage(originalId: string, _prev: PageFormState, fd: F
   if (!r.ok) return { error: r.error };
 
   try {
-    await db.update(pages).set({
-      title: r.meta.title,
-      status: r.meta.status,
-      metaTitle: r.meta.metaTitle,
-      metaDescription: r.meta.metaDescription,
-      updatedAt: new Date(),
-    }).where(eq(pages.id, originalId));
-    await replaceBlocks(originalId, r.blocks);
+    await db.transaction(async (tx) => {
+      await tx.update(pages).set({
+        title: r.meta.title,
+        status: r.meta.status,
+        metaTitle: r.meta.metaTitle,
+        metaDescription: r.meta.metaDescription,
+        updatedAt: new Date(),
+      }).where(eq(pages.id, originalId));
+      await replaceBlocks(tx as unknown as Executor, originalId, r.blocks);
+    });
   } catch (e) {
     return { error: friendlyWriteError(e) };
   }
