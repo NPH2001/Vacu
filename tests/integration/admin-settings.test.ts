@@ -201,6 +201,23 @@ describe('updateSiteInfo', () => {
     expect((await updateSiteInfo(null, fd))?.error).toBeTruthy();
   });
 
+  it('rejects a script-injection gaMeasurementId (auto-XSS guard)', async () => {
+    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
+    const fd = baseForm();
+    fd.set('gaMeasurementId', "');alert(document.domain);//");
+    expect((await updateSiteInfo(null, fd))?.error).toBeTruthy();
+  });
+
+  it('rejects a javascript: social URL and footer URL (stored-XSS guard)', async () => {
+    const { updateSiteInfo } = await import('@/app/admin/actions/settings');
+    const f1 = baseForm();
+    f1.set('socialFacebook', 'javascript:alert(1)');
+    expect((await updateSiteInfo(null, f1))?.error).toBeTruthy();
+    const f2 = baseForm();
+    f2.set('footerBuiltByUrl', 'javascript:alert(1)');
+    expect((await updateSiteInfo(null, f2))?.error).toBeTruthy();
+  });
+
   it('rejects invalid email', async () => {
     const fd = baseForm();
     fd.set('email', 'not-an-email');

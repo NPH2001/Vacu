@@ -137,6 +137,18 @@ const optUrlOrPath = z
   .transform((v) => (v && v.length ? v : null))
   .nullable();
 
+// Same as optUrlOrPath but rejects dangerous schemes (javascript:/data:/…).
+// Use for any value that becomes an <a href> on a public page — React does NOT
+// strip javascript: hrefs, so these would be clickable stored XSS otherwise.
+const optSafeUrlOrPath = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(isSafeHref, 'Đường dẫn không hợp lệ.')
+  .optional()
+  .transform((v) => (v && v.length ? v : null))
+  .nullable();
+
 export const siteInfoSchema = z.object({
   name: z.string().min(1),
   shortName: z.string().min(1),
@@ -182,10 +194,10 @@ export const siteInfoSchema = z.object({
   sectionFaqSubtitle: z.string().min(1).max(300),
 
   footerTagline: z.string().min(1).max(200),
-  socialFacebook: optUrlOrPath,
-  socialInstagram: optUrlOrPath,
-  socialYoutube: optUrlOrPath,
-  socialTiktok: optUrlOrPath,
+  socialFacebook: optSafeUrlOrPath,
+  socialInstagram: optSafeUrlOrPath,
+  socialYoutube: optSafeUrlOrPath,
+  socialTiktok: optSafeUrlOrPath,
 
   contactDemoTitle: z.string().min(1).max(120),
   contactDemoText: z.string().min(1).max(800),
@@ -217,7 +229,12 @@ export const siteInfoSchema = z.object({
 
   // SEO & tracking — all optional (empty = feature off).
   siteUrl: z.string().trim().max(300).default(''),
-  gaMeasurementId: z.string().trim().max(40).default(''),
+  // Interpolated raw into the inline gtag() script, so it must be a real GA/GTM
+  // id — otherwise `');<script>…` would be auto-executing stored XSS for every
+  // visitor. Empty = tracking off.
+  gaMeasurementId: z.string().trim().max(40).default('')
+    .refine((v) => v === '' || /^(G|UA|GT|AW|DC)-[A-Z0-9-]+$/i.test(v),
+      'Mã theo dõi không hợp lệ (ví dụ: G-XXXXXXXXXX).'),
   verificationGoogle: z.string().trim().max(200).default(''),
   verificationBing: z.string().trim().max(200).default(''),
   verificationFacebook: z.string().trim().max(200).default(''),
@@ -236,7 +253,9 @@ export const siteInfoSchema = z.object({
   contactSubtitle: z.string().min(1).max(400),
   orderSuccessNote: z.string().min(1).max(400),
   footerBuiltByLabel: z.string().max(120).default(''),
-  footerBuiltByUrl: z.string().trim().max(300).default(''),
+  // Rendered as an <a href> in the footer — reject javascript:/data: schemes.
+  footerBuiltByUrl: z.string().trim().max(300).default('')
+    .refine(isSafeHref, 'Đường dẫn không hợp lệ.'),
 
   // Secondary UI copy — all required (a blank heading is worse than a default).
   sectionCategoriesLinkLabel: z.string().min(1).max(40),
