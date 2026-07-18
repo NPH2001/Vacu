@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { SiteInfoRow, MenuItemRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
+import PriorityNav from "./PriorityNav";
 
 export default function Navbar({ info, items }: { info: SiteInfoRow; items: MenuItemRow[] }) {
   const [open, setOpen] = useState(false);
@@ -12,38 +13,30 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-green-100">
       <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+        {/* min-w-0 lets a long site name shrink instead of shoving the cart and
+            CTA off the right edge. */}
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="flex items-center gap-2 text-xl md:text-2xl font-bold text-green-800 font-display"
+          className="flex items-center gap-2 text-xl md:text-2xl font-bold text-green-800 font-display min-w-0"
         >
           {info.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={info.logoUrl} alt={info.name} className="w-9 h-9 rounded-full object-cover" />
+            <img src={info.logoUrl} alt={info.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
           ) : (
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-700 text-white text-lg">🌱</span>
+            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-700 text-white text-lg shrink-0">🌱</span>
           )}
-          {info.name}
+          {/* Wraps at spaces like any name; wrap-anywhere only kicks in for a
+              name with no spaces, which would otherwise widen the bar. */}
+          <span className="wrap-anywhere">{info.name}</span>
         </Link>
 
-        {items.length > 0 && (
-          <ul className="hidden lg:flex gap-7 text-sm font-medium text-green-900/80">
-            {items.map((l) => (
-              <li key={l.id}>
-                <Link
-                  href={l.href}
-                  target={l.openInNewTab ? "_blank" : undefined}
-                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
-                  className="hover:text-green-700 transition"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* Priority nav: fits as many links as the space allows on one line and
+            folds the rest into a "Thêm ▾" dropdown, so the bar stays one row no
+            matter how many items the admin adds. */}
+        {items.length > 0 && <PriorityNav items={items} />}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setCartOpen(true)}
             aria-label="Giỏ hàng"
@@ -51,17 +44,22 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
           >
             🧺
             {count > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {count}
+              // A fixed 20px circle can't hold 3 digits — clamp rather than
+              // let the number burst out of its badge.
+              <span
+                title={`${count} món`}
+                className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center"
+              >
+                {count > 99 ? '99+' : count}
               </span>
             )}
           </button>
 
           <Link
             href="/products"
-            className="hidden md:inline-block bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition"
+            className="hidden md:inline-block bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition whitespace-nowrap"
           >
-            Mua nông sản →
+            {info.navbarCta}
           </Link>
 
           {items.length > 0 && (

@@ -3,10 +3,10 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { products } from '@/db/schema';
+import { products, productImages } from '@/db/schema';
 import { productSchema } from '@/lib/validators';
 import { requireAdmin } from '@/lib/session';
-import { deleteUpload, deleteUploadIfReplaced } from '@/lib/uploads';
+import { sanitizeRichText } from '@/lib/sanitize';
 
 export type ProductFormState = { error?: string } | null;
 
@@ -26,23 +26,42 @@ function parseForm(fd: FormData) {
     tags: rawTags ? rawTags.split(',').map((t) => t.trim()).filter(Boolean) : [],
     featured: fd.get('featured') === 'on',
     inStock: fd.get('inStock') === 'on',
+    gallery: fd.getAll('gallery').map(String).filter(Boolean),
   });
+}
+
+/**
+ * The gallery is submitted as a complete ordered list, so it is replaced
+ * wholesale rather than diffed — the form is the single source of truth for
+ * both membership and order.
+ */
+async function replaceGallery(productId: string, urls: string[]) {
+  await db.delete(productImages).where(eq(productImages.productId, productId));
+  if (urls.length === 0) return;
+  await db.insert(productImages).values(
+    urls.map((url, i) => ({ productId, url, sortOrder: i * 10 })),
+  );
 }
 
 export async function createProduct(_prev: ProductFormState, fd: FormData): Promise<ProductFormState> {
   await requireAdmin();
   const parsed = parseForm(fd);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+  const { gallery, ...data } = parsed.data;
   try {
     await db.insert(products).values({
-      ...parsed.data,
-      oldPrice: parsed.data.oldPrice ?? null,
-      farmerId: parsed.data.farmerId ?? null,
+      ...data,
+      // Editor HTML arrives as a plain form field and can be forged.
+      body: sanitizeRichText(data.body),
+      oldPrice: data.oldPrice ?? null,
+      farmerId: data.farmerId ?? null,
     });
+    await replaceGallery(data.id, gallery);
   } catch (e) {
     return { error: (e as Error).message };
   }
   revalidatePath('/admin/products');
+  revalidatePath('/products');
   redirect('/admin/products');
 }
 
@@ -50,27 +69,32 @@ export async function updateProduct(originalId: string, _prev: ProductFormState,
   await requireAdmin();
   const parsed = parseForm(fd);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
-  const [existing] = await db.select({ image: products.image }).from(products).where(eq(products.id, originalId)).limit(1);
+  const { gallery, ...data } = parsed.data;
   try {
     await db.update(products).set({
-      ...parsed.data,
-      oldPrice: parsed.data.oldPrice ?? null,
-      farmerId: parsed.data.farmerId ?? null,
+      ...data,
+      body: sanitizeRichText(data.body),
+      oldPrice: data.oldPrice ?? null,
+      farmerId: data.farmerId ?? null,
       updatedAt: new Date(),
     }).where(eq(products.id, originalId));
+    await replaceGallery(originalId, gallery);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  if (existing) await deleteUploadIfReplaced(existing.image, parsed.data.image);
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${originalId}`);
+  revalidatePath(`/products/${originalId}`);
   redirect('/admin/products');
 }
 
+// Images are intentionally left on disk here. Since the media library made
+// uploads re-usable, the same file may back other products, posts or pages, so
+// deleting it with one referrer would break the others. Unreferenced files are
+// removed from /admin/media, which checks usage first.
 export async function deleteProduct(id: string): Promise<void> {
   await requireAdmin();
-  const [removed] = await db.delete(products).where(eq(products.id, id)).returning({ image: products.image });
-  if (removed) await deleteUpload(removed.image);
+  await db.delete(products).where(eq(products.id, id));
   revalidatePath('/admin/products');
   redirect('/admin/products');
 }
@@ -79,8 +103,7 @@ export async function bulkDeleteProducts(fd: FormData): Promise<void> {
   await requireAdmin();
   const ids = fd.getAll('ids').map(String).filter(Boolean);
   if (ids.length === 0) { redirect('/admin/products'); }
-  const removed = await db.delete(products).where(inArray(products.id, ids)).returning({ image: products.image });
-  await Promise.allSettled(removed.map((r) => deleteUpload(r.image)));
+  await db.delete(products).where(inArray(products.id, ids));
   revalidatePath('/admin/products');
   redirect('/admin/products');
 }

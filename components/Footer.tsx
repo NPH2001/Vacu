@@ -101,17 +101,23 @@ export default function Footer({
       )}
       <div className="border-t border-green-900 py-5 text-center text-xs text-green-300/60 space-y-1">
         <div>© {new Date().getFullYear()} {info.name} — {info.footerTagline}</div>
-        <div>
-          Xây dựng bởi{' '}
-          <a
-            href="https://idflow.vn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-green-200 hover:text-white underline-offset-2 hover:underline"
-          >
-            idflow.vn
-          </a>
-        </div>
+        {info.footerBuiltByLabel && (
+          <div>
+            Xây dựng bởi{' '}
+            {info.footerBuiltByUrl ? (
+              <a
+                href={info.footerBuiltByUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-200 hover:text-white underline-offset-2 hover:underline"
+              >
+                {info.footerBuiltByLabel}
+              </a>
+            ) : (
+              <span className="text-green-200">{info.footerBuiltByLabel}</span>
+            )}
+          </div>
+        )}
       </div>
     </footer>
   );

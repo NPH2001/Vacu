@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import {
-  getAllCategories, getAllProducts, getProductsByCategoryDeep, getCategory,
+  getAllCategories, getAllProducts, getProductsByCategoryDeep, getCategory, getSiteInfo,
 } from '@/lib/data';
 import { getDescendantIds, getAncestors } from '@/lib/categories';
 import CategoryListing from '@/components/CategoryListing';
@@ -19,10 +19,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [activeCategory, allCategories, allProducts] = await Promise.all([
+  const [activeCategory, allCategories, allProducts, info] = await Promise.all([
     getCategory(slug),
     getAllCategories(),
     getAllProducts(),
+    getSiteInfo(),
   ]);
   if (!activeCategory) notFound();
 
@@ -39,6 +40,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       allProducts={allProducts}
       activeCategory={activeCategory}
       allCategories={allCategories}
+      badge={info.listingBadge}
     />
   );
 }

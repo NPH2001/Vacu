@@ -4,6 +4,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CartProvider } from '@/components/CartProvider';
 import CartDrawer from '@/components/CartDrawer';
+import ScrollToTop from '@/components/ScrollToTop';
+import Analytics from '@/components/Analytics';
 import { getSiteInfo, getAllCategories, getMenu } from '@/lib/data';
 
 export async function generateMetadata() {
@@ -23,7 +25,13 @@ export default async function PublicLayout({ children }: { children: React.React
       <Navbar info={info} items={headerMenu} />
       <main className="flex-1">{children}</main>
       <Footer info={info} categories={categories} quickLinks={footerMenu} />
-      <CartDrawer />
+      <CartDrawer
+        emptyTitle={info.cartEmptyTitle}
+        emptyText={info.cartEmptyText}
+        shippingLabel={info.shippingLabel}
+      />
+      <ScrollToTop />
+      <Analytics measurementId={info.gaMeasurementId} />
     </CartProvider>
   );
 }

@@ -2,17 +2,19 @@ import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vites
 import { mkdtempSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { bootPg, stopPg, type TestDb } from '../helpers/pg-test-base';
 
 let tmpUploads: string;
 let authed = false;
+let ctx: TestDb;
+// Set once the users row exists — uploads record who uploaded them.
+const USER = { id: '', email: 'a@b.com', name: 'A', role: 'admin' as const };
 
 vi.mock('@/lib/session', () => ({
-  getCurrentUser: async () => authed
-    ? { id: 'u1', email: 'a@b.com', name: 'A', role: 'admin' }
-    : null,
+  getCurrentUser: async () => (authed ? USER : null),
   requireAdmin: async () => {
     if (!authed) throw new Error('unauthorized');
-    return { id: 'u1', email: 'a@b.com', name: 'A', role: 'admin' };
+    return USER;
   },
   SESSION_COOKIE: 'ntx_session',
   setSessionCookie: async () => {},
@@ -21,14 +23,25 @@ vi.mock('@/lib/session', () => ({
   requireRole: async () => { throw new Error('n/a'); },
 }));
 
-beforeAll(() => {
+// The upload route now records every file in the media library, so this needs a
+// database as well as a scratch uploads directory.
+beforeAll(async () => {
   tmpUploads = mkdtempSync(path.join(tmpdir(), 'vacu-test-uploads-'));
   process.env.UPLOADS_DIR = tmpUploads;
-});
 
-afterAll(() => {
+  ctx = await bootPg();
+  const { db } = await import('@/db/client');
+  const { users } = await import('@/db/schema');
+  const [u] = await db.insert(users).values({
+    email: 'a@b.com', passwordHash: 'x', name: 'A', role: 'admin',
+  }).returning();
+  USER.id = u.id;
+}, 180_000);
+
+afterAll(async () => {
+  await stopPg(ctx);
   if (tmpUploads && existsSync(tmpUploads)) rmSync(tmpUploads, { recursive: true, force: true });
-});
+}, 60_000);
 
 beforeEach(() => { authed = false; });
 
@@ -66,6 +79,46 @@ describe('POST /api/upload', () => {
     // File exists under tmp uploads dir
     const rel = json.url.replace(/^\/uploads\//, '');
     expect(existsSync(path.join(tmpUploads, rel))).toBe(true);
+  });
+
+  it('records the upload in the media library so it can be re-used', async () => {
+    authed = true;
+    const { POST } = await import('@/app/api/upload/route');
+    const { db } = await import('@/db/client');
+    const { media } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const sharp = (await import('sharp')).default;
+    // Wider than the 1200px cap, to check the stored size describes the
+    // processed file rather than the original.
+    const big = await sharp({
+      create: { width: 2000, height: 1000, channels: 3, background: { r: 1, g: 2, b: 3 } },
+    }).png().toBuffer();
+
+    const res = await POST(buildRequest(new File([new Uint8Array(big)], 'rau tươi.png', { type: 'image/png' })));
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as { url: string };
+
+    const [row] = await db.select().from(media).where(eq(media.url, json.url));
+    expect(row).toBeDefined();
+    expect(row.filename).toBe('rau tươi.png');
+    expect(row.mime).toBe('image/webp');
+    expect(row.width).toBe(1200);
+    expect(row.height).toBe(600);
+    expect(row.size).toBeGreaterThan(0);
+    expect(row.uploadedBy).toBe(USER.id);
+  });
+
+  it('does not record a media row for a rejected upload', async () => {
+    authed = true;
+    const { POST } = await import('@/app/api/upload/route');
+    const { db } = await import('@/db/client');
+    const { media } = await import('@/db/schema');
+
+    const before = await db.select().from(media);
+    const res = await POST(buildRequest(new File(['hello'], 'bad.txt', { type: 'text/plain' })));
+    expect(res.status).toBe(400);
+    expect(await db.select().from(media)).toHaveLength(before.length);
   });
 
   it('rejects unsupported mime type', async () => {

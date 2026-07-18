@@ -60,6 +60,14 @@ export default async function PaymentMethodsAdminPage({
         </Link>
       </div>
 
+      <div className="admin-panel p-3.5 bg-amber-50 border-amber-200">
+        <p className="text-[12.5px] text-amber-900 leading-relaxed">
+          ⚠ Trang thanh toán hiện chỉ hỗ trợ hai mã: <b>cod</b> (tiền mặt) và <b>bank</b> (chuyển khoản QR).
+          Bạn có thể sửa <b>nhãn</b> và <b>gợi ý</b> của hai mã này để hiện ở trang thanh toán. Các mã khác
+          (momo, card…) sẽ không xuất hiện khi khách đặt hàng cho tới khi hệ thống hỗ trợ thêm.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput placeholder="Tìm phương thức…" />
         <FilterChips

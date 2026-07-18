@@ -11,16 +11,39 @@ export async function generateMetadata(): Promise<Metadata> {
   // in a CI/Docker context where DATABASE_URL points to nothing).
   try {
     const info = await getSiteInfo();
+
+    // Site verification: emit a meta tag only for platforms the admin filled in.
+    // Bing/Facebook use fixed meta names; Google has a first-class field.
+    const otherMeta: Record<string, string> = {};
+    if (info.verificationBing) otherMeta['msvalidate.01'] = info.verificationBing;
+    if (info.verificationFacebook) otherMeta['facebook-domain-verification'] = info.verificationFacebook;
+
     return {
+      // Absolute base for Open Graph / canonical URLs. Only set when a valid
+      // URL is configured — an invalid metadataBase throws during render.
+      metadataBase: safeUrl(info.siteUrl),
       title: info.name,
       description: info.description,
       icons: info.faviconUrl ? { icon: info.faviconUrl } : undefined,
+      verification: info.verificationGoogle
+        ? { google: info.verificationGoogle, ...(Object.keys(otherMeta).length ? { other: otherMeta } : {}) }
+        : (Object.keys(otherMeta).length ? { other: otherMeta } : undefined),
     };
   } catch {
     return {
       title: 'Vacu',
       description: 'Rau sạch từ nông trại tới bữa cơm gia đình',
     };
+  }
+}
+
+/** A malformed siteUrl must not crash every page's render. */
+function safeUrl(url: string): URL | undefined {
+  if (!url.trim()) return undefined;
+  try {
+    return new URL(url.trim());
+  } catch {
+    return undefined;
   }
 }
 

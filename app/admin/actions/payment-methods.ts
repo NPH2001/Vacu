@@ -14,6 +14,7 @@ function parseFor(fd: FormData, requireId: boolean) {
   return schema.safeParse({
     ...(requireId ? { id: fd.get('id') } : {}),
     label: fd.get('label'),
+    hint: fd.get('hint') ?? '',
     active: fd.get('active') ? true : false,
     sortOrder: fd.get('sortOrder') || 0,
   });
@@ -24,7 +25,7 @@ export async function createPaymentMethod(_p: PaymentMethodFormState, fd: FormDa
   const r = parseFor(fd, true);
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
-    await db.insert(paymentMethods).values(r.data as { id: string; label: string; active: boolean; sortOrder: number });
+    await db.insert(paymentMethods).values(r.data as { id: string; label: string; hint: string; active: boolean; sortOrder: number });
   } catch (e) { return { error: (e as Error).message }; }
   revalidatePath('/admin/payment-methods');
   revalidatePath('/checkout');

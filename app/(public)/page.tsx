@@ -1,7 +1,10 @@
 export const dynamic = 'force-dynamic';
 
+import { Fragment } from "react";
 import Link from "next/link";
+import { type HomeSectionKey } from "@/lib/home-sections";
 import {
+  getHomeSectionOrder,
   getAllCategories,
   getFeaturedProducts,
   getAllFarmers,
@@ -9,24 +12,39 @@ import {
   getSiteInfo,
   getAllFaqItems,
   getAllValueProps,
+  getActiveHeroSlides,
 } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 import FarmerCard from "@/components/FarmerCard";
+import HeroSlider from "@/components/HeroSlider";
+import HScroll from "@/components/HScroll";
+import SectionHeader from "@/components/SectionHeader";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
 import FAQ from "@/components/FAQ";
 import CategoryIcon from "@/components/CategoryIcon";
 
 export default async function HomePage() {
-  const [categories, featured, farmers, testimonials, info, faqRows, valueProps] = await Promise.all([
+  const [categories, featured, farmers, testimonials, info, faqRows, valueProps, order, heroSlides] = await Promise.all([
     getAllCategories(), getFeaturedProducts(8), getAllFarmers(),
     getAllTestimonials(), getSiteInfo(), getAllFaqItems(), getAllValueProps(),
+    getHomeSectionOrder(), getActiveHeroSlides(),
   ]);
   const topFarmers = farmers.slice(0, 3);
   const faqItems = faqRows.map((f) => ({ q: f.question, a: f.answer }));
+  const heroStats = [
+    { value: info.statFarmers, label: info.statFarmersLabel },
+    { value: info.statProducts, label: info.statProductsLabel },
+    { value: info.statCustomers, label: info.statCustomersLabel },
+    { value: info.statYears, label: info.statYearsLabel },
+  ];
 
-  return (
-    <div>
-      {/* Hero */}
+  // Each section keyed by name so the admin's stored order decides what renders
+  // and in what sequence (see /admin/home-sections).
+  const sections: Record<HomeSectionKey, React.ReactNode> = {
+    // Slider when the admin has added slides; otherwise the single static hero.
+    hero: heroSlides.length > 0 ? (
+      <HeroSlider slides={heroSlides} stats={heroStats} />
+    ) : (
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -64,87 +82,79 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-8 mt-12 pt-8 border-t border-white/20">
-              <Stat value={info.statFarmers} label="Nông dân" />
-              <Stat value={info.statProducts} label="Sản phẩm" />
-              <Stat value={info.statCustomers} label="Gia đình tin dùng" />
-              <Stat value={info.statYears} label="Năm kinh nghiệm" />
+              <Stat value={info.statFarmers} label={info.statFarmersLabel} />
+              <Stat value={info.statProducts} label={info.statProductsLabel} />
+              <Stat value={info.statCustomers} label={info.statCustomersLabel} />
+              <Stat value={info.statYears} label={info.statYearsLabel} />
             </div>
           </div>
         </div>
       </section>
+    ),
 
-      {/* Values */}
-      {valueProps.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 py-20">
-          <div className={`grid gap-6 ${valueProps.length >= 4 ? 'md:grid-cols-4' : valueProps.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-            {valueProps.map((v, i) => (
-              <AnimateOnScroll key={v.id} delay={i * 80}>
-                <div className="bg-white p-6 rounded-3xl border border-green-100 h-full">
-                  <div className="text-4xl mb-3">{v.icon}</div>
-                  <h3 className="font-bold text-green-950 font-display text-lg mb-1.5">{v.title}</h3>
-                  <p className="text-green-900/70 text-sm">{v.description}</p>
-                </div>
-              </AnimateOnScroll>
+    valueProps: valueProps.length > 0 && (
+      <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
+          <HScroll
+            itemClass="w-[72vw] max-w-[280px]"
+            gridClass={valueProps.length >= 4 ? 'md:grid-cols-4' : valueProps.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}
+          >
+            {valueProps.map((v) => (
+              <div key={v.id} className="bg-white p-6 rounded-3xl border border-green-100">
+                <div className="text-4xl mb-3">{v.icon}</div>
+                <h3 className="font-bold text-green-950 font-display text-lg mb-1.5 wrap-anywhere">{v.title}</h3>
+                <p className="text-green-900/70 text-sm wrap-anywhere">{v.description}</p>
+              </div>
             ))}
-          </div>
-        </section>
-      )}
-
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 pb-16">
-        <AnimateOnScroll>
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <div className="text-green-700 text-sm font-bold tracking-widest uppercase mb-2">{info.sectionCategoriesEyebrow}</div>
-              <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display">
-                {info.sectionCategoriesTitle}
-              </h2>
-            </div>
-            <Link href="/products" className="hidden md:block text-green-700 font-semibold hover:underline">Tất cả →</Link>
-          </div>
-        </AnimateOnScroll>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.filter((c) => !c.parentId).map((c, i) => (
-            <AnimateOnScroll key={c.id} delay={i * 50}>
-              <Link
-                href={`/danh-muc/${c.id}`}
-                className="block bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition h-full"
-              >
-                <CategoryIcon value={c.icon} alt={c.name} className="w-14 h-14 mx-auto mb-2 text-4xl rounded-xl" />
-                <div className="font-bold text-green-950">{c.name}</div>
-                <div className="text-xs text-green-800/60 mt-1 line-clamp-2">{c.description}</div>
-              </Link>
-            </AnimateOnScroll>
-          ))}
-        </div>
+        </HScroll>
       </section>
+    ),
 
-      {/* Featured products */}
-      <section className="bg-green-50/60 py-20 texture-paper">
+    categories: (
+      <section className="max-w-7xl mx-auto px-4 pb-12 md:pb-16">
+        <AnimateOnScroll>
+          <SectionHeader
+            eyebrow={info.sectionCategoriesEyebrow}
+            title={info.sectionCategoriesTitle}
+            href="/products"
+            linkLabel={info.sectionCategoriesLinkLabel}
+          />
+        </AnimateOnScroll>
+        <HScroll itemClass="w-[42vw] max-w-[190px]" gridClass="md:grid-cols-3 lg:grid-cols-6">
+          {categories.filter((c) => !c.parentId).map((c) => (
+            <Link
+              key={c.id}
+              href={`/danh-muc/${c.id}`}
+              className="flex flex-col h-full bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition"
+            >
+              <CategoryIcon value={c.icon} alt={c.name} className="w-14 h-14 mx-auto mb-2 text-4xl rounded-xl" />
+              <div className="font-bold text-green-950 wrap-anywhere">{c.name}</div>
+              <div className="text-xs text-green-800/60 mt-1 line-clamp-2">{c.description}</div>
+            </Link>
+          ))}
+        </HScroll>
+      </section>
+    ),
+
+    featured: (
+      <section className="bg-green-50/60 py-12 md:py-20 texture-paper">
         <div className="max-w-7xl mx-auto px-4">
           <AnimateOnScroll>
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <div className="text-green-700 text-sm font-bold tracking-widest uppercase mb-2">{info.sectionFeaturedEyebrow}</div>
-                <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display">
-                  {info.sectionFeaturedTitle}
-                </h2>
-              </div>
-              <Link href="/products" className="hidden md:block text-green-700 font-semibold hover:underline">Xem tất cả →</Link>
-            </div>
+            <SectionHeader
+              eyebrow={info.sectionFeaturedEyebrow}
+              title={info.sectionFeaturedTitle}
+              href="/products"
+              linkLabel={info.sectionFeaturedLinkLabel}
+            />
           </AnimateOnScroll>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {featured.map((p, i) => (
-              <AnimateOnScroll key={p.id} delay={i * 60}>
-                <ProductCard p={p} />
-              </AnimateOnScroll>
-            ))}
-          </div>
+          <HScroll gridClass="md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {featured.map((p) => <ProductCard key={p.id} p={p} />)}
+          </HScroll>
         </div>
       </section>
+    ),
 
-      {/* Subscription box */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
+    subBox: (
+      <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
         <div className="bg-gradient-to-br from-green-800 to-green-950 rounded-[2.5rem] overflow-hidden grid md:grid-cols-2">
           <div className="p-10 md:p-14 text-white flex flex-col justify-center">
             <div className="inline-block bg-amber-400 text-green-950 text-xs font-bold px-3 py-1 rounded-full w-fit mb-4">
@@ -178,68 +188,79 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+    ),
 
-      {/* Farmers */}
-      <section className="max-w-7xl mx-auto px-4 pb-20">
+    farmers: (
+      <section className="max-w-7xl mx-auto px-4 pb-12 md:pb-20">
         <AnimateOnScroll>
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <div className="text-green-700 text-sm font-bold tracking-widest uppercase mb-2">{info.sectionFarmersEyebrow}</div>
-              <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display">
-                {info.sectionFarmersTitle}
-              </h2>
-            </div>
-            <Link href="/farmers" className="hidden md:block text-green-700 font-semibold hover:underline">Toàn bộ →</Link>
-          </div>
+          <SectionHeader
+            eyebrow={info.sectionFarmersEyebrow}
+            title={info.sectionFarmersTitle}
+            href="/farmers"
+            linkLabel={info.sectionFarmersLinkLabel}
+          />
         </AnimateOnScroll>
-        <div className="grid md:grid-cols-3 gap-6">
-          {topFarmers.map((f, i) => (
-            <AnimateOnScroll key={f.id} delay={i * 80}>
-              <FarmerCard f={f} />
-            </AnimateOnScroll>
-          ))}
-        </div>
+        <HScroll itemClass="w-[82vw] max-w-[320px]" gridClass="md:grid-cols-3">
+          {topFarmers.map((f) => <FarmerCard key={f.id} f={f} />)}
+        </HScroll>
       </section>
+    ),
 
-      {/* Testimonials */}
-      <section className="bg-green-50/60 py-20 texture-paper">
+    testimonials: (
+      <section className="bg-green-50/60 py-12 md:py-20 texture-paper">
         <div className="max-w-7xl mx-auto px-4">
           <AnimateOnScroll>
             <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display text-center mb-12">
               {info.sectionTestimonialsTitle}
             </h2>
           </AnimateOnScroll>
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* A uniform grid: the old first-card-spans-two-columns trick only
+              lined up when there were exactly five testimonials, and the admin
+              can add any number. */}
+          <HScroll itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((t, i) => (
-              <AnimateOnScroll key={i} delay={i * 60} className={i === 0 ? "lg:col-span-2" : ""}>
-                <div className="bg-white rounded-2xl border border-green-100 p-5 h-full flex flex-col">
-                  <div className="text-amber-500 text-sm mb-2">★★★★★</div>
-                  <p className="text-green-900/80 flex-1 italic leading-relaxed">&ldquo;{t.content}&rdquo;</p>
+              <div key={i} className="bg-white rounded-2xl border border-green-100 p-5 h-full flex flex-col">
+                  <div className="text-amber-500 text-sm mb-2" aria-label={`${t.rating}/5 sao`}>
+                    {'★'.repeat(t.rating)}<span className="text-stone-300">{'★'.repeat(5 - t.rating)}</span>
+                  </div>
+                  <p className="text-green-900/80 flex-1 italic leading-relaxed wrap-anywhere">&ldquo;{t.content}&rdquo;</p>
                   <div className="flex items-center gap-3 mt-4 pt-4 border-t border-green-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover" />
-                    <div>
-                      <div className="font-bold text-green-950 text-sm">{t.name}</div>
-                      <div className="text-xs text-green-900/60">{t.role}</div>
+                    <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-green-950 text-sm truncate">{t.name}</div>
+                      <div className="text-xs text-green-900/60 truncate">{t.role}</div>
                     </div>
                   </div>
                 </div>
-              </AnimateOnScroll>
             ))}
-          </div>
+          </HScroll>
         </div>
       </section>
+    ),
 
-      {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 py-20">
+    faq: (
+      <section className="max-w-3xl mx-auto px-4 py-12 md:py-20">
         <AnimateOnScroll>
           <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display text-center mb-3">
             {info.sectionFaqTitle}
           </h2>
-          <p className="text-center text-green-900/70 mb-10">Còn thắc mắc? Gọi {info.phone} để trò chuyện với chúng tôi.</p>
+          {/* {phone} in the admin-editable subtitle is swapped for the live
+              phone, so the number stays current even after the text is edited. */}
+          <p className="text-center text-green-900/70 mb-10 wrap-anywhere">
+            {info.sectionFaqSubtitle.replaceAll('{phone}', info.phone)}
+          </p>
         </AnimateOnScroll>
         <FAQ items={faqItems} />
       </section>
+    ),
+  };
+
+  return (
+    <div>
+      {order
+        .filter((s) => s.visible)
+        .map((s) => <Fragment key={s.key}>{sections[s.key]}</Fragment>)}
     </div>
   );
 }

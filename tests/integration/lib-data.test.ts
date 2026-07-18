@@ -273,3 +273,80 @@ describe('getAllOrderStatuses / getOrderStatusMap', () => {
     expect(Object.keys(map).length).toBe(5);
   });
 });
+
+// ---------------- page-builder block sources ----------------
+describe('getProductsForBlock', () => {
+  const base = { source: 'featured' as const, categoryId: '', productIds: [] as string[], limit: 4 };
+
+  it('featured: returns only featured, capped at limit', async () => {
+    const { getProductsForBlock } = await import('@/lib/data');
+    const rows = await getProductsForBlock({ ...base, source: 'featured', limit: 4 });
+    expect(rows).toHaveLength(4);
+    expect(rows.every((r) => r.featured)).toBe(true);
+  });
+
+  it('category: returns only that category', async () => {
+    const { getProductsForBlock } = await import('@/lib/data');
+    const rows = await getProductsForBlock({ ...base, source: 'category', categoryId: 'c-z', limit: 10 });
+    expect(rows.map((r) => r.id)).toEqual(['p-gamma']);
+  });
+
+  it('category with empty categoryId → empty', async () => {
+    const { getProductsForBlock } = await import('@/lib/data');
+    expect(await getProductsForBlock({ ...base, source: 'category', categoryId: '' })).toEqual([]);
+  });
+
+  it('manual: returns picked ids in the given order, ignoring limit', async () => {
+    const { getProductsForBlock } = await import('@/lib/data');
+    const rows = await getProductsForBlock({
+      ...base, source: 'manual', productIds: ['p-gamma', 'p-alpha', 'p-beta'], limit: 1,
+    });
+    expect(rows.map((r) => r.id)).toEqual(['p-gamma', 'p-alpha', 'p-beta']);
+  });
+
+  it('manual with no ids → empty', async () => {
+    const { getProductsForBlock } = await import('@/lib/data');
+    expect(await getProductsForBlock({ ...base, source: 'manual', productIds: [] })).toEqual([]);
+  });
+
+  it('sale: returns only products whose oldPrice exceeds price', async () => {
+    const { db } = await import('@/db/client');
+    const { products } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    await db.insert(products).values({
+      id: 'p-sale', name: 'Sale item', categoryId: 'c-early', unit: 'kg',
+      price: 800, oldPrice: 1000, image: '/u/p', description: 'd',
+    });
+    const { getProductsForBlock } = await import('@/lib/data');
+    const rows = await getProductsForBlock({ ...base, source: 'sale', limit: 10 });
+    expect(rows.map((r) => r.id)).toContain('p-sale');
+    expect(rows.every((r) => r.oldPrice != null && r.oldPrice > r.price)).toBe(true);
+    await db.delete(products).where(eq(products.id, 'p-sale'));
+  });
+});
+
+describe('getCategoriesForBlock', () => {
+  it('all: root categories ordered by sortOrder then name', async () => {
+    const { getCategoriesForBlock } = await import('@/lib/data');
+    const rows = await getCategoriesForBlock({ source: 'all', categoryIds: [], limit: 0 });
+    const mine = rows.filter((c) => c.id.startsWith('c-'));
+    expect(mine.map((c) => c.id)).toEqual(['c-early', 'c-a', 'c-z']);
+  });
+
+  it('all with limit caps the count', async () => {
+    const { getCategoriesForBlock } = await import('@/lib/data');
+    const rows = await getCategoriesForBlock({ source: 'all', categoryIds: [], limit: 2 });
+    expect(rows).toHaveLength(2);
+  });
+
+  it('manual: returns picked ids in the given order', async () => {
+    const { getCategoriesForBlock } = await import('@/lib/data');
+    const rows = await getCategoriesForBlock({ source: 'manual', categoryIds: ['c-z', 'c-early'], limit: 0 });
+    expect(rows.map((c) => c.id)).toEqual(['c-z', 'c-early']);
+  });
+
+  it('manual with no ids → empty', async () => {
+    const { getCategoriesForBlock } = await import('@/lib/data');
+    expect(await getCategoriesForBlock({ source: 'manual', categoryIds: [], limit: 0 })).toEqual([]);
+  });
+});

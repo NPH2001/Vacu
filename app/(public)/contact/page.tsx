@@ -9,9 +9,9 @@ export default async function ContactPage() {
     <div className="max-w-6xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
         <div className="text-green-700 text-sm font-bold tracking-widest uppercase mb-2">Liên hệ</div>
-        <h1 className="text-4xl md:text-5xl font-bold text-green-950 font-display">Chúng tôi luôn lắng nghe</h1>
-        <p className="text-green-900/70 mt-3 max-w-xl mx-auto">
-          Có câu hỏi về sản phẩm? Muốn hợp tác? Hay chỉ muốn nói lời cảm ơn? Gửi cho chúng tôi vài dòng.
+        <h1 className="text-4xl md:text-5xl font-bold text-green-950 font-display wrap-anywhere">{info.contactTitle}</h1>
+        <p className="text-green-900/70 mt-3 max-w-xl mx-auto wrap-anywhere">
+          {info.contactSubtitle}
         </p>
       </div>
 

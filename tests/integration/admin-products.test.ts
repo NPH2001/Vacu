@@ -25,9 +25,6 @@ vi.mock('@/lib/uploads', async (importOriginal) => {
   return {
     ...orig,
     deleteUpload: async (url: string | null | undefined) => { uploadCalls.push({ fn: 'deleteUpload', args: [url] }); },
-    deleteUploadIfReplaced: async (prev: string | null | undefined, next: string | null | undefined) => {
-      uploadCalls.push({ fn: 'deleteUploadIfReplaced', args: [prev, next] });
-    },
   };
 });
 
@@ -86,6 +83,20 @@ describe('createProduct', () => {
     const { createProduct } = await import('@/app/admin/actions/products');
     const res = await createProduct(null, pForm({ ...valid(), id: 'BAD ID' }));
     expect(res?.error).toBeTruthy();
+  });
+
+  it('shows a friendly Vietnamese message when the image is missing', async () => {
+    const { createProduct } = await import('@/app/admin/actions/products');
+    // A real admin who forgets the cover image used to see the raw Zod string
+    // "Too small: expected string to have >=1 characters".
+    const res = await createProduct(null, pForm({ ...valid(), id: 'p-no-img', image: '' }));
+    expect(res?.error).toBe('Vui lòng chọn ảnh đại diện cho sản phẩm');
+  });
+
+  it('shows a friendly message when the category is missing', async () => {
+    const { createProduct } = await import('@/app/admin/actions/products');
+    const res = await createProduct(null, pForm({ ...valid(), id: 'p-no-cat', categoryId: '' }));
+    expect(res?.error).toBe('Vui lòng chọn danh mục');
   });
 
   it('rejects non-positive price (0 or negative)', async () => {
@@ -161,17 +172,86 @@ describe('createProduct', () => {
     expect(res?.error).toBeTruthy();
   });
 
-  it('rejects oversize body (>20000)', async () => {
+  // The cap went from 20k to 200k when the body moved from Markdown to
+  // rich-text HTML: the same article carries far more bytes once it is wrapped
+  // in tags.
+  it('rejects oversize body (>200000)', async () => {
     const { createProduct } = await import('@/app/admin/actions/products');
     const res = await createProduct(null, pForm({
-      ...valid(), id: 'p-bigbody', body: 'x'.repeat(20001),
+      ...valid(), id: 'p-bigbody', body: 'x'.repeat(200001),
     }));
     expect(res?.error).toBeTruthy();
+  });
+
+  it('sanitizes hostile HTML in the product body before storing it', async () => {
+    const { createProduct } = await import('@/app/admin/actions/products');
+    const { db } = await import('@/db/client');
+    const { products } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    await expect(createProduct(null, pForm({
+      ...valid(),
+      id: 'p-xss',
+      body: '<p onclick="evil()">Cà chua</p><script>alert(1)</script>',
+    }))).rejects.toThrow();
+
+    const [row] = await db.select().from(products).where(eq(products.id, 'p-xss'));
+    expect(row.body).not.toContain('<script');
+    expect(row.body).not.toContain('onclick');
+    expect(row.body).toContain('Cà chua');
+  });
+});
+
+describe('product gallery', () => {
+  it('stores gallery images in the submitted order and replaces them on update', async () => {
+    const { createProduct, updateProduct } = await import('@/app/admin/actions/products');
+    const { getProductGallery } = await import('@/lib/data');
+
+    const fd = pForm({ ...valid(), id: 'p-gallery' });
+    fd.append('gallery', '/uploads/a.webp');
+    fd.append('gallery', '/uploads/b.webp');
+    await expect(createProduct(null, fd)).rejects.toThrow();
+    expect(await getProductGallery('p-gallery')).toEqual(['/uploads/a.webp', '/uploads/b.webp']);
+
+    // Reordered + one swapped: the form submits the whole list, so the stored
+    // set is replaced rather than appended to.
+    const fd2 = pForm({ ...valid(), id: 'p-gallery' });
+    fd2.append('gallery', '/uploads/b.webp');
+    fd2.append('gallery', '/uploads/c.webp');
+    await expect(updateProduct('p-gallery', null, fd2)).rejects.toThrow();
+    expect(await getProductGallery('p-gallery')).toEqual(['/uploads/b.webp', '/uploads/c.webp']);
+  });
+
+  it('clearing the gallery removes every row', async () => {
+    const { createProduct, updateProduct } = await import('@/app/admin/actions/products');
+    const { getProductGallery } = await import('@/lib/data');
+
+    const fd = pForm({ ...valid(), id: 'p-gallery-clear' });
+    fd.append('gallery', '/uploads/x.webp');
+    await expect(createProduct(null, fd)).rejects.toThrow();
+    expect(await getProductGallery('p-gallery-clear')).toHaveLength(1);
+
+    await expect(updateProduct('p-gallery-clear', null, pForm({ ...valid(), id: 'p-gallery-clear' })))
+      .rejects.toThrow();
+    expect(await getProductGallery('p-gallery-clear')).toEqual([]);
+  });
+
+  it('deleting a product takes its gallery rows with it', async () => {
+    const { createProduct, deleteProduct } = await import('@/app/admin/actions/products');
+    const { getProductGallery } = await import('@/lib/data');
+
+    const fd = pForm({ ...valid(), id: 'p-gallery-del' });
+    fd.append('gallery', '/uploads/g1.webp');
+    await expect(createProduct(null, fd)).rejects.toThrow();
+
+    // ON DELETE CASCADE — otherwise the FK would block the delete outright.
+    await expect(deleteProduct('p-gallery-del')).rejects.toThrow();
+    expect(await getProductGallery('p-gallery-del')).toEqual([]);
   });
 });
 
 describe('updateProduct', () => {
-  it('updates product, triggers deleteUploadIfReplaced for image', async () => {
+  it('updates product and leaves the replaced image on disk', async () => {
     const { db } = await import('@/db/client');
     const { products } = await import('@/db/schema');
     const { eq } = await import('drizzle-orm');
@@ -191,14 +271,45 @@ describe('updateProduct', () => {
     expect(row.name).toBe('New name');
     expect(row.categoryId).toBe('root');
     expect(row.image).toBe('/uploads/new.webp');
-    expect(uploadCalls[0]).toEqual({ fn: 'deleteUploadIfReplaced', args: ['/uploads/old.webp', '/uploads/new.webp'] });
+    // Uploads are shared via the media library, so swapping one product's image
+    // must not delete a file other content may still reference.
+    expect(uploadCalls).toHaveLength(0);
   });
 
-  it('returns error when updating non-existent product (no op but no image call either)', async () => {
+  it('keeps an image alive that another product still uses', async () => {
+    const { db } = await import('@/db/client');
+    const { products } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // Both products point at the same library image.
+    await db.insert(products).values([
+      { id: 'shared-a', name: 'A', categoryId: 'leafy', unit: 'kg', price: 1000,
+        image: '/uploads/shared.webp', description: 'd' },
+      { id: 'shared-b', name: 'B', categoryId: 'leafy', unit: 'kg', price: 1000,
+        image: '/uploads/shared.webp', description: 'd' },
+    ]);
+
+    uploadCalls.length = 0;
+    const { updateProduct, deleteProduct } = await import('@/app/admin/actions/products');
+
+    // A moves to a different image, then B is deleted entirely.
+    await expect(updateProduct('shared-a', null, pForm({
+      id: 'shared-a', name: 'A', categoryId: 'leafy', unit: 'kg',
+      price: '1000', image: '/uploads/other.webp', description: 'd',
+    }))).rejects.toThrow();
+    await expect(deleteProduct('shared-b')).rejects.toThrow();
+
+    // Neither path may touch the file — /uploads/shared.webp could still back a
+    // post body or page block that these actions cannot see.
+    expect(uploadCalls).toHaveLength(0);
+    const [a] = await db.select().from(products).where(eq(products.id, 'shared-a'));
+    expect(a.image).toBe('/uploads/other.webp');
+  });
+
+  it('returns error when updating non-existent product', async () => {
     const { updateProduct } = await import('@/app/admin/actions/products');
     uploadCalls.length = 0;
     await expect(updateProduct('ghost-prod', null, pForm(valid()))).rejects.toThrow();
-    // existing lookup returns undefined; uploads helper not called
     expect(uploadCalls).toHaveLength(0);
   });
 
@@ -210,7 +321,7 @@ describe('updateProduct', () => {
 });
 
 describe('deleteProduct / bulkDeleteProducts', () => {
-  it('delete triggers deleteUpload on stored image', async () => {
+  it('delete removes the row without deleting the image file', async () => {
     const { db } = await import('@/db/client');
     const { products } = await import('@/db/schema');
     const { eq } = await import('drizzle-orm');
@@ -223,7 +334,7 @@ describe('deleteProduct / bulkDeleteProducts', () => {
     uploadCalls.length = 0;
     const { deleteProduct } = await import('@/app/admin/actions/products');
     await expect(deleteProduct('prod-del')).rejects.toThrow();
-    expect(uploadCalls[0]).toEqual({ fn: 'deleteUpload', args: ['/uploads/to-del.webp'] });
+    expect(uploadCalls).toHaveLength(0);
 
     const rows = await db.select().from(products).where(eq(products.id, 'prod-del'));
     expect(rows).toHaveLength(0);
@@ -236,7 +347,7 @@ describe('deleteProduct / bulkDeleteProducts', () => {
     expect(uploadCalls).toHaveLength(0);
   });
 
-  it('bulkDelete removes and calls deleteUpload for each image', async () => {
+  it('bulkDelete removes all rows without deleting image files', async () => {
     const { db } = await import('@/db/client');
     const { products } = await import('@/db/schema');
     const { inArray } = await import('drizzle-orm');
@@ -253,8 +364,7 @@ describe('deleteProduct / bulkDeleteProducts', () => {
     fd.append('ids', 'pb2');
     await expect(bulkDeleteProducts(fd)).rejects.toThrow();
 
-    const urls = uploadCalls.filter((c) => c.fn === 'deleteUpload').flatMap((c) => c.args);
-    expect(new Set(urls)).toEqual(new Set(['/u/i1.webp', '/u/i2.webp']));
+    expect(uploadCalls).toHaveLength(0);
 
     const rem = await db.select().from(products).where(inArray(products.id, ['pb1', 'pb2']));
     expect(rem).toHaveLength(0);

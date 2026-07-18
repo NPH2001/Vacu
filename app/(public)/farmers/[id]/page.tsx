@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getFarmer, getProductsByFarmer } from "@/lib/data";
+import { getFarmer, getProductsByFarmer, getSiteInfo } from "@/lib/data";
 import ProductCard from "@/components/ProductCard";
 
 type Params = Promise<{ id: string }>;
@@ -12,7 +12,7 @@ export default async function FarmerDetailPage({ params }: { params: Params }) {
   const f = await getFarmer(id);
   if (!f) notFound();
 
-  const products = await getProductsByFarmer(f.id);
+  const [products, info] = await Promise.all([getProductsByFarmer(f.id), getSiteInfo()]);
 
   return (
     <div>
@@ -26,7 +26,7 @@ export default async function FarmerDetailPage({ params }: { params: Params }) {
             <img src={f.avatar} alt={f.name} className="w-24 h-24 rounded-full border-4 border-white object-cover" />
             <div>
               <div className="text-amber-300 text-sm font-bold mb-1">📍 {f.location} · {f.years} năm</div>
-              <h1 className="text-3xl md:text-5xl font-bold font-display">{f.name}</h1>
+              <h1 className="text-3xl md:text-5xl font-bold font-display wrap-anywhere">{f.name}</h1>
               <div className="text-green-100/80 mt-1">{f.farm} — {f.specialty}</div>
             </div>
           </div>
@@ -42,15 +42,15 @@ export default async function FarmerDetailPage({ params }: { params: Params }) {
           ))}
         </div>
         <div className="prose prose-green max-w-none">
-          <h2 className="text-2xl md:text-3xl font-bold font-display text-green-950 mb-4">Câu chuyện nông trại</h2>
+          <h2 className="text-2xl md:text-3xl font-bold font-display text-green-950 mb-4 wrap-anywhere">{info.farmerStoryHeading}</h2>
           <p className="text-green-900/80 text-lg leading-relaxed">{f.story}</p>
         </div>
       </div>
 
       {products.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 py-10 pb-20">
-          <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-6">
-            Sản phẩm của {f.name.split(" ").slice(-2).join(" ")}
+          <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-6 wrap-anywhere">
+            {info.farmerProductsHeading.replaceAll('{name}', f.name.split(" ").slice(-2).join(" "))}
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map((p) => (

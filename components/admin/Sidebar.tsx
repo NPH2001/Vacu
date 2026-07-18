@@ -20,8 +20,19 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
+    title: 'Tin tức',
+    items: [
+      { href: '/admin/posts', label: 'Bài viết', icon: '✎' },
+      { href: '/admin/post-categories', label: 'Chuyên mục', icon: '⊞' },
+    ],
+  },
+  {
     title: 'Nội dung',
     items: [
+      { href: '/admin/hero-slides', label: 'Slider trang chủ', icon: '▭' },
+      { href: '/admin/home-sections', label: 'Bố cục trang chủ', icon: '⌂' },
+      { href: '/admin/pages', label: 'Trang', icon: '▤' },
+      { href: '/admin/media', label: 'Thư viện ảnh', icon: '▣' },
       { href: '/admin/farmers', label: 'Nông dân', icon: '❀' },
       { href: '/admin/testimonials', label: 'Cảm nhận', icon: '❝' },
       { href: '/admin/faq', label: 'Câu hỏi', icon: '?' },

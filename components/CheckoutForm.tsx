@@ -9,12 +9,18 @@ import { placeOrder } from "@/app/(public)/checkout/actions";
 import type { DeliverySlotRow } from "@/db/schema";
 
 type PaymentMethod = "cod" | "bank";
+type PaymentCopy = { label: string; hint: string };
 
 export default function CheckoutForm({
-  slots, bankEnabled,
+  slots, bankEnabled, payment, slotNote, shippingLabel, emptyCartTitle, emptyCartText,
 }: {
   slots: DeliverySlotRow[];
   bankEnabled: boolean;
+  payment: { cod: PaymentCopy; bank: PaymentCopy };
+  slotNote: string;
+  shippingLabel: string;
+  emptyCartTitle: string;
+  emptyCartText: string;
 }) {
   const router = useRouter();
   const { items, total, clear } = useCart();
@@ -58,8 +64,8 @@ export default function CheckoutForm({
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <div className="text-7xl mb-4">🧺</div>
-        <h1 className="text-3xl font-bold text-green-950 mb-3 font-display">Giỏ trống</h1>
-        <p className="text-green-900/70 mb-8">Hãy chọn vài loại rau tươi trước khi thanh toán.</p>
+        <h1 className="text-3xl font-bold text-green-950 mb-3 font-display wrap-anywhere">{emptyCartTitle}</h1>
+        <p className="text-green-900/70 mb-8 wrap-anywhere">{emptyCartText}</p>
         <Link
           href="/products"
           className="inline-block bg-green-700 hover:bg-green-800 text-white font-bold px-8 py-3.5 rounded-full"
@@ -98,7 +104,7 @@ export default function CheckoutForm({
                 ? <option>Chưa có khung giờ nào</option>
                 : slots.map((s) => <option key={s.id} value={s.label}>{s.label}</option>)}
             </select>
-            <p className="text-xs text-green-900/60 mt-1">Rau được thu hoạch buổi sáng cùng ngày giao.</p>
+            <p className="text-xs text-green-900/60 mt-1 wrap-anywhere">{slotNote}</p>
           </div>
 
           <div>
@@ -118,8 +124,8 @@ export default function CheckoutForm({
               <div className="grid sm:grid-cols-2 gap-2">
                 {(
                   [
-                    { id: "cod" as const,  label: "💵 Tiền mặt khi nhận",   hint: "Trả khi nông dân giao tới" },
-                    { id: "bank" as const, label: "🏦 Chuyển khoản (QR)",   hint: "Quét mã VietQR sau khi đặt" },
+                    { id: "cod" as const,  label: payment.cod.label,  hint: payment.cod.hint },
+                    { id: "bank" as const, label: payment.bank.label, hint: payment.bank.hint },
                   ]
                 ).map((p) => (
                   <label
@@ -145,8 +151,8 @@ export default function CheckoutForm({
               </div>
             </div>
           ) : (
-            <div className="bg-green-50/60 border border-green-100 rounded-xl p-4 text-sm text-green-900/80">
-              💵 <strong>Thanh toán khi nhận hàng (COD).</strong> Bạn chỉ cần chuẩn bị tiền mặt khi nông dân giao tới cửa.
+            <div className="bg-green-50/60 border border-green-100 rounded-xl p-4 text-sm text-green-900/80 wrap-anywhere">
+              <strong>{payment.cod.label}</strong> — {payment.cod.hint}
             </div>
           )}
 
@@ -182,7 +188,7 @@ export default function CheckoutForm({
             </div>
             <div className="flex justify-between">
               <span className="text-green-900/70">Giao hàng</span>
-              <span className="text-green-700 font-semibold">Miễn phí</span>
+              <span className="text-green-700 font-semibold wrap-anywhere">{shippingLabel}</span>
             </div>
             <div className="flex justify-between text-lg pt-3 border-t border-green-200 font-bold">
               <span className="text-green-950">Tổng</span>

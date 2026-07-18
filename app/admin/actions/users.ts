@@ -71,7 +71,8 @@ export async function updateUser(id: string, _p: UserFormState, fd: FormData): P
 
 export async function deleteUser(id: string): Promise<void> {
   const self = await requireRole('admin');
-  if (self.id === id) throw new Error('Không thể tự xóa tài khoản của chính mình.');
+  // Explained on the list page rather than thrown — see lib/admin/flash.ts.
+  if (self.id === id) redirect('/admin/users?loi=tu-xoa-tai-khoan');
   await db.delete(users).where(eq(users.id, id));
   revalidatePath('/admin/users');
   redirect('/admin/users');

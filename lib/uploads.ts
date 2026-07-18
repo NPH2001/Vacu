@@ -3,17 +3,26 @@ import { mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import sharp from 'sharp';
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL, ALLOWED_MIME } from './upload-limits';
 
-export const MAX_SIZE = 4 * 1024 * 1024;
-export const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
+// Single source shared with the browser — see lib/upload-limits.ts.
+export const MAX_SIZE = MAX_UPLOAD_BYTES;
+export const ALLOWED = new Set<string>(ALLOWED_MIME);
 
 export function validateUpload(mime: string, size: number) {
   if (!ALLOWED.has(mime)) throw new Error(`Mime không hỗ trợ: ${mime}`);
-  if (size > MAX_SIZE) throw new Error('File quá lớn (>4MB)');
+  if (size > MAX_SIZE) throw new Error(`File quá lớn (>${MAX_UPLOAD_LABEL})`);
 }
 
-export async function processImage(buf: Buffer): Promise<Buffer> {
-  return sharp(buf).rotate().resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+export type ProcessedImage = { buf: Buffer; width: number; height: number };
+
+export async function processImage(buf: Buffer): Promise<ProcessedImage> {
+  const { data, info } = await sharp(buf)
+    .rotate()
+    .resize({ width: 1200, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer({ resolveWithObject: true });
+  return { buf: data, width: info.width, height: info.height };
 }
 
 function uploadsDir(): string {
@@ -41,11 +50,4 @@ export async function deleteUpload(url: string | null | undefined): Promise<void
   await rm(abs, { force: true });
 }
 
-export async function deleteUploadIfReplaced(
-  oldUrl: string | null | undefined,
-  newUrl: string | null | undefined,
-): Promise<void> {
-  if (!oldUrl || oldUrl === newUrl) return;
-  await deleteUpload(oldUrl);
-}
 

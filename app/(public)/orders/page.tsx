@@ -40,7 +40,7 @@ export default async function OrdersPage({
           <div className="text-6xl mb-3">🌱</div>
           <h2 className="text-2xl md:text-3xl font-bold font-display mb-2">Đặt hàng thành công!</h2>
           <p className="text-green-100/90 mb-1">Mã đơn: <span className="font-bold">{newId}</span></p>
-          <p className="text-green-100/80 text-sm">Cô nông dân sẽ thu hoạch rau của bạn vào sáng mai.</p>
+          <p className="text-green-100/80 text-sm wrap-anywhere">{info.orderSuccessNote}</p>
         </div>
       )}
       <h1 className="text-3xl md:text-4xl font-bold text-green-950 font-display mb-2">Đơn hàng của tôi</h1>
@@ -49,8 +49,8 @@ export default async function OrdersPage({
       {myOrders.length === 0 ? (
         <div className="bg-white rounded-3xl border border-green-100 p-14 text-center">
           <div className="text-7xl mb-4">🧺</div>
-          <h2 className="text-2xl font-bold text-green-950 mb-2 font-display">Chưa có đơn nào</h2>
-          <p className="text-green-900/70 mb-6">Rau tươi đang chờ bạn trong vườn.</p>
+          <h2 className="text-2xl font-bold text-green-950 mb-2 font-display wrap-anywhere">{info.ordersEmptyTitle}</h2>
+          <p className="text-green-900/70 mb-6 wrap-anywhere">{info.ordersEmptyText}</p>
           <Link href="/products" className="inline-block bg-green-700 hover:bg-green-800 text-white font-bold px-8 py-3 rounded-full">
             Đi chợ nông trại →
           </Link>

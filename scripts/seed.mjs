@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import pg from 'pg';
+import { ensureAboutPage } from './ensure-about-page.mjs';
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error('DATABASE_URL is required'); process.exit(1); }
@@ -95,6 +96,7 @@ try {
       { label: 'Cá Tầm Nga',        href: '/products' },
       { label: 'Thực phẩm bổ sung', href: '/products' },
       { label: 'Câu chuyện',        href: '/about' },
+      { label: 'Tin tức',           href: '/tin-tuc' },
       { label: 'Liên hệ',           href: '/contact' },
     ];
     for (const [i, m] of HEADER.entries()) {
@@ -105,8 +107,35 @@ try {
       );
     }
   } else {
-    console.log('Menu items already present — skipping.');
+    // The block above is skipped once a menu exists, so an install that
+    // predates the news section would never get a link to it.
+    await client.query(
+      `INSERT INTO menu_items (location, label, href, sort_order)
+       SELECT 'header', 'Tin tức', '/tin-tuc',
+              COALESCE((SELECT max(sort_order) FROM menu_items WHERE location = 'header'), 0) + 10
+       WHERE NOT EXISTS (SELECT 1 FROM menu_items WHERE href = '/tin-tuc')`,
+    );
+    console.log('Menu items already present — ensured news link.');
   }
+
+  if ((await tableCount('post_categories')) === 0) {
+    console.log('Seeding post_categories…');
+    const CATS = [
+      ['tin-nong-trai', 'Tin nông trại', 'Chuyện mùa vụ, thu hoạch và bà con nông dân.', 10],
+      ['meo-nha-bep', 'Mẹo nhà bếp', 'Chọn, bảo quản và chế biến nông sản sao cho ngon.', 20],
+      ['cong-thuc', 'Công thức nấu ăn', 'Món ngon từ nông sản sạch theo mùa.', 30],
+    ];
+    for (const [id, name, description, sortOrder] of CATS) {
+      await client.query(
+        `INSERT INTO post_categories (id, name, description, sort_order)
+         VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+        [id, name, description, sortOrder],
+      );
+    }
+  }
+  // home_sections is intentionally not seeded: getHomeSectionOrder() backfills
+  // every known section as visible, so an empty table already renders the full
+  // homepage in DEFAULT_ORDER.
 
   console.log('Seeding site_info…');
   const i = infoJson;
@@ -142,6 +171,12 @@ try {
   );
 
   await client.query('COMMIT');
+
+  // site_info now exists, so /about can be built. Outside the transaction above
+  // because it is independently idempotent and must not roll back the seed if
+  // the page already exists.
+  await ensureAboutPage(client);
+
   console.log('Done.');
 } catch (err) {
   await client.query('ROLLBACK');

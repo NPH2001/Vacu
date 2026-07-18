@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -35,7 +36,7 @@ function LoginForm() {
         {pending ? 'Đang đăng nhập…' : 'Đăng nhập'}
       </button>
       <div className="text-center text-sm">
-        <a href="/admin/forgot-password" className="text-green-700 hover:underline">Quên mật khẩu?</a>
+        <Link href="/admin/forgot-password" className="text-green-700 hover:underline">Quên mật khẩu?</Link>
       </div>
     </form>
   );

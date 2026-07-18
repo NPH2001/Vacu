@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import FlashBanner from '@/components/admin/FlashBanner';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { users } from '@/db/schema';
@@ -49,6 +50,7 @@ export default async function UsersAdminPage({
 
   return (
     <div className="space-y-4">
+      <FlashBanner code={sp.loi} basePath={BASE} />
       <div className="flex items-center justify-between">
         <h1 className="admin-title text-[28px]">Tài khoản</h1>
         <Link
