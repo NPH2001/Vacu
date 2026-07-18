@@ -69,7 +69,7 @@ export default async function ValuePropsAdminPage({
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-start">
-                  <input type="checkbox" name="ids" value={r.id} className="mt-1" />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} className="mt-1" />
                   <div className="text-3xl">{r.icon}</div>
                   <div className="flex-1">
                     <Link href={`/admin/value-props/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.title}</Link>

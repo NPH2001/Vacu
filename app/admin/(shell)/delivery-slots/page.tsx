@@ -84,7 +84,7 @@ export default async function DeliverySlotsAdminPage({
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-center">
-                  <input type="checkbox" name="ids" value={r.id} />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} />
                   <div className="flex-1">
                     <Link href={`/admin/delivery-slots/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.label}</Link>
                     <div className="text-xs text-green-900/50 mt-0.5">Thứ tự: {r.sortOrder} · {r.active ? 'Đang bật' : 'Ẩn'}</div>

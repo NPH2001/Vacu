@@ -86,7 +86,7 @@ export default async function FarmersAdminPage({
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
-                    <td className="px-4 py-2"><input type="checkbox" name="ids" value={r.id} /></td>
+                    <td className="px-4 py-2"><input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} /></td>
                     <td className="px-4 py-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {r.avatar && <img src={r.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />}

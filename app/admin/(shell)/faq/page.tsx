@@ -69,7 +69,7 @@ export default async function FaqAdminPage({
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-start">
-                  <input type="checkbox" name="ids" value={r.id} className="mt-1" />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} className="mt-1" />
                   <div className="flex-1">
                     <Link href={`/admin/faq/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.question}</Link>
                     <div className="text-sm text-green-900/70 mt-1 line-clamp-2">{r.answer}</div>

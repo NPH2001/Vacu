@@ -127,7 +127,7 @@ export default async function ProductsAdminPage({
                 {rows.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      <input type="checkbox" name="ids" value={p.id} />
+                      <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={p.id} />
                     </td>
                     <td>
                       {p.image ? (

@@ -93,7 +93,7 @@ export default async function PaymentMethodsAdminPage({
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-center">
-                  <input type="checkbox" name="ids" value={r.id} />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} />
                   <div className="flex-1">
                     <Link href={`/admin/payment-methods/${r.id}`} className="font-semibold text-green-950 hover:underline">{r.label}</Link>
                     <div className="text-xs text-green-900/50 mt-0.5 font-mono">{r.id} · thứ tự: {r.sortOrder} · {r.active ? 'Đang bật' : 'Ẩn'}</div>

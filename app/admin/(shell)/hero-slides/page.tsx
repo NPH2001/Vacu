@@ -39,7 +39,7 @@ export default async function HeroSlidesAdminPage() {
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-4 flex gap-4 items-center">
-                  <input type="checkbox" name="ids" value={r.id} className="shrink-0" />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} className="shrink-0" />
                   <div className="w-24 h-14 rounded-lg overflow-hidden bg-stone-100 ring-1 ring-stone-200 shrink-0">
                     {r.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
