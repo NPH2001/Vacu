@@ -63,6 +63,15 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
 export default function Sidebar({ role }: { role: 'admin' | 'staff' }) {
   const pathname = usePathname() ?? '';
   const open = useMobileNav();
+  // Longest nav href that matches the current path — used so only the most
+  // specific item highlights (see isActive below).
+  const bestMatchLen = Math.max(
+    0,
+    ...SECTIONS.flatMap((s) => s.items).map((it) =>
+      (it.href === '/admin' ? pathname === '/admin' : pathname === it.href || pathname.startsWith(it.href + '/'))
+        ? it.href.length
+        : -1),
+  );
 
   // Close drawer when route changes (mobile UX).
   useEffect(() => {
@@ -132,10 +141,12 @@ export default function Sidebar({ role }: { role: 'admin' | 'staff' }) {
                 <div className="admin-nav-section">{section.title}</div>
                 <div className="space-y-0.5">
                   {items.map((item) => {
-                    const isActive =
-                      item.href === '/admin'
-                        ? pathname === '/admin'
-                        : pathname === item.href || pathname.startsWith(item.href + '/');
+                    // Only the longest matching href is active, so /admin/pages
+                    // doesn't also light up on /admin/pages/home.
+                    const matches = item.href === '/admin'
+                      ? pathname === '/admin'
+                      : pathname === item.href || pathname.startsWith(item.href + '/');
+                    const isActive = matches && item.href.length === bestMatchLen;
                     return (
                       <Link
                         key={item.href}
