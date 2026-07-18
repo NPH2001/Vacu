@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import type { MediaRow } from '@/db/schema';
+import { useModalA11y } from '@/components/useModalA11y';
 import { deleteMedia, updateMediaAlt, getMediaUsage } from '@/app/admin/actions/media';
 import type { MediaUsage } from '@/lib/media';
 import { uploadImage } from '@/lib/uploads-client';
@@ -116,6 +117,10 @@ function MediaDetail({
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  // Always mounted-when-open (the parent renders it only when a row is active),
+  // so pass open=true: focus into the dialog, trap Tab, Escape closes, restore
+  // focus on close. This dialog previously had no keyboard handling at all.
+  const panelRef = useModalA11y<HTMLDivElement>(true, onClose);
 
   function save() {
     startTransition(async () => {
@@ -144,7 +149,7 @@ function MediaDetail({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
-      <div role="dialog" aria-modal="true" aria-label={row.filename}
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={row.filename}
         className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto">
         <div className="flex items-center px-5 py-4 border-b border-stone-200">
           <h2 className="font-display text-lg text-stone-900 flex-1 truncate">{row.filename}</h2>

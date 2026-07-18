@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useModalA11y } from '@/components/useModalA11y';
 import type { MediaRow } from '@/db/schema';
 import { uploadImage } from '@/lib/uploads-client';
 import { ACCEPT_ATTR, MAX_UPLOAD_LABEL } from '@/lib/upload-limits';
@@ -54,12 +55,9 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
     onClose();
   }, [onClose]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, close]);
+  // Focus moves into the dialog on open, Tab is trapped, Escape closes, and
+  // focus returns to the trigger on close.
+  const panelRef = useModalA11y<HTMLDivElement>(open, close);
 
   async function uploadFiles(files: File[]) {
     const images = files.filter((f) => f.type.startsWith('image/'));
@@ -108,6 +106,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" onClick={close} aria-hidden />
 
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}

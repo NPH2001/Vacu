@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
@@ -10,6 +10,17 @@ import type { DeliverySlotRow } from "@/db/schema";
 
 type PaymentMethod = "cod" | "bank";
 type PaymentCopy = { label: string; hint: string };
+
+// crypto.randomUUID exists only in a secure context; on a plain-http LAN/staging
+// deploy it throws, which would white-screen the whole checkout. Fall back to a
+// good-enough random key there — it only has to be unique per submission.
+function newIdempotencyKey(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
 
 export default function CheckoutForm({
   slots, bankEnabled, payment, slotNote, shippingLabel, emptyCartTitle, emptyCartText,
@@ -27,8 +38,9 @@ export default function CheckoutForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // Stable across retries of the same submission so a double-fire/network retry
-  // resolves to one order; reset after a successful checkout.
-  const idempotencyKey = useRef<string>(crypto.randomUUID());
+  // resolves to one order; reset after a successful checkout. Lazy initializer
+  // so the key is minted exactly once, not on every render.
+  const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
   const [form, setForm] = useState<{
     name: string; phone: string; email: string; address: string; note: string; slot: string; payment: PaymentMethod;
   }>({
@@ -54,11 +66,11 @@ export default function CheckoutForm({
     if (form.note) fd.set('note', form.note);
     // Only id + qty are trusted; the server rebuilds price/name/stock from the DB.
     fd.set('cart', JSON.stringify(items.map((i) => ({ id: i.id, qty: i.qty }))));
-    fd.set('idempotencyKey', idempotencyKey.current);
+    fd.set('idempotencyKey', idempotencyKey);
     startTransition(async () => {
       const res = await placeOrder(fd);
       if (!res.ok) { setError(res.error); return; }
-      idempotencyKey.current = crypto.randomUUID(); // next order gets a fresh key
+      setIdempotencyKey(newIdempotencyKey()); // next order gets a fresh key
       clear();
       router.push(`/orders?new=${res.orderId}`);
     });

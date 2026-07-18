@@ -67,6 +67,10 @@ export default function PostForm({
               defaultValue={d.contentHtml ?? ''}
               placeholder="Viết nội dung bài viết ở đây… Bạn có thể dán từ Word."
               minHeight={420}
+              // The editor writes its hidden input programmatically (no bubbling
+              // change event), so a body-only edit would otherwise never mark the
+              // form dirty and the unsaved-work guard would miss it.
+              onChange={() => setDirty(true)}
             />
           </div>
 
