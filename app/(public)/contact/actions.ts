@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { siteInfo } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendMail } from '@/lib/mail';
+import { formatDateTime } from '@/lib/format';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 const schema = z.object({
@@ -52,7 +53,7 @@ export async function submitContact(fd: FormData): Promise<ContactSubmitResult> 
       <p><strong>Điện thoại:</strong> ${esc(phone)}</p>
       <hr />
       <p style="white-space:pre-wrap">${esc(message)}</p>
-      <p style="color:#688;font-size:12px;margin-top:30px">Gửi lúc ${new Date().toLocaleString('vi-VN')}</p>
+      <p style="color:#688;font-size:12px;margin-top:30px">Gửi lúc ${formatDateTime(new Date())}</p>
     </div>
   `;
 

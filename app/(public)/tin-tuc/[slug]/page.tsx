@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { getPublishedPost, getAnyPost, getRelatedPosts, getLatestPosts, getPostCategoriesWithCounts } from '@/lib/posts';
 import { getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
+import { formatDateLong as formatDate } from '@/lib/format';
 import { getCurrentUser } from '@/lib/session';
 import { articleLd } from '@/lib/jsonld';
 import JsonLd from '@/components/JsonLd';
@@ -60,10 +61,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-function formatDate(d: Date | null): string {
-  if (!d) return '';
-  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: 'long', year: 'numeric' });
-}
 
 /** Rough reading time: strip tags, count words, ~200 wpm, floor of 1. */
 function readingMinutes(html: string): number {
