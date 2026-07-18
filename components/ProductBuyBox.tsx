@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ProductRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
+import { MAX_LINE_QTY } from "@/lib/cart-limits";
 
 export default function ProductBuyBox({ p }: { p: ProductRow }) {
   const { add, setOpen } = useCart();
@@ -25,7 +26,7 @@ export default function ProductBuyBox({ p }: { p: ProductRow }) {
         </button>
         <span className="w-10 text-center font-bold text-green-950">{qty}</span>
         <button
-          onClick={() => setQty(qty + 1)}
+          onClick={() => setQty(Math.min(MAX_LINE_QTY, qty + 1))}
           className="w-10 h-10 text-green-800 font-bold hover:bg-green-50 rounded-r-full"
           aria-label="Tăng"
         >

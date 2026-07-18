@@ -70,7 +70,13 @@ export const productSchema = z.object({
   inStock: z.coerce.boolean().default(true),
   // Extra gallery images; products.image remains the primary thumbnail.
   gallery: z.array(url).max(12).default([]),
-});
+}).refine(
+  // oldPrice is the struck-through "was" price, so it must be ABOVE the live
+  // price — otherwise the card shows a crossed-out number lower than what's
+  // charged, reading as if the price went up.
+  (d) => d.oldPrice == null || d.oldPrice > d.price,
+  { message: 'Giá gốc phải lớn hơn giá bán.', path: ['oldPrice'] },
+);
 
 export const postCategorySchema = z.object({
   id: slug,

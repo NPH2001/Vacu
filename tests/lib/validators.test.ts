@@ -8,7 +8,26 @@ import {
   valuePropSchema,
   paymentMethodSchema,
   orderStatusSchema,
+  productSchema,
 } from '@/lib/validators';
+
+describe('productSchema oldPrice refine', () => {
+  const base = {
+    id: 'ca-chua', name: 'Cà chua', categoryId: 'rau', unit: 'kg',
+    price: 30000, image: '/u/x.webp', description: 'ngon',
+  };
+  it('accepts oldPrice strictly above price (a real discount)', () => {
+    const r = productSchema.safeParse({ ...base, oldPrice: 40000 });
+    expect(r.success).toBe(true);
+  });
+  it('accepts no oldPrice', () => {
+    expect(productSchema.safeParse(base).success).toBe(true);
+  });
+  it('rejects oldPrice <= price (nonsense strikethrough)', () => {
+    expect(productSchema.safeParse({ ...base, oldPrice: 30000 }).success).toBe(false);
+    expect(productSchema.safeParse({ ...base, oldPrice: 20000 }).success).toBe(false);
+  });
+});
 
 describe('placeOrderSchema', () => {
   const base = {
