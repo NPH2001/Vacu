@@ -11,13 +11,15 @@ function uploadsDir(): string {
   return process.env.UPLOADS_DIR || './public/uploads';
 }
 
+// Raster image types only. `svg` is deliberately absent: an SVG served inline as
+// image/svg+xml on the app origin is a stored-XSS vector, and the upload pipeline
+// only ever writes .webp, so any stray file falls through to octet-stream below.
 const MIME: Record<string, string> = {
   webp: 'image/webp',
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
   png: 'image/png',
   gif: 'image/gif',
-  svg: 'image/svg+xml',
   avif: 'image/avif',
 };
 
@@ -46,6 +48,10 @@ export async function GET(
         'Content-Type': MIME[ext] ?? 'application/octet-stream',
         'Content-Length': String(s.size),
         'Cache-Control': 'public, max-age=31536000, immutable',
+        // Stop the browser from MIME-sniffing an octet-stream body as HTML/JS —
+        // defence in depth so a non-image file in the dir can't run as XSS on
+        // the app origin.
+        'X-Content-Type-Options': 'nosniff',
       },
     });
   } catch {

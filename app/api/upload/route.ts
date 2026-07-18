@@ -14,6 +14,16 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: 'Bạn tải ảnh quá nhanh, vui lòng thử lại sau giây lát.' }, { status: 429 });
   }
 
+  // Reject oversized bodies from the Content-Length header BEFORE formData()
+  // buffers the whole request into memory — otherwise a GB-sized multipart body
+  // is fully read before the size check below can run (Next route handlers have
+  // no default body limit). The 1.5× allowance covers multipart framing so a
+  // legitimate near-4MB file isn't rejected on overhead alone.
+  const declaredLen = Number(req.headers.get('content-length') ?? 0);
+  if (declaredLen > MAX_UPLOAD_BYTES * 1.5) {
+    return NextResponse.json({ error: `File quá lớn (>${MAX_UPLOAD_LABEL})` }, { status: 413 });
+  }
+
   const form = await req.formData();
   const file = form.get('file');
   if (!(file instanceof File)) return NextResponse.json({ error: 'Thiếu file' }, { status: 400 });

@@ -28,7 +28,10 @@ export default async function PublicLayout({ children }: { children: React.React
     <CartProvider>
       <JsonLd data={organizationLd(info)} />
       <a href="#main" className="skip-link">Bỏ qua tới nội dung</a>
-      <Navbar info={info} items={headerMenu} />
+      {/* Navbar is a Client Component: pass only the fields it renders, never the
+          whole row, or secrets in `info` (smtpPass, …) end up in the RSC payload
+          embedded in the public HTML. */}
+      <Navbar info={{ logoUrl: info.logoUrl, name: info.name, navbarCta: info.navbarCta }} items={headerMenu} />
       <main id="main" className="flex-1">{children}</main>
       <Footer info={info} categories={categories} quickLinks={footerMenu} />
       <CartDrawer
