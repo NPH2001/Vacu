@@ -58,7 +58,9 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
     paymentMethod: formData.get('paymentMethod') || 'cod',
     customerEmail: formData.get('customerEmail') || undefined,
   });
-  if (!meta.success) return { ok: false, error: 'Thông tin không hợp lệ' };
+  // Surface the specific field message (e.g. "Số điện thoại không hợp lệ…")
+  // instead of a blanket error, so the shopper knows what to fix.
+  if (!meta.success) return { ok: false, error: meta.error.issues[0]?.message ?? 'Thông tin không hợp lệ' };
 
   // Idempotency: a retried submit with the same key returns the existing order.
   const idempotencyKey = String(formData.get('idempotencyKey') ?? '').slice(0, 100) || null;

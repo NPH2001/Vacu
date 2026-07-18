@@ -106,7 +106,8 @@ export default function CheckoutForm({
 
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Họ và tên" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Nguyễn Văn A" autoComplete="name" required />
-            <Field label="Số điện thoại" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="0912 xxx xxx" type="tel" autoComplete="tel" required />
+            <Field label="Số điện thoại" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="0912 xxx xxx" type="tel" autoComplete="tel"
+              pattern="[0-9+()\s.\-]{9,}" title="Nhập 9–11 chữ số (có thể kèm dấu cách/dấu gạch)." required />
           </div>
           <Field label="Email (để nhận xác nhận đơn)" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="ban@example.com" type="email" autoComplete="email" />
           <Field label="Địa chỉ giao hàng" value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="Số nhà, đường, phường, quận, thành phố" autoComplete="street-address" required />
@@ -232,10 +233,10 @@ export default function CheckoutForm({
 }
 
 function Field({
-  label, value, onChange, placeholder, type = "text", required = false, autoComplete,
+  label, value, onChange, placeholder, type = "text", required = false, autoComplete, pattern, title,
 }: {
   label: string; value: string; onChange: (v: string) => void; placeholder: string;
-  type?: string; required?: boolean; autoComplete?: string;
+  type?: string; required?: boolean; autoComplete?: string; pattern?: string; title?: string;
 }) {
   // Programmatic label↔input association so a screen reader announces the field
   // name (placeholders are not accessible names and vanish on input).
@@ -250,6 +251,8 @@ function Field({
         type={type}
         inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
         autoComplete={autoComplete}
+        pattern={pattern}
+        title={title}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
