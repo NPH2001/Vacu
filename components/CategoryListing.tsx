@@ -12,6 +12,8 @@ export default function CategoryListing({
   rootTitle = 'Toàn bộ nông sản',
   rootSubtitle = 'Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.',
   badge = 'Chợ nông trại',
+  filters,
+  emptyText = 'Chưa có sản phẩm trong danh mục này.',
 }: {
   topLevel: CategoryRow[];
   ancestors: CategoryRow[];
@@ -24,6 +26,9 @@ export default function CategoryListing({
   rootTitle?: string;
   rootSubtitle?: string;
   badge?: string;
+  // Search/sort/in-stock controls, rendered above the grid (root view only).
+  filters?: React.ReactNode;
+  emptyText?: string;
 }) {
   const activeBranchIds = activeCategory
     ? new Set([activeCategory.id, ...ancestors.map((a) => a.id)])
@@ -149,9 +154,11 @@ export default function CategoryListing({
           </div>
         )}
 
+        {filters}
+
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-green-900/60">
-            Chưa có sản phẩm trong danh mục này.{' '}
+            {emptyText}{' '}
             <Link href="/products" className="text-green-700 font-semibold underline">Xem tất cả</Link>
           </div>
         ) : (
