@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { emailTemplates, siteInfo } from '@/db/schema';
 import EmailTemplateForm from '@/components/admin/EmailTemplateForm';
 import { updateEmailTemplate } from '@/app/admin/actions/email-templates';
+import { requireRole } from '@/lib/session';
 
 const VARS: Record<string, Array<{ name: string; hint: string }>> = {
   forgot_password: [
@@ -113,6 +114,7 @@ function buildSampleVars(key: string, info: { name: string; email: string; phone
 }
 
 export default async function EditEmailTemplatePage({ params }: { params: Promise<{ key: string }> }) {
+  await requireRole('admin'); // transactional/security email content — admin-only
   const { key } = await params;
   const [[row], [info]] = await Promise.all([
     db.select().from(emailTemplates).where(eq(emailTemplates.key, key)).limit(1),

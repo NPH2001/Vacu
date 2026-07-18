@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne, count } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { users } from '@/db/schema';
 import { userCreateSchema, userUpdateSchema } from '@/lib/validators';
@@ -10,6 +10,19 @@ import { requireRole } from '@/lib/session';
 import { hashPassword } from '@/lib/auth';
 
 export type UserFormState = { error?: string } | null;
+
+/**
+ * True if `id` is currently an admin and no OTHER admin exists — i.e. removing
+ * or demoting them would leave the site with zero admins and no in-app way to
+ * manage users/settings/theme. Both delete and role-change go through this.
+ */
+async function isLastAdmin(id: string): Promise<boolean> {
+  const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+  if (target?.role !== 'admin') return false;
+  const [{ others }] = await db.select({ others: count() }).from(users)
+    .where(and(eq(users.role, 'admin'), ne(users.id, id)));
+  return others === 0;
+}
 
 // pg error 23505 = unique_violation. Drizzle v4 wraps the pg error, so
 // check both code and message on the error and its cause.
@@ -51,6 +64,12 @@ export async function updateUser(id: string, _p: UserFormState, fd: FormData): P
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
 
+  // Don't let the only admin demote themselves (or the last admin be demoted)
+  // to staff — that would lock everyone out of user/settings/theme management.
+  if (parsed.data.role !== 'admin' && await isLastAdmin(id)) {
+    return { error: 'Không thể hạ quyền quản trị viên (admin) duy nhất còn lại. Hãy nâng quyền một admin khác trước.' };
+  }
+
   const patch: Record<string, unknown> = {
     email: parsed.data.email,
     name: parsed.data.name,
@@ -75,6 +94,7 @@ export async function deleteUser(id: string): Promise<void> {
   const self = await requireRole('admin');
   // Explained on the list page rather than thrown — see lib/admin/flash.ts.
   if (self.id === id) redirect('/admin/users?loi=tu-xoa-tai-khoan');
+  if (await isLastAdmin(id)) redirect('/admin/users?loi=xoa-admin-cuoi');
   await db.delete(users).where(eq(users.id, id));
   revalidatePath('/admin/users');
   redirect('/admin/users');

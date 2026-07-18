@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { emailTemplates } from '@/db/schema';
 import { emailTemplateSchema } from '@/lib/validators';
-import { requireAdmin } from '@/lib/session';
+import { requireRole } from '@/lib/session';
 
 export type EmailTemplateFormState = { error?: string } | null;
 
@@ -15,7 +15,10 @@ export async function updateEmailTemplate(
   _p: EmailTemplateFormState,
   fd: FormData,
 ): Promise<EmailTemplateFormState> {
-  await requireAdmin();
+  // Admin-only: these are transactional/security emails (forgot_password,
+  // payment_confirmed). Staff editing the surrounding HTML could inject
+  // phishing content into mail the server sends. Config-tier, like settings.
+  await requireRole('admin');
   const r = emailTemplateSchema.safeParse({
     name: fd.get('name'),
     description: fd.get('description') ?? '',
