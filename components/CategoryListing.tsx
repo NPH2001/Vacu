@@ -40,7 +40,7 @@ export default function CategoryListing({
   const directChildren = activeCategory
     ? allCategories
         .filter((c) => c.parentId === activeCategory.id)
-        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'vi'))
     : [];
   const contextPills: CategoryRow[] = activeCategory ? directChildren : topLevel;
   const showPillBar = contextPills.length > 0;

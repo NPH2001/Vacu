@@ -30,9 +30,12 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
+    # alpine defaults to UTC and has no tzdata, so every server-rendered
+    # toLocale*('vi-VN') date would be an hour/day off. Pin to Vietnam time.
+    TZ=Asia/Ho_Chi_Minh \
     UPLOADS_DIR=/app/public/uploads
 
-RUN apk add --no-cache libc6-compat \
+RUN apk add --no-cache libc6-compat tzdata \
  && addgroup -g 1001 -S nodejs \
  && adduser -S nextjs -u 1001 -G nodejs
 

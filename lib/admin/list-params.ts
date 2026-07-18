@@ -1,5 +1,6 @@
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { and, or, asc, desc, eq, ilike, sql } from 'drizzle-orm';
+import { escapeLike } from '@/lib/sql-like';
 
 export type FilterDef =
   | { type: 'equals'; column: AnyColumn; values?: readonly string[] }
@@ -91,7 +92,9 @@ export function buildWhere(parsed: ParsedListParams, schema: ListSchema): SQL | 
   const clauses: SQL[] = [];
 
   if (parsed.q && schema.searchFields && schema.searchFields.length > 0) {
-    const like = `%${parsed.q}%`;
+    // Escape LIKE metacharacters so a term with % or _ doesn't act as a
+    // wildcard — matching what lib/posts.ts and lib/media.ts already do.
+    const like = `%${escapeLike(parsed.q)}%`;
     const searchClauses = schema.searchFields.map((col) => ilike(sql`${col}::text`, like));
     const combined = or(...searchClauses);
     if (combined) clauses.push(combined);
