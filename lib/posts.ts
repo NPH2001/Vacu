@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { and, desc, eq, lte, ne, sql, or, ilike } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { posts, postCategories, type PostRow, type PostCategoryRow } from '@/db/schema';
+import { escapeLike } from './sql-like';
 
 export type Post = PostRow;
 export type PostCategory = PostCategoryRow;
@@ -45,7 +46,7 @@ export async function getPublishedPosts({
   const filters = [livePosts()];
   if (categoryId) filters.push(eq(posts.categoryId, categoryId));
   if (q?.trim()) {
-    const like = `%${q.trim()}%`;
+    const like = `%${escapeLike(q.trim())}%`;
     filters.push(or(ilike(posts.title, like), ilike(posts.excerpt, like))!);
   }
   const where = and(...filters);

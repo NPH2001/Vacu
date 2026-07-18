@@ -1,4 +1,5 @@
 import 'server-only';
+import { escapeLike } from './sql-like';
 import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { media, products, posts, categories, farmers, type MediaRow } from '@/db/schema';
@@ -15,10 +16,6 @@ export type MediaListParams = {
  * while looking for "giam-50%.webp" would otherwise return every file starting
  * with "50". Backslash first — it is the escape character itself.
  */
-function escapeLike(v: string): string {
-  return v.replace(/[\\%_]/g, (c) => `\\${c}`);
-}
-
 export async function listMedia({ q, page = 1, pageSize = 40 }: MediaListParams = {}) {
   const term = q?.trim();
   const pattern = term ? `%${escapeLike(term)}%` : '';

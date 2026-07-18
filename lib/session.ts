@@ -47,10 +47,11 @@ export const getCurrentUser = cache(async (): Promise<UserRow | null> => {
   const rows = await db.select().from(users).where(eq(users.id, s.sub)).limit(1);
   const u = rows[0];
   if (!u) return null;
-  // A session must carry a password-changed-at stamp, and it must be current;
-  // a missing `pca` (legacy token) or one older than the user's current
-  // passwordChangedAt is revoked, so a reset/change logs it out.
-  if (typeof s.pca !== 'number' || Math.floor(u.passwordChangedAt.getTime() / 1000) > s.pca) {
+  // A session must carry a password-changed-at stamp (epoch ms), and it must be
+  // current; a missing `pca` (legacy token) or one older than the user's current
+  // passwordChangedAt is revoked, so a reset/change logs it out. Millisecond
+  // precision closes the same-second window a change could otherwise slip.
+  if (typeof s.pca !== 'number' || u.passwordChangedAt.getTime() > s.pca) {
     return null;
   }
   return u;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { safeHrefField, isSafeHref } from './safe-url';
 // Side-effect import: installs the global Vietnamese error map so every schema
 // below produces admin-friendly messages instead of Zod's English defaults.
 import './zod-vi';
@@ -161,7 +162,7 @@ export const siteInfoSchema = z.object({
   subBoxDescription: z.string().min(1).max(800),
   subBoxFeatures: z.array(z.string().min(1).max(160)).max(8),
   subBoxCta: z.string().min(1).max(80),
-  subBoxLink: z.string().min(1).max(500),
+  subBoxLink: z.string().min(1).max(500).refine(isSafeHref, 'Đường dẫn không hợp lệ.'),
   subBoxImage: z.string().min(1).max(500),
 
   sectionCategoriesEyebrow: z.string().min(1).max(80),
@@ -256,9 +257,9 @@ export const heroSlideSchema = z.object({
   subtitle: z.string().max(800).default(''),
   image: z.string().min(1, 'Vui lòng chọn ảnh nền cho slide').max(500),
   ctaPrimaryLabel: z.string().max(80).default(''),
-  ctaPrimaryHref: z.string().max(500).default(''),
+  ctaPrimaryHref: safeHrefField(),
   ctaSecondaryLabel: z.string().max(80).default(''),
-  ctaSecondaryHref: z.string().max(500).default(''),
+  ctaSecondaryHref: safeHrefField(),
   active: z.coerce.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 });
@@ -314,7 +315,7 @@ export const emailTemplateSchema = z.object({
 export const menuItemSchema = z.object({
   location: z.enum(['header', 'footer']),
   label: z.string().trim().min(1).max(120),
-  href: z.string().trim().min(1).max(500),
+  href: z.string().trim().min(1).max(500).refine(isSafeHref, 'Đường dẫn không hợp lệ.'),
   openInNewTab: z.coerce.boolean().default(false),
   sortOrder: z.coerce.number().int().default(0),
 });

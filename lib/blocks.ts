@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { safeHrefField } from './safe-url';
 
 /**
  * The contract between the page builder and the public renderer. Block `data`
@@ -46,7 +47,7 @@ export const ctaBlock = z.object({
   title: z.string().max(200).default(''),
   subtitle: z.string().max(400).default(''),
   label: z.string().max(80).default(''),
-  href: z.string().max(500).default(''),
+  href: safeHrefField(),
 });
 
 export const galleryBlock = z.object({
@@ -60,7 +61,7 @@ export const galleryBlock = z.object({
 const sectionHeader = {
   eyebrow: z.string().max(120).default(''),
   linkLabel: z.string().max(80).default(''),
-  linkHref: z.string().max(500).default(''),
+  linkHref: safeHrefField(),
 };
 
 // Background tone for a section block: `muted` paints the soft green band the

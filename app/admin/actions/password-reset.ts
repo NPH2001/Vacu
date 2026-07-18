@@ -50,39 +50,30 @@ export async function requestPasswordReset(
     if (!rateLimit(key, { limit: 5, windowMs: 15 * 60_000 }).ok) return generic;
   }
 
-  const [user] = await db.select().from(users).where(eq(users.email, parsed.data.email)).limit(1);
-  if (!user) return generic;
-
-  const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
-  if (!info?.smtpEnabled) {
-    // Stay generic even here: an SMTP-specific message only ever fires for an
-    // email that exists, which would leak whether an account is registered.
-    console.error('[password-reset] SMTP not configured — cannot send reset email');
-    return generic;
-  }
-
-  const rawToken = randomBytes(32).toString('base64url');
-  const tokenHash = hashToken(rawToken);
-  const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
-
-  await db.insert(passwordResetTokens).values({
-    tokenHash,
-    userId: user.id,
-    expiresAt,
-  });
-
-  const resetLink = `${canonicalOrigin(info.siteUrl)}/admin/reset-password?token=${rawToken}`;
-
-  // Fire-and-forget: awaiting the SMTP round-trip only for existing accounts
-  // would leak their existence via response timing, and a send error would be a
-  // positive-existence oracle. Log failures instead; the caller always gets the
-  // same generic response.
-  void sendTemplatedMail('forgot_password', user.email, {
-    siteName: info.name,
-    userName: user.name || user.email,
-    resetLink,
-    expiresInMinutes: String(TOKEN_TTL_MINUTES),
-  }).catch((e) => console.error('[password-reset] send failed:', e));
+  // Do ALL of the work (user lookup, token insert, email send) off the response
+  // path. Returning immediately keeps the response time constant whether or not
+  // the email exists — the extra DB round-trip for an existing account would
+  // otherwise be a timing oracle for account existence.
+  const email = parsed.data.email;
+  void (async () => {
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (!user) return;
+    const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
+    if (!info?.smtpEnabled) {
+      console.error('[password-reset] SMTP not configured — cannot send reset email');
+      return;
+    }
+    const rawToken = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60 * 1000);
+    await db.insert(passwordResetTokens).values({ tokenHash: hashToken(rawToken), userId: user.id, expiresAt });
+    const resetLink = `${canonicalOrigin(info.siteUrl)}/admin/reset-password?token=${rawToken}`;
+    await sendTemplatedMail('forgot_password', user.email, {
+      siteName: info.name,
+      userName: user.name || user.email,
+      resetLink,
+      expiresInMinutes: String(TOKEN_TTL_MINUTES),
+    });
+  })().catch((e) => console.error('[password-reset] async error:', e));
 
   return generic;
 }

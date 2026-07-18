@@ -4,21 +4,26 @@ import { asc, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { pages, pageBlocks, type PageRow } from '@/db/schema';
 import { blockSchema, type Block } from '@/lib/blocks';
+import { sanitizeRichText } from '@/lib/sanitize';
 
 export type LoadedBlock = { id: number; visible: boolean; data: Block };
 export type LoadedPage = PageRow & { blocks: LoadedBlock[] };
 
 /**
  * Block `data` is jsonb and could have been written by an older build or edited
- * by hand, so each row is re-validated on read. A block that no longer matches
- * its schema is dropped rather than allowed to crash the whole page.
+ * by hand, so each row is re-validated on read (shape dropped if invalid) AND
+ * rich-text is re-sanitized — a row not written through the admin action (SQL
+ * edit, import, legacy) must not render unsanitized HTML.
  */
 function parseBlocks(rows: { id: number; type: string; visible: boolean; data: unknown }[]): LoadedBlock[] {
   const out: LoadedBlock[] = [];
   for (const r of rows) {
     const parsed = blockSchema.safeParse({ ...(r.data as object), type: r.type });
     if (!parsed.success) continue;
-    out.push({ id: r.id, visible: r.visible, data: parsed.data });
+    const data = parsed.data.type === 'richtext'
+      ? { ...parsed.data, html: sanitizeRichText(parsed.data.html) }
+      : parsed.data;
+    out.push({ id: r.id, visible: r.visible, data });
   }
   return out;
 }
