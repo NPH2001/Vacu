@@ -1,0 +1,55 @@
+# Rancher Continuous Delivery (Fleet) bundle.
+#
+# Fleet detects the Chart.yaml next to this file and deploys it as a Helm chart.
+# Register this repo in Rancher → Continuous Delivery → Git Repos, with
+#   Path: deploy/helm/vacu
+# and a target cluster/group. Fleet then installs/upgrades on every git change.
+#
+# Secrets are NOT in git: create the `vacu-env` Secret in the target namespace
+# (DATABASE_URL + AUTH_SECRET) — see deploy/README.md — and reference it below.
+
+defaultNamespace: vacu
+
+helm:
+  releaseName: vacu
+  # Wait for the rollout to be healthy before marking the bundle Ready.
+  takeOwnership: true
+  values:
+    image:
+      # Pin the released tag. Bump on each release (or let CI update it — see
+      # deploy/README.md). Avoid `latest` in GitOps so rollbacks are precise.
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    # imagePullSecrets: [{ name: ghcr-creds }]   # if the GHCR package is private
+
+    secret:
+      existingSecret: vacu-env   # you create this in the vacu namespace
+
+    config:
+      APP_URL: https://vacu.example.com
+
+    ingress:
+      enabled: true
+      className: ""              # e.g. nginx / traefik
+      hosts:
+        - host: vacu.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+
+    persistence:
+      enabled: true
+      size: 5Gi
+      # storageClass: ""         # set to your cluster's RWO class
+
+# Per-cluster/-environment overrides (optional). Match clusters by label in the
+# Rancher GitRepo target, then override values here.
+# targetCustomizations:
+#   - name: staging
+#     clusterSelector:
+#       matchLabels: { env: staging }
+#     helm:
+#       values:
+#         image: { tag: "main" }
+#         config: { APP_URL: https://staging.vacu.example.com }
+#         ingress: { hosts: [{ host: staging.vacu.example.com, paths: [{ path: /, pathType: Prefix }] }] }
