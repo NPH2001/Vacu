@@ -38,7 +38,7 @@ export async function signIn(_prev: SignInState, formData: FormData): Promise<Si
   await setSessionCookie({
     sub: user.id,
     role: user.role as 'admin' | 'staff',
-    pca: Math.floor(user.passwordChangedAt.getTime() / 1000),
+    pca: user.passwordChangedAt.getTime(),
   });
   redirect(next && next.startsWith('/admin') ? next : '/admin');
 }

@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders, siteInfo } from '@/db/schema';
 import { orderStatusSchema } from '@/lib/validators';
@@ -20,19 +20,28 @@ export async function updateOrderStatus(id: string, fd: FormData): Promise<void>
 
 export async function markOrderPaid(id: string): Promise<void> {
   await requireAdmin();
-  await db.update(orders).set({ paymentStatus: 'paid', updatedAt: new Date() }).where(eq(orders.id, id));
-  // The customer's order page promises the order auto-advances once paid; move a
-  // still-pending order to "preparing" (never regress a later status).
-  await db.update(orders).set({ status: 'preparing', updatedAt: new Date() })
-    .where(and(eq(orders.id, id), eq(orders.status, 'pending')));
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  // No-op for a cancelled order (can't be paid) or one already paid (avoids a
+  // duplicate confirmation email on a double-click / retry).
+  if (!order || order.status === 'cancelled' || order.paymentStatus === 'paid') {
+    revalidatePath(`/admin/orders/${id}`);
+    return;
+  }
+
+  await db.update(orders).set({
+    paymentStatus: 'paid',
+    // The order page promises it auto-advances once paid; move a still-pending
+    // order to "preparing" and never regress a later status.
+    status: order.status === 'pending' ? 'preparing' : order.status,
+    updatedAt: new Date(),
+  }).where(eq(orders.id, id));
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${id}`);
   revalidatePath('/orders');
 
   try {
-    const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
     const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
-    if (order?.customerEmail && info?.smtpEnabled) {
+    if (order.customerEmail && info?.smtpEnabled) {
       await sendTemplatedMail('payment_confirmed', order.customerEmail, {
         siteName: info.name,
         customerName: order.customerName,

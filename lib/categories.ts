@@ -26,12 +26,14 @@ export function getDescendantIds(rootId: string, rows: CategoryRow[]): string[] 
       childrenByParent.set(r.parentId, arr);
     }
   }
+  const seen = new Set<string>([rootId]);
   const ids: string[] = [rootId];
   const queue: string[] = [rootId];
   while (queue.length) {
     const cur = queue.shift()!;
-    const kids = childrenByParent.get(cur) ?? [];
-    for (const kid of kids) {
+    for (const kid of childrenByParent.get(cur) ?? []) {
+      if (seen.has(kid)) continue; // guard against a parent_id cycle → no infinite loop
+      seen.add(kid);
       ids.push(kid);
       queue.push(kid);
     }
@@ -42,10 +44,12 @@ export function getDescendantIds(rootId: string, rows: CategoryRow[]): string[] 
 export function getAncestors(id: string, rows: CategoryRow[]): CategoryRow[] {
   const byId = new Map(rows.map((r) => [r.id, r]));
   const chain: CategoryRow[] = [];
+  const seen = new Set<string>();
   let current = byId.get(id);
-  while (current?.parentId) {
+  while (current?.parentId && !seen.has(current.id)) {
+    seen.add(current.id); // guard against a parent_id cycle → no infinite loop
     const parent = byId.get(current.parentId);
-    if (!parent) break;
+    if (!parent || seen.has(parent.id)) break;
     chain.unshift(parent);
     current = parent;
   }

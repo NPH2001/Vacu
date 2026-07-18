@@ -159,7 +159,9 @@ export async function sendTemplatedMail(
 
   const shell = await getShellContext();
   const mergedVars = { ...shell.vars, ...vars };
-  const subject = renderTemplate(tpl.subject, mergedVars);
+  // The subject is a plain-text mail header, not HTML — render every var raw so
+  // a customer name like "Trần & Lê" isn't shown as "Trần &amp; Lê".
+  const subject = renderTemplate(tpl.subject, mergedVars, Object.keys(mergedVars));
   const body = renderTemplate(tpl.bodyHtml, mergedVars, rawKeys);
   const html = wrapWithShell({ body, subject, header: shell.header, footer: shell.footer });
   const text = htmlToText(html);

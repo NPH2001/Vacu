@@ -102,7 +102,8 @@ export default async function OrdersPage({
                   <div><div className="text-[11px] uppercase tracking-wider text-green-700 font-bold">Khung giờ</div><div className="text-green-950">{o.deliverySlot}</div></div>
                   <div className="md:text-right"><div className="text-[11px] uppercase tracking-wider text-green-700 font-bold">Tổng tiền</div><div className="font-bold text-green-800 text-lg">{formatPrice(o.total)}</div></div>
                 </div>
-                {o.paymentMethod === 'bank' && o.paymentStatus === 'unpaid' && info.bankBin && info.bankAccountNumber && (
+                {o.paymentMethod === 'bank' && o.paymentStatus === 'unpaid' && o.status !== 'cancelled'
+                  && info.bankEnabled && info.bankBin && info.bankAccountNumber && (
                   <BankQrPanel
                     orderId={o.id}
                     total={o.total}
