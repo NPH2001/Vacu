@@ -15,6 +15,7 @@ import { getOrderStatusMap, getSiteInfo } from '@/lib/data';
 import { findBank, vietQrImageUrl } from '@/lib/banks';
 import PurchaseEvent from '@/components/PurchaseEvent';
 import SmartImage from '@/components/SmartImage';
+import OrderLookupForm from '@/components/OrderLookupForm';
 
 export default async function OrdersPage({
   searchParams,
@@ -129,6 +130,12 @@ export default async function OrdersPage({
           })}
         </div>
       )}
+
+      {/* Always available — recover an order by code + phone when the cookie is
+          gone or you're on a different device. */}
+      <div className="mt-8">
+        <OrderLookupForm />
+      </div>
     </div>
   );
 }
