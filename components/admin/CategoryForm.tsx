@@ -63,7 +63,7 @@ export default function CategoryForm({
         defaultValue={d.coverImage ?? ''}
         label="Ảnh bìa danh mục (banner)"
       />
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">
         <Link href="/admin/categories" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>
         <button type="submit" disabled={pending}

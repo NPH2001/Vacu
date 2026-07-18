@@ -106,7 +106,7 @@ export default function PostForm({
 
         {state?.error && (
           <div className="admin-panel p-3 border-red-200 bg-red-50">
-            <p className="text-sm text-red-700">{state.error}</p>
+            <p role="alert" className="text-sm text-red-700">{state.error}</p>
           </div>
         )}
 

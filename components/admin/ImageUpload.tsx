@@ -61,7 +61,7 @@ export default function ImageUpload({
             alt=""
             className="w-40 h-40 rounded-xl object-cover border border-green-200 shadow-sm"
           />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 rounded-xl transition flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 group-focus-within:bg-black/50 rounded-xl transition flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
@@ -150,7 +150,7 @@ export default function ImageUpload({
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <MediaPicker
         open={pickerOpen}

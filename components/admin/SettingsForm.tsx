@@ -551,7 +551,7 @@ export default function SettingsForm({
         </span>
         <div className="flex items-center gap-3">
           {state?.ok && <span className="text-sm text-green-700">Đã lưu ✓</span>}
-          {state?.error && <span className="text-sm text-red-600">{state.error}</span>}
+          {state?.error && <span role="alert" className="text-sm text-red-600">{state.error}</span>}
           <button type="submit" disabled={pending}
             className="bg-green-700 hover:bg-green-800 disabled:opacity-60 text-white font-semibold px-5 py-2 rounded-full">
             {pending ? 'Đang lưu…' : 'Lưu thay đổi'}

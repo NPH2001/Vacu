@@ -28,7 +28,7 @@ function LoginForm() {
         <span className="text-sm font-medium text-green-950">Mật khẩu</span>
         <input name="password" type="password" required className="mt-1 w-full border border-green-200 rounded px-3 py-2" />
       </label>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}

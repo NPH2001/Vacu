@@ -48,7 +48,7 @@ export default function PaymentMethodForm({
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
           className="w-32 border border-green-200 rounded px-3 py-2" />
       </L>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">
         <Link href="/admin/payment-methods" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>
         <button type="submit" disabled={pending}

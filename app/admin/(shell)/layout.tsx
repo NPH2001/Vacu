@@ -6,10 +6,11 @@ export default async function ShellLayout({ children }: { children: React.ReactN
   const user = await requireAdmin();
   return (
     <div className="admin-shell h-screen flex overflow-hidden">
+      <a href="#admin-main" className="skip-link">Bỏ qua tới nội dung</a>
       <Sidebar role={user.role as 'admin' | 'staff'} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar email={user.email} />
-        <main className="flex-1 overflow-auto">
+        <main id="admin-main" className="flex-1 overflow-auto">
           <div className="px-4 py-5 sm:px-8 sm:py-7 max-w-[1440px] mx-auto w-full">{children}</div>
         </main>
       </div>

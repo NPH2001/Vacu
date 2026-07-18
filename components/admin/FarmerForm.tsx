@@ -48,7 +48,7 @@ export default function FarmerForm({
       <L label="Câu chuyện" required>
         <textarea name="story" defaultValue={d.story ?? ''} required rows={5} className="w-full border border-green-200 rounded px-3 py-2" />
       </L>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">
         <Link href="/admin/farmers" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>
         <button type="submit" disabled={pending}

@@ -46,7 +46,7 @@ export default function ThemeForm({ defaults }: { defaults: ThemeConfig }) {
         <FontSelect label="Font tiêu đề" value={fontHeading} onChange={setFontHeading} options={HEADING_FONTS} />
         <FontSelect label="Font nội dung" value={fontBody} onChange={setFontBody} options={BODY_FONTS} />
 
-        {state?.error && <p className="text-sm text-red-700">{state.error}</p>}
+        {state?.error && <p role="alert" className="text-sm text-red-700">{state.error}</p>}
         {state?.ok && <p className="text-sm text-green-700">✓ Đã lưu — toàn site đã đổi theo.</p>}
 
         <div className="flex items-center gap-2 pt-1">
