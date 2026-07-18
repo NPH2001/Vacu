@@ -23,11 +23,15 @@ describe('rateLimit', () => {
   });
 
   it('resets after the window elapses', () => {
+    // Use a comfortably-sized window (30ms) and spin well past it (60ms). The
+    // old 1ms window was flaky under parallel test load: the two setup calls
+    // could straddle a >1ms scheduling gap, so the second saw a fresh window.
     const key = `t-${Math.round(performance.now())}-w`;
-    expect(rateLimit(key, { limit: 1, windowMs: 1 }).ok).toBe(true);
-    expect(rateLimit(key, { limit: 1, windowMs: 1 }).ok).toBe(false);
+    const opts = { limit: 1, windowMs: 30 };
+    expect(rateLimit(key, opts).ok).toBe(true);
+    expect(rateLimit(key, opts).ok).toBe(false);
     const start = Date.now();
-    while (Date.now() - start < 5) { /* spin ~5ms so the 1ms window expires */ }
-    expect(rateLimit(key, { limit: 1, windowMs: 1 }).ok).toBe(true);
+    while (Date.now() - start < 60) { /* spin past the 30ms window */ }
+    expect(rateLimit(key, opts).ok).toBe(true);
   });
 });
