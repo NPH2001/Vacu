@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ProductRow } from "@/db/schema";
 import { trackEvent } from "@/lib/gtag";
+import { MAX_LINE_QTY } from "@/lib/cart-limits";
 
 export type CartLine = {
   id: string;
@@ -58,11 +59,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => {
       const found = prev.find((p) => p.id === item.id);
       if (found) {
-        return prev.map((p) => (p.id === item.id ? { ...p, qty: p.qty + n } : p));
+        return prev.map((p) => (p.id === item.id ? { ...p, qty: Math.min(MAX_LINE_QTY, p.qty + n) } : p));
       }
       return [
         ...prev,
-        { id: item.id, name: item.name, price: item.price, image: item.image, unit: item.unit, qty: n },
+        { id: item.id, name: item.name, price: item.price, image: item.image, unit: item.unit, qty: Math.min(MAX_LINE_QTY, n) },
       ];
     });
     trackEvent('add_to_cart', {
@@ -78,7 +79,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const setQty = (id: string, qty: number) =>
     setItems((prev) =>
       prev
-        .map((p) => (p.id === id ? { ...p, qty: Math.max(0, qty) } : p))
+        // Clamp to the server's per-line max so the "+" buttons can't build a
+        // cart the checkout will then reject wholesale with a confusing error.
+        .map((p) => (p.id === id ? { ...p, qty: Math.min(MAX_LINE_QTY, Math.max(0, qty)) } : p))
         .filter((p) => p.qty > 0)
     );
 

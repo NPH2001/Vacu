@@ -14,12 +14,13 @@ import { sendTemplatedMail } from '@/lib/mail';
 import { vietQrImageUrl, findBank } from '@/lib/banks';
 import { isUniqueViolation } from '@/lib/db-errors';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { MAX_LINE_QTY } from '@/lib/cart-limits';
 
 // The client is trusted for the product id and quantity only — never the price,
 // name or unit. Everything money-related is rebuilt from the products table.
 const cartLineSchema = z.object({
   id: z.string().min(1).max(80),
-  qty: z.coerce.number().int().positive().max(99),
+  qty: z.coerce.number().int().positive().max(MAX_LINE_QTY),
 });
 
 type BuiltLine = { productId: string; name: string; price: number; qty: number; unit: string; image: string };
@@ -102,10 +103,12 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
     return { ok: false, error: 'Đơn hàng quá lớn, vui lòng tách thành nhiều đơn nhỏ hơn.' };
   }
 
-  // Validate the delivery slot against the currently active ones.
+  // Validate the delivery slot against the currently active ones. With no active
+  // slots the chosen one can't be valid — reject rather than accept any string
+  // (the server is the authority; the form already disables submit in this case).
   const activeSlots = await db.select({ label: deliverySlots.label }).from(deliverySlots)
     .where(eq(deliverySlots.active, true));
-  if (activeSlots.length > 0 && !activeSlots.some((s) => s.label === meta.data.deliverySlot)) {
+  if (!activeSlots.some((s) => s.label === meta.data.deliverySlot)) {
     return { ok: false, error: 'Khung giờ giao không hợp lệ. Vui lòng chọn lại.' };
   }
 
