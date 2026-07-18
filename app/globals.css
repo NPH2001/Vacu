@@ -36,11 +36,18 @@ body {
 }
 
 /* Visible keyboard focus for interactive elements that don't style it
-   themselves. Only on :focus-visible, so it never shows for mouse clicks. */
+   themselves. Only on :focus-visible, so it never shows for mouse clicks.
+   Form controls are included because many hand-rolled admin/storefront inputs
+   set no focus style of their own — without this a keyboard user can't tell
+   which field is focused. Inputs that DO supply a focus:ring simply layer over
+   this harmlessly. */
 a:focus-visible,
 button:focus-visible,
 [role="button"]:focus-visible,
 summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
 [tabindex]:not([tabindex="-1"]):focus-visible {
   outline: 2px solid var(--color-green-600);
   outline-offset: 2px;
