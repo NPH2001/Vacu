@@ -61,7 +61,8 @@ export default function HeroSlider({ slides, stats }: { slides: HeroSlideRow[]; 
           }`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={s.image} alt="" loading={i === 0 ? 'eager' : 'lazy'} className="w-full h-full object-cover" />
+          <img src={s.image} alt="" loading={i === 0 ? 'eager' : 'lazy'}
+            fetchPriority={i === 0 ? 'high' : undefined} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-br from-green-950/80 via-green-900/60 to-amber-900/40" />
         </div>
       ))}

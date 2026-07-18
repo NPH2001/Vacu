@@ -205,7 +205,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 -z-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={info.heroImage} alt="" className="w-full h-full object-cover" />
+            <img src={info.heroImage} alt="" fetchPriority="high" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-br from-green-950/80 via-green-900/60 to-amber-900/40" />
           </div>
           <div className="max-w-7xl mx-auto px-4 py-20 md:py-32 text-white">
