@@ -43,6 +43,7 @@ const withCategory = {
 export async function getPublishedPosts({
   categoryId, page = 1, pageSize = 9, q,
 }: { categoryId?: string; page?: number; pageSize?: number; q?: string } = {}) {
+  page = Math.max(1, Math.floor(page)); // never a negative OFFSET
   const filters = [livePosts()];
   if (categoryId) filters.push(eq(posts.categoryId, categoryId));
   if (q?.trim()) {
@@ -140,5 +141,6 @@ export async function getPostCategoriesWithCounts() {
     .from(postCategories)
     .leftJoin(posts, and(eq(posts.categoryId, postCategories.id), livePosts()))
     .groupBy(postCategories.id, postCategories.name, postCategories.description, postCategories.sortOrder)
+    .having(sql`count(${posts.id}) > 0`) // only categories with at least one live post
     .orderBy(postCategories.sortOrder, postCategories.name);
 }

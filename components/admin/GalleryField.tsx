@@ -16,6 +16,8 @@ type Props = {
   pickerTitle?: string;
   emptyTitle?: string;
   emptyHint?: string;
+  /** Hard cap on images, matching the schema this feeds (product = 12, block = 24). */
+  max?: number;
 };
 
 /**
@@ -24,7 +26,7 @@ type Props = {
  * into the block JSON).
  */
 export default function GalleryField({
-  name = 'gallery', defaultValue = [], value, onChange,
+  name = 'gallery', defaultValue = [], value, onChange, max = 12,
   pickerTitle = 'Chọn ảnh phụ cho sản phẩm',
   emptyTitle = 'Thêm ảnh phụ',
   emptyHint = 'Ảnh chụp thêm góc khác, khách xem ở trang chi tiết',
@@ -97,8 +99,9 @@ export default function GalleryField({
         title={pickerTitle}
         onSelect={(picked) => {
           // Skip ones already in the gallery — a duplicate would render twice
-          // and collide on the React key.
-          setUrls([...urls, ...picked.filter((p) => !urls.includes(p))]);
+          // and collide on the React key. Cap at `max` to match the schema this
+          // feeds, so the save can't fail with a raw Zod error.
+          setUrls([...urls, ...picked.filter((p) => !urls.includes(p))].slice(0, max));
         }}
       />
     </div>

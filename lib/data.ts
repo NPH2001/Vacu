@@ -51,9 +51,9 @@ export async function getProductsByCategoryDeep(categoryIds: string[]) {
 export async function getFeaturedProducts(limit = 8) {
   return db.select().from(products).where(eq(products.featured, true)).limit(limit);
 }
-export async function getAllCategories() {
-  return db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name));
-}
+// Cached per request: read by the public layout and again by most page bodies.
+export const getAllCategories = cache(async () =>
+  db.select().from(categories).orderBy(asc(categories.sortOrder), asc(categories.name)));
 
 /**
  * Products for a page-builder "products" block, chosen by its configured source.

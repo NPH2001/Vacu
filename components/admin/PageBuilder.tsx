@@ -10,6 +10,8 @@ const TYPES = Object.keys(BLOCK_LABELS) as BlockType[];
 let keySeq = 0;
 const genKey = () => `blk-${keySeq++}`;
 
+const MAX_BLOCKS = 40; // must match blockListSchema.max(40) in lib/blocks.ts
+
 export type PickOption = { id: string; name: string };
 
 /**
@@ -48,10 +50,21 @@ export default function PageBuilder({
     const [item] = next.splice(i, 1);
     next.splice(to, 0, item);
     setRows(next);
-    setOpen(to);
+    // Keep whatever was open open — follow the moved block if it was the open
+    // one, otherwise adjust for the shift so a different reorder doesn't collapse
+    // the editor the admin is in.
+    setOpen((prev) => {
+      if (prev === null) return null;
+      if (prev === i) return to;
+      let np = prev;
+      if (i < np) np -= 1;
+      if (to <= np) np += 1;
+      return np;
+    });
     dirty();
   }
   function add(type: BlockType) {
+    if (rows.length >= MAX_BLOCKS) return;
     setRows((prev) => [...prev, { key: genKey(), entry: { visible: true, data: emptyBlock(type) } }]);
     setOpen(rows.length);
     setAdding(false);
@@ -145,6 +158,8 @@ export default function PageBuilder({
           <button type="button" onClick={() => setAdding(false)}
             className="admin-btn-ghost text-[12.5px] mt-2">Hủy</button>
         </div>
+      ) : rows.length >= MAX_BLOCKS ? (
+        <p className="text-center text-[12.5px] text-stone-500 py-2">Đã đạt tối đa {MAX_BLOCKS} khối cho một trang.</p>
       ) : (
         <button type="button" onClick={() => setAdding(true)}
           className="w-full border-2 border-dashed border-stone-300 rounded-xl py-3 text-[13px] font-medium text-stone-600 hover:border-green-400 hover:text-green-800 hover:bg-green-50/40 transition">
@@ -278,6 +293,7 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
           <GalleryField
             value={block.images}
             onChange={(images) => onChange({ ...block, images })}
+            max={24}
             pickerTitle="Chọn ảnh cho bộ ảnh"
             emptyTitle="Thêm ảnh vào bộ ảnh"
             emptyHint="Các ảnh sẽ xếp thành lưới trên trang"
@@ -337,7 +353,7 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
           {block.source === 'manual' ? (
             <MultiPick label="Chọn danh mục (kéo ↑ ↓ để đổi thứ tự)" options={categoryOptions}
               selected={block.categoryIds} onChange={(ids) => onChange({ ...block, categoryIds: ids })}
-              max={24} emptyHint="Chưa chọn danh mục nào" />
+              max={24} searchable emptyHint="Chưa chọn danh mục nào" />
           ) : (
             <NumberField label="Giới hạn số lượng (0 = hiện tất cả)" min={0} max={24} value={block.limit}
               onChange={(n) => onChange({ ...block, limit: n })} />
@@ -484,7 +500,10 @@ function MultiPick({
 }) {
   const [q, setQ] = useState('');
   const byId = new Map(options.map((o) => [o.id, o]));
-  const chosen = selected.filter((id) => byId.has(id));
+  // Keep every selected id, even one whose option is gone (a since-deleted
+  // product/category) — dropping it silently on the next reorder would corrupt
+  // the admin's saved picks. Missing ones render with a placeholder label.
+  const chosen = selected;
   const needle = q.trim().toLowerCase();
   const avail = options.filter(
     (o) => !selected.includes(o.id) && (!needle || o.name.toLowerCase().includes(needle)),
@@ -506,7 +525,9 @@ function MultiPick({
         <ul className="mt-1 mb-2 space-y-1">
           {chosen.map((id, i) => (
             <li key={id} className="flex items-center gap-1.5 bg-green-50/60 border border-green-200 rounded px-2 py-1">
-              <span className="flex-1 truncate text-[13px] text-stone-800">{byId.get(id)?.name}</span>
+              <span className="flex-1 truncate text-[13px] text-stone-800">
+                {byId.get(id)?.name ?? <span className="text-amber-700">{id} (không còn tồn tại)</span>}
+              </span>
               <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0}
                 className="admin-btn-ghost px-1.5 disabled:opacity-25 text-xs" title="Lên">↑</button>
               <button type="button" onClick={() => move(i, i + 1)} disabled={i === chosen.length - 1}
