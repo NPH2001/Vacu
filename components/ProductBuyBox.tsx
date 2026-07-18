@@ -18,16 +18,20 @@ export default function ProductBuyBox({ p }: { p: ProductRow }) {
     <div className="flex items-center gap-3 mb-6">
       <div className="flex items-center bg-white border border-green-200 rounded-full">
         <button
+          type="button"
           onClick={() => setQty(Math.max(1, qty - 1))}
-          className="w-10 h-10 text-green-800 font-bold hover:bg-green-50 rounded-l-full"
+          disabled={!p.inStock || qty <= 1}
+          className="w-10 h-10 text-green-800 font-bold hover:bg-green-50 rounded-l-full disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Giảm"
         >
           −
         </button>
-        <span className="w-10 text-center font-bold text-green-950">{qty}</span>
+        <span className="w-10 text-center font-bold text-green-950 tabular-nums">{qty}</span>
         <button
+          type="button"
           onClick={() => setQty(Math.min(MAX_LINE_QTY, qty + 1))}
-          className="w-10 h-10 text-green-800 font-bold hover:bg-green-50 rounded-r-full"
+          disabled={!p.inStock || qty >= MAX_LINE_QTY}
+          className="w-10 h-10 text-green-800 font-bold hover:bg-green-50 rounded-r-full disabled:opacity-40 disabled:hover:bg-transparent"
           aria-label="Tăng"
         >
           +

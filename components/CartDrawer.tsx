@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
 import { useModalA11y } from "./useModalA11y";
+import { MAX_LINE_QTY } from "@/lib/cart-limits";
+import SmartImage from "./SmartImage";
 
 export default function CartDrawer({
   emptyTitle, emptyText, shippingLabel,
@@ -68,8 +70,7 @@ export default function CartDrawer({
                   key={it.id}
                   className="flex items-center gap-3 p-3 rounded-2xl border border-green-100 bg-green-50/40"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <SmartImage
                     src={it.image}
                     alt={it.name}
                     className="w-16 h-16 rounded-xl object-cover shrink-0"
@@ -84,23 +85,29 @@ export default function CartDrawer({
                   <div className="flex flex-col items-end gap-1.5">
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setQty(it.id, it.qty - 1)}
-                        className="w-7 h-7 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800"
+                        type="button"
+                        aria-label="Giảm số lượng"
+                        onClick={() => setQty(it.id, Math.max(1, it.qty - 1))}
+                        disabled={it.qty <= 1}
+                        className="w-9 h-9 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
                       >
                         −
                       </button>
-                      <span className="w-6 text-center font-bold text-green-950">{it.qty}</span>
+                      <span className="w-6 text-center font-bold text-green-950 tabular-nums">{it.qty}</span>
                       <button
+                        type="button"
+                        aria-label="Tăng số lượng"
                         onClick={() => setQty(it.id, it.qty + 1)}
-                        className="w-7 h-7 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800"
+                        disabled={it.qty >= MAX_LINE_QTY}
+                        className="w-9 h-9 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
                       >
                         +
                       </button>
                     </div>
                     <button
+                      type="button"
                       onClick={() => remove(it.id)}
-                      aria-label="Xóa"
-                      className="text-[11px] text-stone-400 hover:text-red-600"
+                      className="text-xs text-stone-500 hover:text-red-600 px-2 py-1 -mr-1"
                     >
                       Xóa
                     </button>
