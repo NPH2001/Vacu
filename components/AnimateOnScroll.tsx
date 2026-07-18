@@ -13,8 +13,20 @@ export default function AnimateOnScroll({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  // When the user asks for reduced motion, skip the fade/slide entirely: show
+  // the content immediately with no transition, rather than animating it in on
+  // every scroll (vestibular trigger — WCAG 2.3.3).
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
+    if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      // Client-only media query (unknown during SSR), so this must run in an
+      // effect — the one extra render is intended, as in CartProvider.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReduced(true);
+      setVisible(true);
+      return;
+    }
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
@@ -29,6 +41,10 @@ export default function AnimateOnScroll({
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  if (reduced) {
+    return <div className={className}>{children}</div>;
+  }
 
   return (
     <div

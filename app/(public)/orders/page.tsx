@@ -51,6 +51,10 @@ export default async function OrdersPage({
           }))}
         />
       )}
+      {/* h1 first so the heading order is h1 → h2 (the success banner), not h2
+          before h1. The subtitle margin is dropped when the banner follows. */}
+      <h1 className="text-3xl md:text-4xl font-bold text-green-950 font-display mb-2">Đơn hàng của tôi</h1>
+      <p className={`text-green-900/60 ${newId ? 'mb-6' : 'mb-8'}`}>Theo dõi rau từ vườn tới nhà</p>
       {newId && (
         <div className="bg-gradient-to-r from-green-700 to-green-800 text-white rounded-3xl p-8 mb-8 text-center">
           <div className="text-6xl mb-3">🌱</div>
@@ -59,8 +63,6 @@ export default async function OrdersPage({
           <p className="text-green-100/80 text-sm wrap-anywhere">{info.orderSuccessNote}</p>
         </div>
       )}
-      <h1 className="text-3xl md:text-4xl font-bold text-green-950 font-display mb-2">Đơn hàng của tôi</h1>
-      <p className="text-green-900/60 mb-8">Theo dõi rau từ vườn tới nhà</p>
 
       {myOrders.length === 0 ? (
         <div className="bg-white rounded-3xl border border-green-100 p-14 text-center">

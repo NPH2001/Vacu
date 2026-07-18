@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
@@ -37,6 +37,8 @@ export default function CheckoutForm({
   const { items, total, clear } = useCart();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const slotId = useId();
+  const noteId = useId();
   // Stable across retries of the same submission so a double-fire/network retry
   // resolves to one order; reset after a successful checkout. Lazy initializer
   // so the key is minted exactly once, not on every render.
@@ -102,15 +104,16 @@ export default function CheckoutForm({
           <h2 className="text-lg font-bold text-green-950 font-display">Thông tin giao hàng</h2>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Họ và tên" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Nguyễn Văn A" required />
-            <Field label="Số điện thoại" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="0912 xxx xxx" type="tel" required />
+            <Field label="Họ và tên" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Nguyễn Văn A" autoComplete="name" required />
+            <Field label="Số điện thoại" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} placeholder="0912 xxx xxx" type="tel" autoComplete="tel" required />
           </div>
-          <Field label="Email (để nhận xác nhận đơn)" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="ban@example.com" type="email" />
-          <Field label="Địa chỉ giao hàng" value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="Số nhà, đường, phường, quận, thành phố" required />
+          <Field label="Email (để nhận xác nhận đơn)" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="ban@example.com" type="email" autoComplete="email" />
+          <Field label="Địa chỉ giao hàng" value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="Số nhà, đường, phường, quận, thành phố" autoComplete="street-address" required />
 
           <div>
-            <label className="block text-sm font-semibold text-green-950 mb-1.5">Khung giờ giao</label>
+            <label htmlFor={slotId} className="block text-sm font-semibold text-green-950 mb-1.5">Khung giờ giao</label>
             <select
+              id={slotId}
               value={form.slot}
               onChange={(e) => setForm({ ...form, slot: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border border-green-200 bg-white focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
@@ -124,8 +127,9 @@ export default function CheckoutForm({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-green-950 mb-1.5">Ghi chú cho nông dân</label>
+            <label htmlFor={noteId} className="block text-sm font-semibold text-green-950 mb-1.5">Ghi chú cho nông dân</label>
             <textarea
+              id={noteId}
               rows={3}
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
@@ -221,18 +225,24 @@ export default function CheckoutForm({
 }
 
 function Field({
-  label, value, onChange, placeholder, type = "text", required = false,
+  label, value, onChange, placeholder, type = "text", required = false, autoComplete,
 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string; required?: boolean;
+  label: string; value: string; onChange: (v: string) => void; placeholder: string;
+  type?: string; required?: boolean; autoComplete?: string;
 }) {
+  // Programmatic label↔input association so a screen reader announces the field
+  // name (placeholders are not accessible names and vanish on input).
+  const id = useId();
   return (
     <div>
-      <label className="block text-sm font-semibold text-green-950 mb-1.5">
+      <label htmlFor={id} className="block text-sm font-semibold text-green-950 mb-1.5">
         {label}{required && <span className="text-red-600"> *</span>}
       </label>
       <input
+        id={id}
         type={type}
         inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
+        autoComplete={autoComplete}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}

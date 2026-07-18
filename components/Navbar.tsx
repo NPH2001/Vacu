@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MenuItemRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 import PriorityNav from "./PriorityNav";
@@ -15,6 +15,14 @@ type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string };
 export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuItemRow[] }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
+
+  // Let keyboard users dismiss the open mobile menu with Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-green-100">

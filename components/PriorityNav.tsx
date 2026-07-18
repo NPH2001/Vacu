@@ -56,14 +56,20 @@ export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
     return () => ro.disconnect();
   }, [items]);
 
-  // Close the dropdown on outside click.
+  // Close the dropdown on outside click or Escape (keyboard users must be able
+  // to dismiss it without tabbing through every item).
   useEffect(() => {
     if (!openMenu) return;
     const onDown = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) setOpenMenu(false);
     };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenMenu(false); };
     window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
   }, [openMenu]);
 
   const visible = items.slice(0, visibleCount);
