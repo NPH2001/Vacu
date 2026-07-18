@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FarmerRow } from "@/db/schema";
+import SmartImage from "./SmartImage";
 
 export default function FarmerCard({ f }: { f: FarmerRow }) {
   return (
@@ -8,12 +9,10 @@ export default function FarmerCard({ f }: { f: FarmerRow }) {
       className="group relative block rounded-3xl overflow-hidden border border-green-100 bg-white hover:shadow-xl transition"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={f.cover} alt={f.farm} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+        <SmartImage src={f.cover} alt={f.farm} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         <div className="absolute inset-0 bg-gradient-to-t from-green-950/80 via-green-950/20 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3 text-white">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={f.avatar} alt={f.name} className="w-14 h-14 rounded-full border-2 border-white object-cover" />
+          <SmartImage src={f.avatar} alt={f.name} fallback="👨‍🌾" className="w-14 h-14 rounded-full border-2 border-white object-cover" />
           <div className="min-w-0">
             <div className="text-xs text-green-200">{f.years} năm kinh nghiệm</div>
             <div className="font-bold font-display text-lg truncate">{f.name}</div>

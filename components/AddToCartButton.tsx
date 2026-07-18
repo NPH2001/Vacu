@@ -18,15 +18,16 @@ export default function AddToCartButton({
   if (compact) {
     return (
       <button
+        type="button"
         onClick={(e) => {
           e.preventDefault();
           if (!disabled) add(item);
         }}
         disabled={disabled}
-        aria-label="Thêm vào giỏ"
-        className="w-10 h-10 rounded-full bg-green-700 text-white flex items-center justify-center hover:bg-green-800 disabled:bg-stone-300 transition"
+        aria-label={disabled ? "Hết hàng" : inCart ? "Đã có trong giỏ — thêm nữa" : "Thêm vào giỏ"}
+        className="w-10 h-10 rounded-full bg-green-700 text-white flex items-center justify-center hover:bg-green-800 disabled:bg-stone-200 disabled:text-stone-400 transition"
       >
-        {inCart ? "✓" : "+"}
+        {disabled ? "✕" : inCart ? "✓" : "+"}
       </button>
     );
   }

@@ -82,7 +82,8 @@ export default async function NewsPage({
       {/* Category pills — mobile/tablet only. On desktop the sidebar carries
           category navigation, so this bar is hidden to avoid duplication. */}
       {cats.length > 0 && (
-        <div className="lg:hidden border-b border-green-100 bg-white/60 sticky top-0 z-20 backdrop-blur">
+        // top-[72px] clears the sticky navbar (z-50, ~72px) so this pill bar isn't hidden behind it while scrolling
+        <div className="lg:hidden border-b border-green-100 bg-white/60 sticky top-[72px] z-20 backdrop-blur">
           <div className="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto hide-scrollbar">
             <Link href={href({ cat: '' })}
               className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${

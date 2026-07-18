@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import SmartImage from './SmartImage';
 
 /**
  * `primary` is products.image and always leads; `extra` are the gallery rows.
@@ -15,8 +16,7 @@ export default function ProductGallery({
   return (
     <div className="space-y-3">
       <div className="relative aspect-square rounded-3xl overflow-hidden bg-green-50">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={current} alt={alt} className="w-full h-full object-cover" />
+        <SmartImage src={current} alt={alt} className="w-full h-full object-cover" />
         {discount > 0 && (
           <span className="absolute top-4 right-4 bg-amber-500 text-green-950 text-sm font-bold px-3 py-1.5 rounded-full">
             -{discount}%
@@ -37,8 +37,7 @@ export default function ProductGallery({
                 i === active ? 'border-green-600' : 'border-transparent hover:border-green-300'
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={u} alt="" loading="lazy" className="w-full h-full object-cover" />
+              <SmartImage src={u} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

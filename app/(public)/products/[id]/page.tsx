@@ -10,6 +10,7 @@ import JsonLd from "@/components/JsonLd";
 import ProductCard from "@/components/ProductCard";
 import ProductBuyBox from "@/components/ProductBuyBox";
 import ProductGallery from "@/components/ProductGallery";
+import SmartImage from "@/components/SmartImage";
 
 type Params = Promise<{ id: string }>;
 
@@ -97,8 +98,7 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
               href={`/farmers/${farmer.id}`}
               className="flex items-center gap-4 p-4 rounded-2xl border border-green-100 bg-white hover:shadow-md transition"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={farmer.avatar} alt={farmer.name} className="w-14 h-14 rounded-full object-cover" />
+              <SmartImage src={farmer.avatar} alt={farmer.name} fallback="👨‍🌾" className="w-14 h-14 rounded-full object-cover" />
               <div className="flex-1">
                 <div className="text-xs text-green-700/70">{info.grownByLabel}</div>
                 <div className="font-bold text-green-950">{farmer.name}</div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Product } from "@/lib/data";
 import { formatPrice, getFarmer } from "@/lib/data";
 import AddToCartButton from "./AddToCartButton";
+import SmartImage from "./SmartImage";
 
 export default async function ProductCard({ p }: { p: Product }) {
   const farmer = await getFarmer(p.farmerId);
@@ -13,8 +14,7 @@ export default async function ProductCard({ p }: { p: Product }) {
   return (
     <div className="group bg-white rounded-3xl overflow-hidden border border-green-100 hover:shadow-xl transition flex flex-col">
       <Link href={`/products/${p.id}`} className="relative aspect-[4/3] overflow-hidden bg-green-50 block">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SmartImage
           src={p.image}
           alt={p.name}
           className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
@@ -52,8 +52,10 @@ export default async function ProductCard({ p }: { p: Product }) {
         <div className="flex items-end justify-between pt-2 border-t border-green-100/70 gap-2">
           <div>
             <div className="text-lg font-bold text-green-800">{formatPrice(p.price)}</div>
-            {p.oldPrice && (
-              <div className="text-xs line-through text-stone-400">{formatPrice(p.oldPrice)}</div>
+            {/* Only strike through when it's a real discount — an oldPrice <= price
+                would otherwise imply a markdown that isn't one. */}
+            {discount > 0 && (
+              <div className="text-xs line-through text-stone-400">{formatPrice(p.oldPrice!)}</div>
             )}
             <div className="text-[11px] text-stone-500">/ {p.unit}</div>
           </div>

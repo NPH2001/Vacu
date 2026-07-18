@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
+import SmartImage from "./SmartImage";
 import { placeOrder } from "@/app/(public)/checkout/actions";
 import type { DeliverySlotRow } from "@/db/schema";
 
@@ -183,9 +184,16 @@ export default function CheckoutForm({
           <button
             type="submit"
             disabled={pending || slots.length === 0}
-            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition text-lg disabled:opacity-60"
+            className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition text-lg disabled:opacity-60 inline-flex items-center justify-center gap-2"
           >
-            Đặt hàng · {formatPrice(total)}
+            {pending ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden />
+                Đang đặt hàng…
+              </>
+            ) : (
+              <>Đặt hàng · {formatPrice(total)}</>
+            )}
           </button>
         </form>
 
@@ -194,8 +202,7 @@ export default function CheckoutForm({
           <ul className="space-y-3 mb-5">
             {items.map((it) => (
               <li key={it.id} className="flex items-center gap-3 text-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={it.image} alt={it.name} className="w-12 h-12 rounded-lg object-cover" />
+                <SmartImage src={it.image} alt={it.name} className="w-12 h-12 rounded-lg object-cover" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-green-950 line-clamp-1">{it.name}</div>
                   <div className="text-xs text-green-900/60">{it.qty} × {it.unit}</div>

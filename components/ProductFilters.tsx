@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
@@ -35,12 +35,18 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
     }
   }
 
+  // Wrap the navigation in a transition so we can show a pending spinner while
+  // the server re-renders the filtered grid — otherwise the shopper types and
+  // sees stale results with no signal anything is happening.
+  const [isNavPending, startNavTransition] = useTransition();
   const setParam = (patch: Record<string, string>) => {
     const next = new URLSearchParams(params.toString());
     for (const [k, v] of Object.entries(patch)) {
       if (v) next.set(k, v); else next.delete(k);
     }
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    startNavTransition(() => {
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    });
   };
 
   // Debounce the search box so we don't navigate on every keystroke.
@@ -66,8 +72,18 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
           onChange={(e) => setQ(e.target.value)}
           placeholder="Tìm sản phẩm…"
           aria-label="Tìm sản phẩm"
-          className="w-full pl-9 pr-3 py-2.5 rounded-full border border-green-200 bg-white text-sm focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
+          className="w-full pl-9 pr-9 py-2.5 rounded-full border border-green-200 bg-white text-sm focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
         />
+        {q && (
+          <button
+            type="button"
+            onClick={() => setQ('')}
+            aria-label="Xóa tìm kiếm"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full text-green-900/50 hover:text-green-900 hover:bg-green-50 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        )}
       </div>
       <select
         value={sort}
@@ -89,8 +105,12 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
         />
         Còn hàng
       </label>
-      {/* Announce the new count to screen readers after a filter/search change. */}
-      <span role="status" aria-live="polite" className="text-xs text-green-900/50 tabular-nums ml-auto">{resultCount} sản phẩm</span>
+      {/* Announce the new count to screen readers after a filter/search change,
+          and show a spinner while the filtered grid is being fetched. */}
+      <span role="status" aria-live="polite" className="text-xs text-green-900/50 tabular-nums ml-auto flex items-center gap-1.5">
+        {isNavPending && <span className="w-3 h-3 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" aria-hidden />}
+        {resultCount} sản phẩm
+      </span>
     </div>
   );
 }
