@@ -1,0 +1,125 @@
+# -- Number of app replicas. Note: uploads use a ReadWriteOnce PVC by default,
+# so >1 replica needs a ReadWriteMany storage class (or move uploads to object
+# storage). See persistence below.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/thang14/vato
+  # Overrides Chart.appVersion. Pin to a released tag in production.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Secret(s) for pulling a private GHCR image, e.g. [{ name: ghcr-creds }].
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ---------------------------------------------------------------------------
+# Secrets. The app needs DATABASE_URL and AUTH_SECRET (>=32 chars).
+# Preferred: create a Secret yourself and set existingSecret. Otherwise the
+# chart creates one from `secret.data` below (fine for a quick start, but the
+# values then live in your release — use a sealed/external secret in prod).
+# ---------------------------------------------------------------------------
+secret:
+  # Name of an existing Secret to use instead of creating one. It must contain
+  # the keys listed in `secret.data` that your app requires.
+  existingSecret: ""
+  data:
+    DATABASE_URL: "postgres://user:pass@your-external-db:5432/vacu"
+    AUTH_SECRET: "" # REQUIRED, 32+ random chars (openssl rand -base64 48)
+    # Optional — only used by the manual seed-admin script, not at runtime.
+    ADMIN_EMAIL: ""
+    ADMIN_PASSWORD: ""
+
+# Non-secret environment. UPLOADS_DIR/PORT/NODE_ENV are already baked into the
+# image; APP_URL is the canonical origin fallback for password-reset links.
+config:
+  APP_URL: "https://vacu.example.com"
+
+# Extra env vars (list of {name, value} or {name, valueFrom}).
+extraEnv: []
+
+# ---------------------------------------------------------------------------
+# Database migrations run once per release as a Helm pre-install/pre-upgrade
+# hook Job (not per-pod), so the app container just serves.
+# ---------------------------------------------------------------------------
+migrations:
+  enabled: true
+  # backoffLimit for the migrate Job.
+  backoffLimit: 2
+
+# Command for the app container. With migrations.enabled the Job handles
+# migrating, so the app only serves. Set to [] to fall back to the image's
+# default CMD (migrate + serve) — use that if you disable the hook.
+command: ["node", "server.js"]
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: vacu.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: vacu-tls
+  #   hosts: [vacu.example.com]
+
+# Persistent uploads (product/farmer images written to /app/public/uploads).
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 768Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 75
+
+# Probes hit /api/health (checks the process AND the external DB).
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 20
+  periodSeconds: 20
+  timeoutSeconds: 3
+  failureThreshold: 3
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+podAnnotations: {}
+podSecurityContext:
+  fsGroup: 1001
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

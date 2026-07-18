@@ -1,0 +1,32 @@
+Vacu app deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Image:      {{ include "vacu.image" . }}
+Migrations: {{ if .Values.migrations.enabled }}run in an initContainer on startup{{ else }}handled by the image default CMD{{ end }}
+Uploads:    {{ if .Values.persistence.enabled }}PVC {{ include "vacu.uploadsClaim" . }} ({{ .Values.persistence.size }}, {{ .Values.persistence.accessMode }}){{ else }}emptyDir (NOT persistent!){{ end }}
+
+{{- if .Values.ingress.enabled }}
+
+Reachable at:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+
+No Ingress. Port-forward to test:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "vacu.fullname" . }} 8080:{{ .Values.service.port }}
+  # then open http://localhost:8080
+{{- end }}
+
+Health:  GET /api/health  (checks the process AND the external database)
+
+{{- if or (gt (int .Values.replicaCount) 1) .Values.autoscaling.enabled }}
+
+⚠  More than one replica with a ReadWriteOnce uploads PVC will not schedule
+   reliably, and per-pod migrations can race. Use a ReadWriteMany storage class
+   (or object storage for uploads) before scaling past 1.
+{{- end }}
+{{- if not .Values.secret.existingSecret }}
+
+⚠  A Secret was created from values (AUTH_SECRET / DATABASE_URL are in the
+   release). For production, set secret.existingSecret to a Secret you manage.
+{{- end }}
