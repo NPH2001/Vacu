@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vacu.fullname" . }}
+  labels:
+    {{- include "vacu.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "vacu.selectorLabels" . | nindent 6 }}
+  strategy:
+    # RWO uploads volume can attach to one node at a time, so avoid overlapping
+    # old/new pods when a single replica mounts it.
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "vacu.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.migrations.enabled }}
+      initContainers:
+        # Idempotent DB migration before the app serves. Runs per pod; keep
+        # replicaCount 1 (the default, with the Recreate strategy) so migrations
+        # never run concurrently. For multi-replica, run migrations as a
+        # separate release step instead.
+        - name: migrate
+          image: {{ include "vacu.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "scripts/migrate.mjs"]
+          envFrom:
+            - secretRef:
+                name: {{ include "vacu.secretName" . }}
+            - configMapRef:
+                name: {{ include "vacu.fullname" . }}-config
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: app
+          image: {{ include "vacu.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if and .Values.command .Values.migrations.enabled }}
+          # migrations run in the initContainer, so the app only serves.
+          command: {{ toYaml .Values.command | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: {{ include "vacu.secretName" . }}
+            - configMapRef:
+                name: {{ include "vacu.fullname" . }}-config
+          {{- with .Values.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/public/uploads
+      volumes:
+        - name: uploads
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "vacu.uploadsClaim" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vacu
+description: >-
+  Vacu farm/OCOP e-commerce app. Deploys the app only — Postgres, SMTP and any
+  other dependencies are external services referenced by connection string.
+type: application
+version: 0.1.0
+# Default image tag; override with image.tag (or set to a released version).
+appVersion: "latest"
