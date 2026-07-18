@@ -2,11 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { SiteInfoRow, MenuItemRow } from "@/db/schema";
+import type { MenuItemRow } from "@/db/schema";
 import { useCart } from "./CartProvider";
 import PriorityNav from "./PriorityNav";
 
-export default function Navbar({ info, items }: { info: SiteInfoRow; items: MenuItemRow[] }) {
+// A narrowed view of site_info — NOT the whole SiteInfoRow. This is a Client
+// Component, so every prop is serialized into the RSC payload embedded in the
+// public HTML; handing it the full row would leak smtpPass and other secrets to
+// anyone who views source. Only the fields actually rendered are accepted.
+type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string };
+
+export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuItemRow[] }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
 

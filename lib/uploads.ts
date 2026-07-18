@@ -16,8 +16,15 @@ export function validateUpload(mime: string, size: number) {
 
 export type ProcessedImage = { buf: Buffer; width: number; height: number };
 
+// Output is only ever 1200px wide, so cap decoded input pixels well below
+// sharp's ~268MP default: a ~4MB file can still encode a ~16000² image that
+// decodes to ~1GB of RGBA before the resize runs. 40MP (~6300×6300) is far more
+// than any real product photo needs and turns a decompression bomb into a
+// cheap, caught error instead of an OOM.
+const MAX_INPUT_PIXELS = 40_000_000;
+
 export async function processImage(buf: Buffer): Promise<ProcessedImage> {
-  const { data, info } = await sharp(buf)
+  const { data, info } = await sharp(buf, { limitInputPixels: MAX_INPUT_PIXELS })
     .rotate()
     .resize({ width: 1200, withoutEnlargement: true })
     .webp({ quality: 82 })
