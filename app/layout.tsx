@@ -5,13 +5,17 @@ import { generateThemeCss } from '@/lib/theme';
 import './globals.css';
 
 // The theme picks among these by key (see FONT_VARS in lib/theme.ts). All are
-// loaded so switching fonts in the admin needs no rebuild.
+// loaded so switching fonts in the admin needs no rebuild — but only the
+// default pair (Inter + Fraunces, see DEFAULT_THEME) is <link rel=preload>ed.
+// The other two set `preload: false`: they still load if the admin selects
+// them, they just don't compete for first-load bandwidth on the default theme
+// (each carries a large Vietnamese glyph set).
 const inter = Inter({ subsets: ['latin', 'vietnamese'], variable: '--font-inter' });
 const fraunces = Fraunces({ subsets: ['latin', 'vietnamese'], variable: '--font-fraunces' });
 const beVietnam = Be_Vietnam_Pro({
-  subsets: ['latin', 'vietnamese'], weight: ['400', '500', '600', '700'], variable: '--font-be-vietnam',
+  subsets: ['latin', 'vietnamese'], weight: ['400', '500', '600', '700'], variable: '--font-be-vietnam', preload: false,
 });
-const playfair = Playfair_Display({ subsets: ['latin', 'vietnamese'], variable: '--font-playfair' });
+const playfair = Playfair_Display({ subsets: ['latin', 'vietnamese'], variable: '--font-playfair', preload: false });
 
 const fontVars = `${inter.variable} ${fraunces.variable} ${beVietnam.variable} ${playfair.variable}`;
 

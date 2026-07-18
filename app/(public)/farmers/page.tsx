@@ -1,4 +1,7 @@
-export const dynamic = 'force-dynamic';
+// No searchParams/cookies here — just farmer + site data — so this page can be
+// ISR like farmers/[id], instead of re-querying on every hit. Admin edits fire
+// revalidatePath, and the 5-min ceiling bounds staleness.
+export const revalidate = 300;
 
 import type { Metadata } from "next";
 import { getAllFarmers, getSiteInfo } from "@/lib/data";
