@@ -49,6 +49,12 @@ export async function sendMail(input: SendMailInput): Promise<SendMailResult> {
     port: cfg.port,
     secure: cfg.secure,
     auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
+    // Bound the wait on a black-holed SMTP host: the contact form awaits
+    // sendMail, so without these it would hang on nodemailer's multi-minute
+    // defaults before returning a friendly error.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   try {
@@ -176,6 +182,12 @@ export async function verifyMailConfig(): Promise<SendMailResult> {
     port: cfg.port,
     secure: cfg.secure,
     auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
+    // Bound the wait on a black-holed SMTP host: the contact form awaits
+    // sendMail, so without these it would hang on nodemailer's multi-minute
+    // defaults before returning a friendly error.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
   try {
     await transporter.verify();

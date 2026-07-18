@@ -44,8 +44,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above: no SSR-safe alternative without moving the cart to an external store.
-      if (raw) setItems(JSON.parse(raw));
+      const parsed = raw ? JSON.parse(raw) : null;
+      // Validate the shape, not just that it's valid JSON: a tampered value like
+      // `"{}"` parses fine but isn't an array, and items.reduce() in render would
+      // then throw past the layout into the bare global-error page.
+      if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- see above: no SSR-safe alternative without moving the cart to an external store.
+        setItems(parsed.filter((l) => l && typeof l.id === 'string' && typeof l.qty === 'number'));
+      }
     } catch {}
     setHydrated(true);
   }, []);

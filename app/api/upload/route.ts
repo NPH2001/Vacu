@@ -40,7 +40,16 @@ export async function POST(req: Request): Promise<Response> {
   if (inBuf.byteLength > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: `File quá lớn (>${MAX_UPLOAD_LABEL})` }, { status: 413 });
   }
-  const { buf, width, height } = await processImage(inBuf);
+  // sharp throws on a file that has an image MIME but undecodable bytes (the
+  // MIME check above trusts the client). Turn that into the same friendly 400
+  // the rest of the handler returns instead of a raw 500.
+  let processed;
+  try {
+    processed = await processImage(inBuf);
+  } catch {
+    return NextResponse.json({ error: 'Ảnh không hợp lệ hoặc bị hỏng.' }, { status: 400 });
+  }
+  const { buf, width, height } = processed;
   const url = await saveUpload(buf);
 
   const row = await recordMedia({

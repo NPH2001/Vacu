@@ -173,6 +173,17 @@ describe('GET /api/products', () => {
     const json = await res.json() as { data: Array<{ id: string }> };
     expect(json.data).toHaveLength(1);
   });
+
+  it('clamps a garbage/negative limit instead of 500ing', async () => {
+    const { GET } = await import('@/app/api/products/route');
+    const { NextRequest } = await import('next/server');
+    for (const bad of ['abc', '-5', '0', '999999']) {
+      const res = await GET(new NextRequest(`http://localhost/api/products?featured=true&limit=${bad}`));
+      expect(res.status).toBe(200);
+      const json = await res.json() as { data: unknown[] };
+      expect(Array.isArray(json.data)).toBe(true);
+    }
+  });
 });
 
 describe('GET /api/products/[id]', () => {
