@@ -33,7 +33,9 @@ const existing = await db.select({ id: users.id }).from(users).where(eq(users.em
 if (existing.length > 0) {
   console.log(`Admin ${email} already exists — skipping.`);
 } else {
-  const passwordHash = await hash(password);
+  // Match lib/auth.ts ARGON_OPTS so a manually-seeded admin uses the same KDF
+  // parameters the app hashes with.
+  const passwordHash = await hash(password, { memoryCost: 19456, timeCost: 2, parallelism: 1 });
   await db.insert(users).values({ email, passwordHash, name: 'Admin', role: 'admin' });
   console.log(`Created admin ${email}`);
 }

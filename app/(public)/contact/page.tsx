@@ -1,7 +1,18 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from "next";
 import { getSiteInfo, getAllContactTopics } from "@/lib/data";
+import { seoMeta } from "@/lib/seo";
 import ContactForm from "@/components/ContactForm";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getSiteInfo();
+  return seoMeta({
+    title: `${info.contactTitle || 'Liên hệ'} — ${info.name}`,
+    description: info.contactSubtitle,
+    canonical: '/contact',
+  });
+}
 
 export default async function ContactPage() {
   const [info, topics] = await Promise.all([getSiteInfo(), getAllContactTopics()]);
