@@ -15,6 +15,19 @@ export default function PublicNotFound() {
       <p className="text-green-900/70 mb-8">
         Có thể đường dẫn bị gõ nhầm, hoặc trang đã được chuyển đi nơi khác.
       </p>
+      {/* Re-search straight from the dead-end (plain GET → /products, no JS). */}
+      <form action="/products" method="get" className="max-w-md mx-auto mb-8 flex gap-2">
+        <input
+          type="search"
+          name="q"
+          placeholder="Tìm nông sản…"
+          aria-label="Tìm nông sản"
+          className="flex-1 min-w-0 px-4 py-2.5 rounded-full border border-green-200 bg-white text-sm focus:border-green-600 focus:ring-2 focus:ring-green-600/40"
+        />
+        <button type="submit" className="bg-green-700 hover:bg-green-800 text-white font-semibold px-5 py-2.5 rounded-full transition whitespace-nowrap">
+          Tìm
+        </button>
+      </form>
       <div className="flex flex-wrap gap-3 justify-center">
         <Link href="/"
           className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-full transition">
