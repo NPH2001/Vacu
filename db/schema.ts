@@ -14,6 +14,9 @@ export const users = pgTable('users', {
   // Bumped whenever the password changes; sessions issued before this time are
   // rejected, so a reset/change logs out every existing session.
   passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }).defaultNow().notNull(),
+  // Bumped on logout; sessions issued before this time are rejected, so logging
+  // out actually revokes the (stateless) token instead of only dropping the cookie.
+  sessionsRevokedAt: timestamp('sessions_revoked_at', { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

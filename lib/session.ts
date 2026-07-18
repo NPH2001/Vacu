@@ -54,6 +54,12 @@ export const getCurrentUser = cache(async (): Promise<UserRow | null> => {
   if (typeof s.pca !== 'number' || u.passwordChangedAt.getTime() > s.pca) {
     return null;
   }
+  // Logout bumps sessionsRevokedAt: a token issued before it is revoked, so
+  // logging out invalidates the stateless token server-side (not just the
+  // cookie). A legacy token without `iam` is treated as revoked.
+  if (typeof s.iam !== 'number' || u.sessionsRevokedAt.getTime() > s.iam) {
+    return null;
+  }
   return u;
 });
 

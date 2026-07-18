@@ -19,7 +19,10 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 // at the moment the session was issued. getCurrentUser rejects a session whose
 // `pca` is older than the user's current passwordChangedAt (also compared in ms),
 // so a reset/change logs out every prior session.
-export type SessionClaims = { sub: string; role: 'admin' | 'staff'; pca?: number };
+// `iam` = issued-at, epoch MILLISECONDS, stamped by signSession. getCurrentUser
+// rejects a session whose `iam` predates the user's sessionsRevokedAt, so logout
+// invalidates the token server-side (ms precision, like `pca`).
+export type SessionClaims = { sub: string; role: 'admin' | 'staff'; pca?: number; iam?: number };
 
 function secret(): Uint8Array {
   const raw = process.env.AUTH_SECRET;
@@ -30,7 +33,8 @@ function secret(): Uint8Array {
 }
 
 export async function signSession(claims: SessionClaims): Promise<string> {
-  return new SignJWT({ ...claims } as JWTPayload)
+  // Stamp the issue time in ms here so every caller gets it automatically.
+  return new SignJWT({ ...claims, iam: Date.now() } as JWTPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
