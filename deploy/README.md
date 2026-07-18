@@ -68,6 +68,57 @@ kubectl exec deploy/vacu -- node scripts/seed-admin.mjs   # uses ADMIN_EMAIL / A
 # or seed demo content:  kubectl exec deploy/vacu -- node scripts/seed.mjs
 ```
 
+## 3. Rancher Continuous Delivery (Fleet)
+
+Rancher CD is Fleet — it watches this repo and deploys the chart via GitOps.
+`deploy/helm/vacu/fleet.yaml` is the Fleet bundle (Fleet auto-detects the
+`Chart.yaml` beside it and installs it as Helm).
+
+### One-time setup
+
+1. **Create the Secret** in the target cluster (Fleet must not carry secrets in
+   git). In the `vacu` namespace of the downstream cluster:
+   ```bash
+   kubectl create namespace vacu
+   kubectl -n vacu create secret generic vacu-env \
+     --from-literal=DATABASE_URL='postgres://user:pass@db-host:5432/vacu' \
+     --from-literal=AUTH_SECRET="$(openssl rand -base64 48)"
+   ```
+   (Or use a SealedSecret / external-secrets so it *can* live in git.)
+
+2. **Register the repo** in Rancher → **Continuous Delivery → Git Repos → Create**:
+   - Repository URL: `https://github.com/thang14/vato`
+   - Branch: `main`
+   - Paths: `deploy/helm/vacu`
+   - Target: the cluster or cluster group to deploy to.
+
+   Fleet reads `fleet.yaml`, installs the release `vacu` in namespace `vacu`, and
+   re-syncs on every push. Edit the values in `fleet.yaml` (host, ingress class,
+   storageClass, image tag) to match your cluster.
+
+3. **Private image**: make the GHCR package public, or add
+   `imagePullSecrets: [{ name: ghcr-creds }]` in `fleet.yaml` and create that
+   secret in the namespace.
+
+### Updating the deployed version
+
+Fleet deploys exactly what's in git, so bump `image.tag` in `fleet.yaml` when you
+release. Either:
+
+- **Manual (simple):** edit `fleet.yaml` → `image.tag: "1.4.0"`, commit → Fleet
+  rolls it out.
+- **Automatic:** add a step to `release.yml` that rewrites the tag and commits
+  back to `main` (needs `permissions: contents: write`):
+  ```yaml
+  - name: Bump Fleet image tag
+    run: |
+      V="${GITHUB_REF_NAME#v}"
+      sed -i -E 's|^      tag: "[^"]*"|      tag: "'"$V"'"|' deploy/helm/vacu/fleet.yaml
+      git config user.name  github-actions
+      git config user.email github-actions@github.com
+      git commit -am "chore: deploy $V via Fleet" && git push || true
+  ```
+
 ### Notes
 
 - `persistence` is a **ReadWriteOnce** PVC by default, so keep `replicaCount: 1`
