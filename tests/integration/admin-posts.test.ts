@@ -240,6 +240,34 @@ describe('publish scheduling', () => {
     expect(row.publishedAt!.toISOString()).toBe(original.toISOString());
   });
 
+  it('"Đăng ngay" on a SCHEDULED (future) post publishes it now, not on the scheduled date', async () => {
+    const { createPost, updatePost } = await import('@/app/admin/actions/posts');
+    const { db } = await import('@/db/client');
+    const { posts } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    // Scheduled three days out — currently hidden from the public.
+    const future = new Date(Date.now() + 3 * 86400_000);
+    await expect(createPost(null, form({
+      ...base(), id: 'hen-roi-dang-ngay', title: 'Hẹn rồi đăng ngay', status: 'published',
+      publishedAt: future.toISOString(),
+    }))).rejects.toThrow();
+
+    // Admin changes their mind and hits "Đăng ngay" (empty publishedAt). The
+    // old code fell back to the future date and left it hidden — it must go live.
+    const at = Date.now();
+    await expect(updatePost('hen-roi-dang-ngay', null, form({
+      ...base(), id: 'hen-roi-dang-ngay', title: 'Hẹn rồi đăng ngay', status: 'published',
+      publishedAt: '',
+    }))).rejects.toThrow();
+
+    const [row] = await db.select().from(posts).where(eq(posts.id, 'hen-roi-dang-ngay'));
+    expect(row.publishedAt!.getTime()).toBeGreaterThanOrEqual(at - 1000);
+    expect(row.publishedAt!.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+    const { getPublishedPost } = await import('@/lib/posts');
+    expect(await getPublishedPost('hen-roi-dang-ngay')).not.toBeNull(); // now live
+  });
+
   it('stamps now when a draft is published for the first time', async () => {
     const { createPost, updatePost } = await import('@/app/admin/actions/posts');
     const { db } = await import('@/db/client');

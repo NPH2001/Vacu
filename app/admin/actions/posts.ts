@@ -41,12 +41,13 @@ type Parsed = z.output<typeof postSchema>;
 /**
  * Resolves the instant a post goes live.
  *
- * "Đăng ngay" submits an empty publishedAt, which means *now* only the first
- * time — `existing` keeps a live post's original date when the admin merely
- * edits it. Without that, every save re-stamped published_at, so fixing a typo
- * silently changed the article's date and shot it back to the top of /tin-tuc.
- * To move the date deliberately the admin picks one with "Hẹn giờ" (a past time
- * is allowed and backdates the post).
+ * "Đăng ngay" submits an empty publishedAt, which means *now* — but we keep an
+ * existing *past* date so merely editing a live post (e.g. fixing a typo)
+ * doesn't re-stamp published_at and shoot the article back to the top of
+ * /tin-tuc. A *future* existing date is different: the post isn't live yet, so
+ * "Đăng ngay" must actually publish it now, not fall back to the scheduled
+ * date (which would leave it hidden — the bug this guards against). To move the
+ * date deliberately the admin picks one with "Hẹn giờ" (a past time backdates).
  *
  * Publishing must never leave published_at null: the row would be marked
  * published yet never satisfy the `published_at <= now()` visibility rule, so
@@ -54,7 +55,10 @@ type Parsed = z.output<typeof postSchema>;
  */
 function resolvePublishedAt(data: Parsed, existing: Date | null): Date | null {
   if (data.status !== 'published') return data.publishedAt;
-  return data.publishedAt ?? existing ?? new Date();
+  if (data.publishedAt) return data.publishedAt;       // explicit "Hẹn giờ"
+  const now = new Date();
+  if (existing && existing <= now) return existing;     // keep a live post's date
+  return now;                                           // no date, or a future one → publish now
 }
 
 /**
