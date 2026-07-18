@@ -37,7 +37,7 @@ export default function UserForm({
             className="w-full border border-green-200 rounded px-3 py-2" />
         </L>
       </div>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">
         <Link href="/admin/users" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>
         <button type="submit" disabled={pending}

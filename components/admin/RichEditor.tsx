@@ -51,6 +51,10 @@ export default function RichEditor({
         // Same class the public page uses, so the editor is a true preview.
         class: 'product-prose px-4 py-3',
         style: `min-height:${minHeight}px`,
+        role: 'textbox',
+        'aria-multiline': 'true',
+        // Give the multiline edit region an accessible name.
+        'aria-label': label || 'Trình soạn thảo nội dung',
       },
     },
     onUpdate: ({ editor }) => {
@@ -96,7 +100,7 @@ export default function RichEditor({
       <input type="hidden" name={name} value={html} />
 
       <div className="border border-green-200 rounded-xl overflow-hidden bg-white focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-100 transition">
-        <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-green-100 bg-green-50/50 sticky top-0 z-10">
+        <div role="toolbar" aria-label="Định dạng văn bản" className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-green-100 bg-green-50/50 sticky top-0 z-10">
           <Btn onClick={() => editor.chain().focus().toggleBold().run()}
             active={editor.isActive('bold')} title="Chữ đậm (Ctrl+B)">
             <b>B</b>

@@ -155,7 +155,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
             />
           </div>
 
-          {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+          {error && <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>}
 
           {loading && rows.length === 0 ? (
             <p className="text-sm text-green-900/60 py-12 text-center">Đang tải…</p>

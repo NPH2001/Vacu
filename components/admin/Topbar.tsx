@@ -61,12 +61,12 @@ export default function Topbar({ email }: { email: string }) {
         </button>
 
         {/* Mobile: just the current page */}
-        <nav className="lg:hidden text-[13.5px] font-medium text-stone-900 truncate">
+        <nav aria-label="Vị trí hiện tại" className="lg:hidden text-[13.5px] font-medium text-stone-900 truncate">
           {lastCrumb?.label ?? 'Vacu'}
         </nav>
 
         {/* Desktop: full breadcrumb */}
-        <nav className="hidden lg:flex items-center gap-1.5 text-[13px] min-w-0">
+        <nav aria-label="Breadcrumb" className="hidden lg:flex items-center gap-1.5 text-[13px] min-w-0">
           {crumbs.map((c, i) => (
             <span key={c.href} className="flex items-center gap-1.5 min-w-0">
               {i > 0 && <span className="text-stone-300 select-none">›</span>}

@@ -25,7 +25,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
         className="w-full bg-green-700 hover:bg-green-800 disabled:opacity-60 text-white font-semibold py-2 rounded-full">
         {pending ? 'Đang cập nhật…' : 'Đặt mật khẩu mới'}
       </button>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
     </form>
   );
 }

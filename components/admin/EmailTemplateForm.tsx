@@ -119,7 +119,7 @@ export default function EmailTemplateForm({
         rawKeys={rawKeys}
       />
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
 
       <div className="flex justify-end gap-3">
         <Link href="/admin/email-templates" className="px-4 py-2 text-sm text-green-800 hover:underline">Hủy</Link>

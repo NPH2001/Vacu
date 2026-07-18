@@ -68,7 +68,7 @@ export default function MediaGrid({ rows }: { rows: MediaRow[] }) {
           className="sr-only" />
       </div>
 
-      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600 mb-3">{error}</p>}
 
       {rows.length === 0 ? (
         <div className="admin-panel p-10 text-center">

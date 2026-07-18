@@ -15,16 +15,20 @@ export default function EmojiPicker({
   const [q, setQ] = useState('');
   const [activeGroup, setActiveGroup] = useState(EMOJI_GROUPS[0].id);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Close and return focus to the trigger (instead of dropping it to <body>).
+  const close = () => { setOpen(false); triggerRef.current?.focus(); };
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpen(false); // outside click: don't steal focus back
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') close();
     };
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
@@ -36,7 +40,7 @@ export default function EmojiPicker({
 
   const pick = (e: string) => {
     onChange(e);
-    setOpen(false);
+    close();
     setQ('');
   };
 
@@ -55,11 +59,15 @@ export default function EmojiPicker({
           onChange={(e) => onChange(e.target.value)}
           required={required}
           placeholder={placeholder}
+          aria-label="Biểu tượng (emoji)"
           className="w-20 border border-green-200 rounded px-3 py-2 text-2xl text-center"
         />
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
           className="px-3 py-2 text-sm rounded border border-green-200 bg-white hover:bg-green-50 text-green-800"
         >
           Chọn emoji
@@ -70,6 +78,7 @@ export default function EmojiPicker({
         <div
           className="absolute z-30 mt-2 left-0 w-[22rem] max-w-[90vw] bg-white border border-green-200 rounded-2xl shadow-xl p-3"
           role="dialog"
+          aria-label="Chọn emoji"
         >
           <input
             autoFocus

@@ -132,7 +132,7 @@ export default function Sidebar({ role }: { role: 'admin' | 'staff' }) {
 
         <div className="mx-4" style={{ borderTop: '1px solid #2a2a27' }} />
 
-        <nav className="flex-1 px-4 pb-4 overflow-y-auto">
+        <nav aria-label="Điều hướng quản trị" className="flex-1 px-4 pb-4 overflow-y-auto">
           {SECTIONS.map((section) => {
             const items = section.items.filter((i) => !i.adminOnly || role === 'admin');
             if (items.length === 0) return null;
