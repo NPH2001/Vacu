@@ -55,7 +55,10 @@ export async function requestPasswordReset(
 
   const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!info?.smtpEnabled) {
-    return { error: 'Tính năng gửi mail chưa được cấu hình. Liên hệ quản trị viên.' };
+    // Stay generic even here: an SMTP-specific message only ever fires for an
+    // email that exists, which would leak whether an account is registered.
+    console.error('[password-reset] SMTP not configured — cannot send reset email');
+    return generic;
   }
 
   const rawToken = randomBytes(32).toString('base64url');
@@ -107,7 +110,9 @@ export async function resetPassword(
 
   const passwordHash = await hashPassword(parsed.data.password);
   await db.transaction(async (tx) => {
-    await tx.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, row.userId));
+    await tx.update(users)
+      .set({ passwordHash, passwordChangedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, row.userId));
     await tx
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })

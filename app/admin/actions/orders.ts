@@ -1,7 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders, siteInfo } from '@/db/schema';
 import { orderStatusSchema } from '@/lib/validators';
@@ -21,6 +21,10 @@ export async function updateOrderStatus(id: string, fd: FormData): Promise<void>
 export async function markOrderPaid(id: string): Promise<void> {
   await requireAdmin();
   await db.update(orders).set({ paymentStatus: 'paid', updatedAt: new Date() }).where(eq(orders.id, id));
+  // The customer's order page promises the order auto-advances once paid; move a
+  // still-pending order to "preparing" (never regress a later status).
+  await db.update(orders).set({ status: 'preparing', updatedAt: new Date() })
+    .where(and(eq(orders.id, id), eq(orders.status, 'pending')));
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${id}`);
   revalidatePath('/orders');

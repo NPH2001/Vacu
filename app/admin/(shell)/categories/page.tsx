@@ -57,7 +57,7 @@ export default async function CategoriesAdminPage({
     const walk = (nodes: CategoryNode[], level: number) => {
       const sorted = [...nodes].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
       for (const n of sorted) {
-        const { children: _ignored, ...row } = n;
+        const { children, ...row } = n;
         flat.push({ ...row, level });
         walk(n.children, level + 1);
       }

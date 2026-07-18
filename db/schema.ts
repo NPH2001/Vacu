@@ -1,5 +1,5 @@
 import {
-  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check, real,
+  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check, real, index,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -11,6 +11,9 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   name: text('name').notNull(),
   role: text('role', { enum: ['admin', 'staff'] }).notNull().default('staff'),
+  // Bumped whenever the password changes; sessions issued before this time are
+  // rejected, so a reset/change logs out every existing session.
+  passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -77,7 +80,11 @@ export const products = pgTable('products', {
   inStock: boolean('in_stock').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  index('products_category_idx').on(t.categoryId),
+  index('products_farmer_idx').on(t.farmerId),
+  index('products_featured_idx').on(t.featured),
+]);
 
 /**
  * Extra gallery shots. `products.image` stays the primary/thumbnail image so
@@ -90,7 +97,7 @@ export const productImages = pgTable('product_images', {
   url: text('url').notNull(),
   alt: text('alt').notNull().default(''),
   sortOrder: integer('sort_order').default(0).notNull(),
-});
+}, (t) => [index('product_images_product_idx').on(t.productId, t.sortOrder)]);
 
 export const postCategories = pgTable('post_categories', {
   id: text('id').primaryKey(),
@@ -125,13 +132,15 @@ export const posts = pgTable('posts', {
   metaDescription: text('meta_description').notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  index('posts_status_published_idx').on(t.status, t.publishedAt),
+  index('posts_category_idx').on(t.categoryId),
+]);
 
 /**
- * Which homepage sections show, and in what order. Rows are fixed: each `key`
- * maps to a purpose-built section in app/(public)/page.tsx (they read different
- * data and cannot be generic blocks), so the admin controls order and
- * visibility rather than creating or deleting them.
+ * Legacy homepage section ordering. The homepage is now a page-builder page
+ * (see pages/page_blocks), so nothing reads this table anymore; it is kept only
+ * so no destructive migration is forced on existing databases.
  */
 export const homeSections = pgTable('home_sections', {
   key: text('key').primaryKey(),
@@ -166,7 +175,7 @@ export const pageBlocks = pgTable('page_blocks', {
   sortOrder: integer('sort_order').default(0).notNull(),
   visible: boolean('visible').notNull().default(true),
   data: jsonb('data').$type<Record<string, unknown>>().notNull().default({}),
-});
+}, (t) => [index('page_blocks_page_idx').on(t.pageId, t.sortOrder)]);
 
 export const testimonials = pgTable('testimonials', {
   id: serial('id').primaryKey(),

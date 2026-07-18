@@ -15,7 +15,10 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
   }
 }
 
-export type SessionClaims = { sub: string; role: 'admin' | 'staff' };
+// `pca` = password-changed-at (epoch seconds) at the moment the session was
+// issued. getCurrentUser rejects a session whose `pca` is older than the user's
+// current passwordChangedAt, so a reset/change logs out every prior session.
+export type SessionClaims = { sub: string; role: 'admin' | 'staff'; pca?: number };
 
 function secret(): Uint8Array {
   const raw = process.env.AUTH_SECRET;

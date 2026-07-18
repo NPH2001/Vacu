@@ -58,6 +58,7 @@ export async function updateUser(id: string, _p: UserFormState, fd: FormData): P
   };
   if (parsed.data.password) {
     patch.passwordHash = await hashPassword(parsed.data.password);
+    patch.passwordChangedAt = new Date(); // revoke this user's existing sessions
   }
   try {
     await db.update(users).set(patch).where(eq(users.id, id));
