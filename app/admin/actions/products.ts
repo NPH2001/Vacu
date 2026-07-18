@@ -68,7 +68,7 @@ export async function createProduct(_prev: ProductFormState, fd: FormData): Prom
   }
   revalidatePath('/admin/products');
   revalidatePath('/products');
-  redirect('/admin/products');
+  redirect('/admin/products?ok=da-tao');
 }
 
 export async function updateProduct(originalId: string, _prev: ProductFormState, fd: FormData): Promise<ProductFormState> {
@@ -93,7 +93,7 @@ export async function updateProduct(originalId: string, _prev: ProductFormState,
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${originalId}`);
   revalidatePath(`/products/${originalId}`);
-  redirect('/admin/products');
+  redirect('/admin/products?ok=da-luu');
 }
 
 // Images are intentionally left on disk here. Since the media library made
@@ -104,7 +104,7 @@ export async function deleteProduct(id: string): Promise<void> {
   await requireAdmin();
   await db.delete(products).where(eq(products.id, id));
   revalidatePath('/admin/products');
-  redirect('/admin/products');
+  redirect('/admin/products?ok=da-xoa');
 }
 
 export async function bulkDeleteProducts(fd: FormData): Promise<void> {
@@ -113,5 +113,5 @@ export async function bulkDeleteProducts(fd: FormData): Promise<void> {
   if (ids.length === 0) { redirect('/admin/products'); }
   await db.delete(products).where(inArray(products.id, ids));
   revalidatePath('/admin/products');
-  redirect('/admin/products');
+  redirect('/admin/products?ok=da-xoa');
 }

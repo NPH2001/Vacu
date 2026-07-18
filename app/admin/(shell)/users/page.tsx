@@ -50,7 +50,7 @@ export default async function UsersAdminPage({
 
   return (
     <div className="space-y-4">
-      <FlashBanner code={sp.loi} basePath={BASE} />
+      <FlashBanner code={sp.ok ?? sp.loi} basePath={BASE} />
       <div className="flex items-center justify-between">
         <h1 className="admin-title text-[28px]">Tài khoản</h1>
         <Link

@@ -11,6 +11,9 @@
  * hand-crafted into a misleading message inside the admin UI.
  */
 export const FLASH: Record<string, { kind: 'error' | 'ok'; text: string }> = {
+  'da-luu': { kind: 'ok', text: 'Đã lưu thay đổi.' },
+  'da-tao': { kind: 'ok', text: 'Đã tạo mới.' },
+  'da-xoa': { kind: 'ok', text: 'Đã xóa.' },
   'danh-muc-dang-dung': {
     kind: 'error',
     text: 'Không xóa được danh mục này vì đang có sản phẩm thuộc về nó, hoặc nó còn danh mục con. Hãy chuyển sản phẩm sang danh mục khác (hoặc xóa danh mục con) rồi thử lại.',

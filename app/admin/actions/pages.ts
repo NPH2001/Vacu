@@ -113,7 +113,7 @@ export async function updatePage(originalId: string, _prev: PageFormState, fd: F
   revalidatePath('/admin/pages');
   revalidatePath(`/admin/pages/${originalId}`);
   revalidatePath(`/${originalId}`);
-  redirect('/admin/pages');
+  redirect('/admin/pages?ok=da-luu');
 }
 
 // page_blocks cascades, so the blocks go with the page.

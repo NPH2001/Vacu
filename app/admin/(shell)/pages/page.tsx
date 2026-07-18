@@ -24,7 +24,7 @@ export default async function PagesAdminPage({
         <Link href="/admin/pages/new" className="admin-btn-primary">+ Tạo trang mới</Link>
       </div>
 
-      <FlashBanner code={sp.loi} basePath="/admin/pages" />
+      <FlashBanner code={sp.ok ?? sp.loi} basePath="/admin/pages" />
 
       {rows.length === 0 ? (
         <div className="admin-panel p-8 text-center">
