@@ -1,8 +1,19 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from "next";
 import { getAllFarmers, getSiteInfo } from "@/lib/data";
+import { seoMeta } from "@/lib/seo";
 import FarmerCard from "@/components/FarmerCard";
 import AnimateOnScroll from "@/components/AnimateOnScroll";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const info = await getSiteInfo();
+  return seoMeta({
+    title: `${info.farmersHeroTitle || "Nông dân"} — ${info.name}`,
+    description: info.farmersHeroSubtitle?.replaceAll("{count}", "nhiều"),
+    canonical: "/farmers",
+  });
+}
 
 export default async function FarmersPage() {
   const [farmers, info] = await Promise.all([getAllFarmers(), getSiteInfo()]);

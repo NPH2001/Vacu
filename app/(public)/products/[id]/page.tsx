@@ -1,13 +1,27 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: on-demand + refreshed by admin revalidatePath, 5-min ceiling
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, getFarmer, formatPrice, getAllProducts, getCategory, getProductGallery, getSiteInfo } from "@/lib/data";
+import { seoMeta } from "@/lib/seo";
 import ProductCard from "@/components/ProductCard";
 import ProductBuyBox from "@/components/ProductBuyBox";
 import ProductGallery from "@/components/ProductGallery";
 
 type Params = Promise<{ id: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { id } = await params;
+  const [p, info] = await Promise.all([getProduct(id), getSiteInfo()]);
+  if (!p) return { title: "Không tìm thấy sản phẩm" };
+  return seoMeta({
+    title: `${p.name} — ${info.name}`,
+    description: p.description,
+    canonical: `/products/${p.id}`,
+    image: p.image,
+  });
+}
 
 export default async function ProductDetailPage({ params }: { params: Params }) {
   const { id } = await params;

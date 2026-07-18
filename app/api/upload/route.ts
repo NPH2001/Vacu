@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/session';
 import { validateUpload, processImage, saveUpload } from '@/lib/uploads';
 import { recordMedia } from '@/lib/media';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  // Cap uploads per user so a logged-in account can't spin the disk / sharp CPU.
+  if (!rateLimit(`upload:${user.id}`, { limit: 60, windowMs: 60_000 }).ok) {
+    return NextResponse.json({ error: 'Bạn tải ảnh quá nhanh, vui lòng thử lại sau giây lát.' }, { status: 429 });
+  }
 
   const form = await req.formData();
   const file = form.get('file');

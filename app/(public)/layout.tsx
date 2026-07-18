@@ -1,4 +1,6 @@
-export const dynamic = 'force-dynamic';
+// No force-dynamic here: it would cascade dynamic rendering onto every public
+// route and defeat the per-page ISR below. Pages that need per-request data keep
+// their own `force-dynamic`; content detail pages opt into ISR via `revalidate`.
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';

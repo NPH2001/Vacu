@@ -1,11 +1,25 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: on-demand + refreshed by admin revalidatePath, 5-min ceiling
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFarmer, getProductsByFarmer, getSiteInfo } from "@/lib/data";
+import { seoMeta } from "@/lib/seo";
 import ProductCard from "@/components/ProductCard";
 
 type Params = Promise<{ id: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { id } = await params;
+  const [f, info] = await Promise.all([getFarmer(id), getSiteInfo()]);
+  if (!f) return { title: "Không tìm thấy nông dân" };
+  return seoMeta({
+    title: `${f.name} — ${f.farm} — ${info.name}`,
+    description: f.story,
+    canonical: `/farmers/${f.id}`,
+    image: f.cover,
+  });
+}
 
 export default async function FarmerDetailPage({ params }: { params: Params }) {
   const { id } = await params;
