@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { getPublishedPosts, getPostCategoriesWithCounts, getLatestPosts } from '@/lib/posts';
 import { getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
+import { formatDate } from '@/lib/format';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import NewsSidebar from '@/components/NewsSidebar';
 
@@ -30,10 +31,6 @@ export async function generateMetadata({ searchParams }: {
   };
 }
 
-function formatDate(d: Date | null): string {
-  if (!d) return '';
-  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
 
 export default async function NewsPage({
   searchParams,

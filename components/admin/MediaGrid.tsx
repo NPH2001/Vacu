@@ -8,6 +8,7 @@ import { deleteMedia, updateMediaAlt, getMediaUsage } from '@/app/admin/actions/
 import type { MediaUsage } from '@/lib/media';
 import { uploadImage } from '@/lib/uploads-client';
 import { ACCEPT_ATTR, MAX_UPLOAD_LABEL } from '@/lib/upload-limits';
+import { formatDate } from '@/lib/format';
 
 function prettySize(bytes: number) {
   if (!bytes) return '—';
@@ -171,7 +172,7 @@ function MediaDetail({
               </div>
               <div className="flex gap-2">
                 <dt className="w-24 text-stone-400">Tải lên</dt>
-                <dd>{new Date(row.createdAt).toLocaleDateString('vi-VN')}</dd>
+                <dd>{formatDate(row.createdAt)}</dd>
               </div>
               <div className="flex gap-2 items-center">
                 <dt className="w-24 text-stone-400 shrink-0">Đường dẫn</dt>

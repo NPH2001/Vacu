@@ -1,12 +1,8 @@
 import Link from 'next/link';
 import type { PostWithCategory } from '@/lib/posts';
+import { formatDate as fmtDate } from '@/lib/format';
 
 type CategoryCount = { id: string; name: string; count: number };
-
-function fmtDate(d: Date | null): string {
-  if (!d) return '';
-  return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
 
 /**
  * Right-hand column for the news pages. Each block is optional so the list and

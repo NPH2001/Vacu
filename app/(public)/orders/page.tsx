@@ -10,7 +10,7 @@ import { inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { orders, orderItems } from '@/db/schema';
 import { MY_ORDERS_COOKIE, parseMyOrders } from '@/lib/orders-cookie';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatDateTime } from '@/lib/format';
 import { getOrderStatusMap, getSiteInfo } from '@/lib/data';
 import { findBank, vietQrImageUrl } from '@/lib/banks';
 import PurchaseEvent from '@/components/PurchaseEvent';
@@ -87,7 +87,7 @@ export default async function OrdersPage({
                     <div className="text-xs text-green-900/60">Mã đơn</div>
                     <div className="font-bold text-green-950 text-lg">{o.id}</div>
                     <div className="text-xs text-green-900/60 mt-0.5">
-                      {new Date(o.createdAt).toLocaleString('vi-VN')}
+                      {formatDateTime(o.createdAt)}
                     </div>
                   </div>
                   <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${s.color}`}>{s.label}</span>

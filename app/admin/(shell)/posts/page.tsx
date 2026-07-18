@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql, eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { posts, postCategories } from '@/db/schema';
+import { formatDate, formatDateTime } from '@/lib/format';
 import DeleteButton from '@/components/admin/DeleteButton';
 import BulkDeleteForm from '@/components/admin/BulkDeleteForm';
 import { deletePost, bulkDeletePosts } from '@/app/admin/actions/posts';
@@ -24,7 +25,7 @@ const BASE = '/admin/posts';
 function statusOf(status: string, publishedAt: Date | null) {
   if (status !== 'published') return { label: 'Nháp', style: { background: '#f5f5f4', color: '#57534e', borderColor: '#e7e5e4' } };
   if (publishedAt && publishedAt.getTime() > Date.now()) {
-    return { label: `Hẹn ${publishedAt.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`,
+    return { label: `Hẹn ${formatDateTime(publishedAt)}`,
       style: { background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' } };
   }
   return { label: 'Đang hiện', style: { background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' } };
@@ -173,7 +174,7 @@ export default async function PostsAdminPage({
                         <span className="admin-badge" style={st.style}>{st.label}</span>
                       </td>
                       <td className="text-stone-600 tabular-nums text-[12.5px]">
-                        {p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : '—'}
+                        {p.publishedAt ? formatDate(p.publishedAt) : '—'}
                       </td>
                       <td className="text-right">
                         <div className="inline-flex items-center gap-3">

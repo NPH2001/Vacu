@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/session';
 import { sendMail } from '@/lib/mail';
+import { formatDateTime } from '@/lib/format';
 import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request): Promise<Response> {
@@ -30,7 +31,7 @@ export async function POST(req: Request): Promise<Response> {
       <div style="font-family: system-ui, sans-serif; color:#1a2e1a; line-height:1.5">
         <h2 style="color:#1f6b3a">Vacu — Test SMTP</h2>
         <p>Nếu bạn đọc được dòng này, cấu hình SMTP của Vacu đang <strong>hoạt động tốt</strong>.</p>
-        <p style="color:#688;font-size:12px;margin-top:30px">Gửi tự động lúc ${new Date().toLocaleString('vi-VN')}</p>
+        <p style="color:#688;font-size:12px;margin-top:30px">Gửi tự động lúc ${formatDateTime(new Date())}</p>
       </div>
     `,
   });
