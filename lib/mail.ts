@@ -146,7 +146,10 @@ async function getShellContext(): Promise<{
   const headerTpl = info?.emailHeaderHtml || '';
   const footerTpl = info?.emailFooterHtml || '';
   return {
-    header: headerTpl ? renderTemplate(headerTpl, vars, ['logoUrl']) : '',
+    // logoUrl is HTML-escaped like every other var (not raw): a URL escapes
+    // harmlessly, but a crafted value with `"` can no longer break out of the
+    // header's <img src="…"> attribute.
+    header: headerTpl ? renderTemplate(headerTpl, vars) : '',
     footer: footerTpl ? renderTemplate(footerTpl, vars) : '',
     vars,
   };

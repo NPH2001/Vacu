@@ -59,12 +59,17 @@ export default function CategoryListing({
     : {};
 
   const cover = activeCategory?.coverImage;
+  // Strip CSS-breakout chars before interpolating into the inline `url(...)` —
+  // React escapes the `"` of the style attribute but not `)`/`;` inside the
+  // value, so a crafted coverImage could otherwise inject extra CSS declarations
+  // (full-screen overlay / defacement) scoped to this element.
+  const coverUrl = cover ? cover.replace(/["'()\\<>]/g, '') : '';
 
   return (
     <div>
       <section
         className={`relative overflow-hidden text-white ${cover ? 'min-h-[240px] lg:min-h-[640px] flex items-end' : 'bg-gradient-to-br from-green-800 to-green-950 py-14'}`}
-        style={cover ? { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+        style={cover ? { backgroundImage: `url("${coverUrl}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {cover && (
           <>

@@ -12,7 +12,12 @@ import Script from 'next/script';
  */
 export default function Analytics({ measurementId }: { measurementId: string }) {
   const id = measurementId.trim();
-  if (!id) return null;
+  // The id is interpolated raw into the inline gtag() script below, so a value
+  // like `');<script>…` would execute for every visitor. The settings schema
+  // now rejects bad ids, but validate again here (defense in depth, and to
+  // neutralize any value already stored before that guard existed): only a real
+  // GA/GTM id shape is allowed through.
+  if (!id || !/^(G|UA|GT|AW|DC)-[A-Z0-9-]+$/i.test(id)) return null;
 
   return (
     <>
