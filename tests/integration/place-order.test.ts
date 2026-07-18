@@ -1,5 +1,15 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest';
+import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+
+// placeOrder now rate-limits by client IP (via clientIp → headers()) and, on
+// success, appends the order id to a cookie. Both need a request scope that
+// vitest doesn't provide, so stub next/headers. A distinct IP per call keeps
+// the rate limiter (per-process, shared across tests) from tripping mid-suite.
+let ipCounter = 0;
+vi.mock('next/headers', () => ({
+  headers: async () => new Map<string, string>([['x-forwarded-for', `10.0.0.${ipCounter++}`]]),
+  cookies: async () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
+}));
 
 let container: StartedPostgreSqlContainer;
 let validSlot: string; // a seeded active delivery slot label (checkout validates against these)

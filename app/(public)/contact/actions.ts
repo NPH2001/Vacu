@@ -4,6 +4,7 @@ import { db } from '@/db/client';
 import { siteInfo } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendMail } from '@/lib/mail';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 const schema = z.object({
   name: z.string().min(1).max(120),
@@ -30,6 +31,12 @@ export async function submitContact(fd: FormData): Promise<ContactSubmitResult> 
     message: fd.get('message'),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+
+  // Unauthenticated and it sends mail, so throttle per IP — otherwise a scripted
+  // loop floods the admin inbox and burns the SMTP quota/reputation.
+  if (!rateLimit(`contact:ip:${await clientIp()}`, { limit: 5, windowMs: 10 * 60_000 }).ok) {
+    return { ok: false, error: 'Bạn gửi quá nhiều lần. Vui lòng thử lại sau ít phút.' };
+  }
 
   const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!info) return { ok: false, error: 'Site chưa khởi tạo.' };

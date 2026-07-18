@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/format';
 import { sendTemplatedMail } from '@/lib/mail';
 import { vietQrImageUrl, findBank } from '@/lib/banks';
 import { isUniqueViolation } from '@/lib/db-errors';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 // The client is trusted for the product id and quantity only — never the price,
 // name or unit. Everything money-related is rebuilt from the products table.
@@ -64,6 +65,14 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
     const [existing] = await db.select({ id: orders.id }).from(orders)
       .where(eq(orders.idempotencyKey, idempotencyKey)).limit(1);
     if (existing) return { ok: true, orderId: existing.id };
+  }
+
+  // Unauthenticated, and each success writes rows + sends two emails. The
+  // idempotency key dedupes honest retries above; this throttles a distinct-key
+  // loop that would otherwise spam orders and admin notifications. Placed after
+  // the idempotency short-circuit so a genuine retry never counts against it.
+  if (!rateLimit(`order:ip:${await clientIp()}`, { limit: 10, windowMs: 10 * 60_000 }).ok) {
+    return { ok: false, error: 'Bạn đặt hàng quá nhiều lần. Vui lòng thử lại sau ít phút.' };
   }
 
   let requested: z.infer<typeof cartLineSchema>[];

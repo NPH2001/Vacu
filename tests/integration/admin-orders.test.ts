@@ -200,6 +200,59 @@ describe('markOrderPaid', () => {
     expect(row.paymentStatus).toBe('paid');
     errSpy.mockRestore();
   });
+
+  it('is idempotent: a second call on an already-paid order sends no further mail', async () => {
+    await seedSiteInfo(true);
+    await seedOrder('ord-paid-twice', { customerEmail: 'twice@example.com' });
+    const { markOrderPaid } = await import('@/app/admin/actions/orders');
+    await markOrderPaid('ord-paid-twice');
+    await markOrderPaid('ord-paid-twice'); // the guard must match zero rows here
+    // Exactly one confirmation email despite two calls — the once-only guarantee.
+    expect(templatedMailCalls).toHaveLength(1);
+  });
+
+  it('no-ops on a cancelled order: no mail, stays cancelled/unpaid', async () => {
+    await seedSiteInfo(true);
+    await seedOrder('ord-cancelled', { customerEmail: 'c@example.com', status: 'cancelled' });
+    const { markOrderPaid } = await import('@/app/admin/actions/orders');
+    await markOrderPaid('ord-cancelled');
+
+    const { db } = await import('@/db/client');
+    const { orders } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const [row] = await db.select().from(orders).where(eq(orders.id, 'ord-cancelled'));
+    expect(row.status).toBe('cancelled');
+    expect(row.paymentStatus).toBe('unpaid');
+    expect(templatedMailCalls).toHaveLength(0);
+  });
+
+  it('advances a pending order to preparing when paid', async () => {
+    await seedSiteInfo(true);
+    await seedOrder('ord-pending-pay', { status: 'pending' });
+    const { markOrderPaid } = await import('@/app/admin/actions/orders');
+    await markOrderPaid('ord-pending-pay');
+
+    const { db } = await import('@/db/client');
+    const { orders } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const [row] = await db.select().from(orders).where(eq(orders.id, 'ord-pending-pay'));
+    expect(row.status).toBe('preparing');
+    expect(row.paymentStatus).toBe('paid');
+  });
+
+  it('never regresses a later status: delivering stays delivering when paid', async () => {
+    await seedSiteInfo(true);
+    await seedOrder('ord-delivering-pay', { status: 'delivering' });
+    const { markOrderPaid } = await import('@/app/admin/actions/orders');
+    await markOrderPaid('ord-delivering-pay');
+
+    const { db } = await import('@/db/client');
+    const { orders } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const [row] = await db.select().from(orders).where(eq(orders.id, 'ord-delivering-pay'));
+    expect(row.status).toBe('delivering');
+    expect(row.paymentStatus).toBe('paid');
+  });
 });
 
 describe('markOrderUnpaid', () => {
