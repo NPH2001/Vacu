@@ -26,7 +26,7 @@ secret:
   # the keys listed in `secret.data` that your app requires.
   existingSecret: ""
   data:
-    DATABASE_URL: "postgres://user:pass@your-external-db:5432/vacu"
+    DATABASE_URL: "" # REQUIRED — the chart fails to render if left blank
     AUTH_SECRET: "" # REQUIRED, 32+ random chars (openssl rand -base64 48)
     # Optional — only used by the manual seed-admin script, not at runtime.
     ADMIN_EMAIL: ""
@@ -116,6 +116,9 @@ securityContext:
   runAsNonRoot: true
   runAsUser: 1001
   allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true   # writable paths are mounted as emptyDir (see deployment.yaml)
+  seccompProfile:
+    type: RuntimeDefault
   capabilities:
     drop: ["ALL"]
 

@@ -2,11 +2,9 @@
 .gitignore
 node_modules
 .next
-.env
-.env.local
-.env.*.local
-.env.development
-.env.test
+# Exclude every env file (real secrets) from the build context; examples aren't
+# needed to build. Catch-all so a future .env.production can't leak into a layer.
+.env*
 .DS_Store
 *.log
 npm-debug.log*

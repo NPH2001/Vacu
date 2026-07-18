@@ -25,7 +25,7 @@ name: vacu
 
 services:
   app:
-    image: ${IMAGE_NAME:-registry.tagatechx.com/vacu/app}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_NAME:-registry.tagatechx.com/vacu/app}:${IMAGE_TAG:?set IMAGE_TAG to a pinned release, e.g. v1.0.0}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -69,7 +69,7 @@ services:
       traefik.http.middlewares.vacu-redirect.redirectscheme.permanent: "true"
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-vacu}
@@ -86,7 +86,7 @@ services:
       retries: 5
 
   backup:
-    image: ${BACKUP_IMAGE:-registry.tagatechx.com/vacu/backup}:${BACKUP_IMAGE_TAG:-latest}
+    image: ${BACKUP_IMAGE:-registry.tagatechx.com/vacu/backup}:${BACKUP_IMAGE_TAG:?set BACKUP_IMAGE_TAG to a pinned tag}
     restart: unless-stopped
     depends_on:
       postgres:
