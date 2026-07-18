@@ -89,7 +89,8 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
         />
         Còn hàng
       </label>
-      <span className="text-xs text-green-900/50 tabular-nums ml-auto">{resultCount} sản phẩm</span>
+      {/* Announce the new count to screen readers after a filter/search change. */}
+      <span role="status" aria-live="polite" className="text-xs text-green-900/50 tabular-nums ml-auto">{resultCount} sản phẩm</span>
     </div>
   );
 }

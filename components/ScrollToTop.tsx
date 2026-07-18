@@ -20,6 +20,9 @@ export default function ScrollToTop() {
     <button
       type="button"
       aria-label="Lên đầu trang"
+      // Keyboard focus must not land on the button while it's visually hidden.
+      tabIndex={show ? 0 : -1}
+      aria-hidden={!show}
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className={`fixed bottom-5 right-5 z-40 w-11 h-11 rounded-full bg-green-700 hover:bg-green-800 text-white shadow-lg flex items-center justify-center transition-all duration-200 ${
         show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
