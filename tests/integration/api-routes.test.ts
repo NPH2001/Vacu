@@ -50,6 +50,9 @@ async function seed() {
     id: 1, name: 'Vacu', shortName: 'Vacu', tagline: 't', description: 'd',
     address: 'a', phone: 'p', email: 'admin@vacu.com.vn', hours: 'h',
     statFarmers: '1', statProducts: '1', statCustomers: '1', statYears: '1',
+    // Secrets that the public /api/site-info route must never serialize.
+    smtpEnabled: true, smtpHost: 'smtp.secret.internal', smtpUser: 'mail-bot',
+    smtpPass: 'super-secret-password', smtpFrom: 'no-reply@vacu.com.vn',
   });
 
   await db.insert(categories).values([
@@ -94,6 +97,24 @@ beforeEach(() => {
 });
 
 // --- Public GET routes ---
+describe('GET /api/site-info', () => {
+  it('returns public fields but strips every SMTP secret', async () => {
+    const { GET } = await import('@/app/api/site-info/route');
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const json = await res.json() as { data: Record<string, unknown> };
+    // Public content is present…
+    expect(json.data.name).toBe('Vacu');
+    expect(json.data.email).toBe('admin@vacu.com.vn');
+    // …but mail credentials must never leave the server.
+    for (const k of ['smtpEnabled', 'smtpHost', 'smtpUser', 'smtpPass', 'smtpFrom', 'smtpFromName', 'smtpPort', 'smtpSecure']) {
+      expect(json.data).not.toHaveProperty(k);
+    }
+    // Belt-and-braces: the secret value appears nowhere in the payload.
+    expect(JSON.stringify(json.data)).not.toContain('super-secret-password');
+  });
+});
+
 describe('GET /api/categories', () => {
   it('returns array sorted by sortOrder then name, with cache header', async () => {
     const { GET } = await import('@/app/api/categories/route');

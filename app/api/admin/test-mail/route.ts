@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin, getCurrentUser } from '@/lib/session';
+import { requireRole } from '@/lib/session';
 import { sendMail } from '@/lib/mail';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request): Promise<Response> {
+  // Sends to a caller-supplied address using the server's SMTP — a mail-relay
+  // primitive, so restrict it to full admins (not any authenticated staff).
+  let me;
   try {
-    await requireAdmin();
+    me = await requireRole('admin');
   } catch {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const me = await getCurrentUser();
+  // Throttle so it can't be driven as a relay/quota-abuse loop.
+  if (!rateLimit(`test-mail:${me.id}`, { limit: 10, windowMs: 10 * 60_000 }).ok) {
+    return NextResponse.json({ error: 'Gửi thử quá nhiều lần. Thử lại sau ít phút.' }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => ({}));
-  const to = String(body.to || me?.email || '').trim();
+  const to = String(body.to || me.email || '').trim();
   if (!to) return NextResponse.json({ error: 'Nhập email nhận thử nghiệm.' }, { status: 400 });
 
   const res = await sendMail({

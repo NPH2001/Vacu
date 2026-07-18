@@ -1,6 +1,15 @@
 import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import { bootPg, stopPg, type TestDb } from '../helpers/pg-test-base';
 
+// submitContact now rate-limits by client IP (clientIp → headers()), which needs
+// a request scope vitest doesn't provide. Stub it, handing out a distinct IP per
+// call so the per-process limiter doesn't trip across unrelated test cases.
+let ipCounter = 0;
+vi.mock('next/headers', () => ({
+  headers: async () => new Map<string, string>([['x-forwarded-for', `10.1.0.${ipCounter++}`]]),
+  cookies: async () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
+}));
+
 type SendMailCall = {
   to: string;
   replyTo?: string;
