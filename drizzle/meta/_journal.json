@@ -120,6 +120,13 @@
       "when": 1784365346957,
       "tag": "0016_massive_living_lightning",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784368281893,
+      "tag": "0017_chemical_mysterio",
+      "breakpoints": true
     }
   ]
 }

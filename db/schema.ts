@@ -47,7 +47,10 @@ export const categories = pgTable('categories', {
   sortOrder: integer('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  // A category can't be its own parent. (App code also guards deeper cycles.)
+  check('categories_no_self_parent', sql`${t.parentId} IS NULL OR ${t.parentId} <> ${t.id}`),
+]);
 
 export const farmers = pgTable('farmers', {
   id: text('id').primaryKey(),
@@ -84,6 +87,9 @@ export const products = pgTable('products', {
   index('products_category_idx').on(t.categoryId),
   index('products_farmer_idx').on(t.farmerId),
   index('products_featured_idx').on(t.featured),
+  // Money invariants the app enforces in Zod, locked at the DB so a direct
+  // write/seed can't store a zero/negative price that then flows into totals.
+  check('products_price_pos', sql`${t.price} > 0 AND (${t.oldPrice} IS NULL OR ${t.oldPrice} > 0)`),
 ]);
 
 /**
@@ -187,7 +193,9 @@ export const testimonials = pgTable('testimonials', {
   // rating was a hardcoded ★★★★★.
   rating: integer('rating').notNull().default(5),
   sortOrder: integer('sort_order').default(0).notNull(),
-});
+}, (t) => [
+  check('testimonials_rating_rng', sql`${t.rating} BETWEEN 1 AND 5`),
+]);
 
 export const faqItems = pgTable('faq_items', {
   id: serial('id').primaryKey(),
@@ -459,7 +467,13 @@ export const orders = pgTable('orders', {
   idempotencyKey: text('idempotency_key').unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => [
+  // The admin listing and dashboard sort by created_at and filter by status;
+  // orders is the primary growth table, so back both.
+  index('orders_created_idx').on(t.createdAt),
+  index('orders_status_created_idx').on(t.status, t.createdAt),
+  check('orders_total_nonneg', sql`${t.total} >= 0`),
+]);
 
 export const orderItems = pgTable('order_items', {
   id: serial('id').primaryKey(),
@@ -470,7 +484,12 @@ export const orderItems = pgTable('order_items', {
   qty: integer('qty').notNull(),
   unit: text('unit').notNull(),
   image: text('image').notNull(),
-});
+}, (t) => [
+  // FK columns aren't auto-indexed in Postgres; the order detail query filters
+  // on order_id and every order delete cascades through here.
+  index('order_items_order_idx').on(t.orderId),
+  check('order_items_qty_pos', sql`${t.qty} > 0 AND ${t.price} >= 0`),
+]);
 
 export const ordersRelations = relations(orders, ({ many }) => ({
   items: many(orderItems),
