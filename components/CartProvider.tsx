@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ProductRow } from "@/db/schema";
+import { trackEvent } from "@/lib/gtag";
 
 export type CartLine = {
   id: string;
@@ -62,6 +63,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         { id: item.id, name: item.name, price: item.price, image: item.image, unit: item.unit, qty: 1 },
       ];
+    });
+    trackEvent('add_to_cart', {
+      currency: 'VND',
+      value: item.price,
+      items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: 1 }],
     });
     setOpen(true);
   };

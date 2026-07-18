@@ -5,6 +5,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, getFarmer, formatPrice, getAllProducts, getCategory, getProductGallery, getSiteInfo } from "@/lib/data";
 import { seoMeta } from "@/lib/seo";
+import { productLd, breadcrumbLd } from "@/lib/jsonld";
+import JsonLd from "@/components/JsonLd";
 import ProductCard from "@/components/ProductCard";
 import ProductBuyBox from "@/components/ProductBuyBox";
 import ProductGallery from "@/components/ProductGallery";
@@ -41,6 +43,13 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
+      <JsonLd data={productLd(info, p, farmer, category)} />
+      <JsonLd data={breadcrumbLd(info, [
+        { name: "Trang chủ", path: "/" },
+        { name: "Nông sản", path: "/products" },
+        ...(category ? [{ name: category.name, path: `/danh-muc/${category.id}` }] : []),
+        { name: p.name, path: `/products/${p.id}` },
+      ])} />
       <nav className="text-sm text-green-900/60 mb-6 wrap-anywhere">
         <Link href="/" className="hover:underline">Trang chủ</Link> /{" "}
         <Link href="/products" className="hover:underline">Nông sản</Link>
