@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getPublishedPage, getAnyPage } from '@/lib/pages';
+import { getPublishedPage, getAnyPage, primaryHeroIndex } from '@/lib/pages';
 import { getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
 import { getCurrentUser } from '@/lib/session';
@@ -52,6 +52,8 @@ export default async function DynamicPage({ params, searchParams }: Props) {
   // Any unknown URL lands here, so a miss must 404 like a normal not-found.
   if (!page) notFound();
 
+  const primary = primaryHeroIndex(page.blocks);
+
   return (
     <div>
       {previewing && page.status !== 'published' && (
@@ -60,7 +62,11 @@ export default async function DynamicPage({ params, searchParams }: Props) {
           <Link href={`/admin/pages/${page.id}`} className="underline">Sửa trang</Link>
         </div>
       )}
-      {page.blocks.map((b) => <BlockRenderer key={b.id} block={b.data} />)}
+      {/* Guarantee exactly one <h1>: if no hero carries it, add a hidden one. */}
+      {primary === -1 && <h1 className="sr-only">{page.title}</h1>}
+      {page.blocks.map((b, i) => (
+        <BlockRenderer key={b.id} block={b.data} heading={i === primary ? 'h1' : 'h2'} />
+      ))}
     </div>
   );
 }

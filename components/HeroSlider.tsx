@@ -12,7 +12,10 @@ const INTERVAL = 6000;
  * is disabled entirely for reduced-motion users. The stats strip is persistent
  * (it belongs to the site, not a slide) so it never flickers between slides.
  */
-export default function HeroSlider({ slides, stats }: { slides: HeroSlideRow[]; stats: Stat[] }) {
+export default function HeroSlider({
+  slides, stats, heading = 'h1',
+}: { slides: HeroSlideRow[]; stats: Stat[]; heading?: 'h1' | 'h2' }) {
+  const HeroHeading = heading;
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchX = useRef<number | null>(null);
@@ -89,9 +92,9 @@ export default function HeroSlider({ slides, stats }: { slides: HeroSlideRow[]; 
                     {s.badge}
                   </div>
                 )}
-                <h1 className="text-4xl md:text-6xl font-bold font-display mb-4 md:mb-6 leading-[1.1] wrap-anywhere">
+                <HeroHeading className="text-4xl md:text-6xl font-bold font-display mb-4 md:mb-6 leading-[1.1] wrap-anywhere">
                   {s.title}
-                </h1>
+                </HeroHeading>
                 {s.subtitle && (
                   <p className="text-lg md:text-xl text-green-50/90 mb-6 md:mb-10 max-w-xl wrap-anywhere">{s.subtitle}</p>
                 )}

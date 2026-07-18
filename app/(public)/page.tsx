@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import type { Metadata } from 'next';
-import { getPublishedPage, getAnyPage, type LoadedBlock } from '@/lib/pages';
+import { getPublishedPage, getAnyPage, primaryHeroIndex, type LoadedBlock } from '@/lib/pages';
 import { getCurrentUser } from '@/lib/session';
 import { getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
@@ -42,10 +42,16 @@ export default async function HomePage({ searchParams }: Props) {
   // page?.blocks already has hidden blocks stripped; an empty result means the
   // homepage would render blank, so use the default layout instead.
   const blocks: LoadedBlock[] = page && page.blocks.length > 0 ? page.blocks : fallback;
+  const primary = primaryHeroIndex(blocks);
+  const info = primary === -1 ? await getSiteInfo() : null;
 
   return (
     <div>
-      {blocks.map((b) => <BlockRenderer key={b.id} block={b.data} />)}
+      {/* Guarantee exactly one <h1>: if no hero carries it, add a hidden one. */}
+      {primary === -1 && <h1 className="sr-only">{info!.name}</h1>}
+      {blocks.map((b, i) => (
+        <BlockRenderer key={b.id} block={b.data} heading={i === primary ? 'h1' : 'h2'} />
+      ))}
     </div>
   );
 }
