@@ -1,5 +1,5 @@
 import {
-  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check,
+  pgTable, text, integer, serial, boolean, timestamp, jsonb, uuid, check, real,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
@@ -495,6 +495,22 @@ export type ProductImageRow = typeof productImages.$inferSelect;
 export type PageRow = typeof pages.$inferSelect;
 export type PageBlockRow = typeof pageBlocks.$inferSelect;
 export type HomeSectionRow = typeof homeSections.$inferSelect;
+/**
+ * Site-wide theme, a single row (id = 1). Colours are stored as the admin picks
+ * them; the CSS-variable overrides (green/amber ramps, radius, fonts) are
+ * generated from these in lib/theme.ts and injected in the root layout.
+ */
+export const theme = pgTable('theme', {
+  id: integer('id').primaryKey().default(1),
+  brandColor: text('brand_color').notNull().default('#16a34a'),
+  accentColor: text('accent_color').notNull().default('#f59e0b'),
+  radiusScale: real('radius_scale').notNull().default(1),
+  fontBody: text('font_body').notNull().default('inter'),
+  fontHeading: text('font_heading').notNull().default('fraunces'),
+});
+
+export type ThemeRow = typeof theme.$inferSelect;
+
 export type PostRow = typeof posts.$inferSelect;
 export type PostCategoryRow = typeof postCategories.$inferSelect;
 export type ValuePropRow = typeof valueProps.$inferSelect;
