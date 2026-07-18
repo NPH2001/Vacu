@@ -34,6 +34,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: info.name,
       description: info.description,
       icons: info.faviconUrl ? { icon: info.faviconUrl } : undefined,
+      // Default social card, inherited by pages that don't set their own image.
+      openGraph: {
+        siteName: info.name,
+        type: 'website',
+        images: info.logoUrl ? [info.logoUrl] : undefined,
+      },
+      twitter: { card: 'summary_large_image' },
       verification: info.verificationGoogle
         ? { google: info.verificationGoogle, ...(Object.keys(otherMeta).length ? { other: otherMeta } : {}) }
         : (Object.keys(otherMeta).length ? { other: otherMeta } : undefined),
