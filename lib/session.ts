@@ -45,7 +45,13 @@ export const getCurrentUser = cache(async (): Promise<UserRow | null> => {
   const s = await getSession();
   if (!s) return null;
   const rows = await db.select().from(users).where(eq(users.id, s.sub)).limit(1);
-  return rows[0] ?? null;
+  const u = rows[0];
+  if (!u) return null;
+  // Sessions minted before the password last changed are revoked.
+  if (typeof s.pca === 'number' && Math.floor(u.passwordChangedAt.getTime() / 1000) > s.pca) {
+    return null;
+  }
+  return u;
 });
 
 export async function requireAdmin(): Promise<UserRow> {

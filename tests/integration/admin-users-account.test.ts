@@ -4,9 +4,7 @@ import { bootPg, stopPg, type TestDb } from '../helpers/pg-test-base';
 // Auth state the mocks read from:
 //   authedUserId: the `id` of the user the session resolves to.
 //     null → no session → getCurrentUser returns null, requireRole/requireAdmin throws.
-//   authedRole: role reported for the session.
 let authedUserId: string | null = null;
-let authedRole: 'admin' | 'staff' = 'admin';
 
 async function currentRow() {
   if (!authedUserId) return null;
@@ -60,7 +58,6 @@ afterAll(async () => { await stopPg(ctx); });
 
 beforeEach(() => {
   authedUserId = adminId;
-  authedRole = 'admin';
 });
 
 // =====================================================================
@@ -80,7 +77,6 @@ describe('createUser', () => {
 
   it('blocks staff (requireRole admin)', async () => {
     authedUserId = staffId;
-    authedRole = 'staff';
     const { createUser } = await import('@/app/admin/actions/users');
     const fd = new FormData();
     fd.set('email', 'new@vacu.com.vn');

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/session';
 import { validateUpload, processImage, saveUpload } from '@/lib/uploads';
 import { recordMedia } from '@/lib/media';
 import { rateLimit } from '@/lib/rate-limit';
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from '@/lib/upload-limits';
 
 export async function POST(req: Request): Promise<Response> {
   const user = await getCurrentUser();
@@ -24,6 +25,11 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const inBuf = Buffer.from(await file.arrayBuffer());
+  // Authoritative size check: file.size is a client-set hint; the decoded body
+  // is what actually hit memory.
+  if (inBuf.byteLength > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: `File quá lớn (>${MAX_UPLOAD_LABEL})` }, { status: 413 });
+  }
   const { buf, width, height } = await processImage(inBuf);
   const url = await saveUpload(buf);
 

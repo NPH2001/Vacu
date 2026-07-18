@@ -34,6 +34,10 @@ export async function signIn(_prev: SignInState, formData: FormData): Promise<Si
   const ok = await verifyPassword(password, user.passwordHash);
   if (!ok) return { error: 'Sai email hoặc mật khẩu.' };
 
-  await setSessionCookie({ sub: user.id, role: user.role as 'admin' | 'staff' });
+  await setSessionCookie({
+    sub: user.id,
+    role: user.role as 'admin' | 'staff',
+    pca: Math.floor(user.passwordChangedAt.getTime() / 1000),
+  });
   redirect(next && next.startsWith('/admin') ? next : '/admin');
 }

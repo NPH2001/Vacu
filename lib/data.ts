@@ -5,17 +5,13 @@ import { db } from '@/db/client';
 import {
   products, productImages, categories, farmers, testimonials, faqItems, siteInfo,
   valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
-  homeSections, heroSlides, theme,
+  heroSlides, theme,
   type ProductRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
   type ValuePropRow, type DeliverySlotRow, type PaymentMethodRow, type ContactTopicRow,
   type HeroSlideRow,
   type OrderStatusRow,
 } from '@/db/schema';
-import {
-  HOME_SECTIONS, DEFAULT_ORDER,
-  type HomeSectionKey, type HomeSectionState,
-} from './home-sections';
 import { DEFAULT_THEME, type ThemeConfig } from './theme';
 
 export type Product = ProductRow;
@@ -144,26 +140,6 @@ export async function getAllTestimonials() {
 }
 export async function getAllFaqItems() {
   return db.select().from(faqItems).orderBy(asc(faqItems.sortOrder), asc(faqItems.id));
-}
-/**
- * Every known homepage section in stored order. Sections missing from the
- * database (a fresh install, or one added in a later release) are appended as
- * visible, so the homepage never silently loses a section just because nobody
- * has opened the admin screen yet.
- */
-export async function getHomeSectionOrder(): Promise<HomeSectionState[]> {
-  const rows = await db.select().from(homeSections)
-    .orderBy(asc(homeSections.sortOrder), asc(homeSections.key));
-
-  const stored = new Set(rows.map((r) => r.key));
-  const known = rows
-    .filter((r) => r.key in HOME_SECTIONS)
-    .map((r) => ({ key: r.key as HomeSectionKey, visible: r.visible }));
-  const missing = DEFAULT_ORDER
-    .filter((k) => !stored.has(k))
-    .map((k) => ({ key: k, visible: true }));
-
-  return [...known, ...missing];
 }
 
 /**
