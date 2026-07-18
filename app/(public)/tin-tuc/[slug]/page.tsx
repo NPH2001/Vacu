@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPublishedPost, getAnyPost, getRelatedPosts, getLatestPosts, getPostCategoriesWithCounts } from '@/lib/posts';
 import { getSiteInfo } from '@/lib/data';
+import { seoMeta } from '@/lib/seo';
 import { getCurrentUser } from '@/lib/session';
 import { articleLd } from '@/lib/jsonld';
 import JsonLd from '@/components/JsonLd';
@@ -33,14 +34,25 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
   const info = await getSiteInfo();
+  // "Live" = published AND its publish time has arrived. A scheduled post is
+  // status='published' with a future date, so checking status alone would let a
+  // previewed scheduled post be indexed — mirror the public visibility rule.
+  const isLive = post.status === 'published'
+    && !!post.publishedAt && new Date(post.publishedAt) <= new Date();
   return {
-    title: `${post.metaTitle || post.title} — ${info.name}`,
-    description: post.metaDescription || post.excerpt,
-    // An unpublished preview must never be indexed if the URL is shared.
-    robots: previewing && post.status !== 'published' ? { index: false, follow: false } : undefined,
+    ...seoMeta({
+      title: `${post.metaTitle || post.title} — ${info.name}`,
+      description: post.metaDescription || post.excerpt,
+      canonical: `/tin-tuc/${slug}`,
+      image: post.coverImage ?? undefined,
+      type: 'article',
+    }),
+    // An unpublished/scheduled preview must never be indexed if the URL is shared.
+    robots: previewing && !isLive ? { index: false, follow: false } : undefined,
     openGraph: {
       title: post.metaTitle || post.title,
       description: post.metaDescription || post.excerpt,
+      url: `/tin-tuc/${slug}`,
       type: 'article',
       publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
       images: post.coverImage ? [post.coverImage] : undefined,

@@ -4,16 +4,29 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPublishedPosts, getPostCategoriesWithCounts, getLatestPosts } from '@/lib/posts';
 import { getSiteInfo } from '@/lib/data';
+import { seoMeta } from '@/lib/seo';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import NewsSidebar from '@/components/NewsSidebar';
 
 const PAGE_SIZE = 9;
 
-export async function generateMetadata(): Promise<Metadata> {
-  const info = await getSiteInfo();
+export async function generateMetadata({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const [info, sp] = await Promise.all([getSiteInfo(), searchParams]);
+  const category = typeof sp['chuyen-muc'] === 'string' ? sp['chuyen-muc'] : undefined;
+  const searching = typeof sp.q === 'string' && sp.q.trim() !== '';
+  const paged = typeof sp.trang === 'string' && sp.trang !== '1';
+  // Canonical folds all the infinite ?q=/?trang= variants back to a single
+  // indexable URL (category kept, search/page dropped); free-text search and
+  // pages past the first are noindex'd so they don't burn crawl budget.
   return {
-    title: `Tin tức — ${info.name}`,
-    description: `Tin tức, mẹo hay và câu chuyện nông trại từ ${info.name}.`,
+    ...seoMeta({
+      title: `Tin tức — ${info.name}`,
+      description: `Tin tức, mẹo hay và câu chuyện nông trại từ ${info.name}.`,
+      canonical: category ? `/tin-tuc?chuyen-muc=${encodeURIComponent(category)}` : '/tin-tuc',
+    }),
+    robots: searching || paged ? { index: false, follow: true } : undefined,
   };
 }
 

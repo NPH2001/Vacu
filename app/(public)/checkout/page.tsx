@@ -1,5 +1,9 @@
 export const dynamic = 'force-dynamic';
 
+// Personal, transient page — keep it out of the index (robots.txt already
+// disallows it; this is belt-and-braces for externally-linked URLs).
+export const metadata = { robots: { index: false, follow: false } };
+
 import CheckoutForm from "@/components/CheckoutForm";
 import { getActiveDeliverySlots, getActivePaymentMethods, getSiteInfo } from "@/lib/data";
 
