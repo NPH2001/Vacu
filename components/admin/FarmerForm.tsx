@@ -22,19 +22,19 @@ export default function FarmerForm({
           <SlugInput defaultValue={d.id ?? ''} editing={editing} />
         </L>
         <L label="Tên" required>
-          <input name="name" defaultValue={d.name ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="name" defaultValue={d.name ?? ''} required className="w-full admin-input" />
         </L>
         <L label="Nông trại" required>
-          <input name="farm" defaultValue={d.farm ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="farm" defaultValue={d.farm ?? ''} required className="w-full admin-input" />
         </L>
         <L label="Địa điểm" required>
-          <input name="location" defaultValue={d.location ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="location" defaultValue={d.location ?? ''} required className="w-full admin-input" />
         </L>
         <L label="Năm kinh nghiệm" required>
-          <input name="years" type="number" min="0" defaultValue={d.years ?? 0} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="years" type="number" min="0" defaultValue={d.years ?? 0} required className="w-full admin-input" />
         </L>
         <L label="Chuyên môn" required>
-          <input name="specialty" defaultValue={d.specialty ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="specialty" defaultValue={d.specialty ?? ''} required className="w-full admin-input" />
         </L>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
@@ -43,10 +43,10 @@ export default function FarmerForm({
       </div>
       <L label="Chứng nhận (phẩy ngăn cách)">
         <input name="certifications" defaultValue={(d.certifications ?? []).join(', ')}
-          className="w-full border border-green-200 rounded px-3 py-2" placeholder="PGS Việt Nam, VietGAP" />
+          className="w-full admin-input" placeholder="PGS Việt Nam, VietGAP" />
       </L>
       <L label="Câu chuyện" required>
-        <textarea name="story" defaultValue={d.story ?? ''} required rows={5} className="w-full border border-green-200 rounded px-3 py-2" />
+        <textarea name="story" defaultValue={d.story ?? ''} required rows={5} className="w-full admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

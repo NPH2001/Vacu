@@ -94,7 +94,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <h2 className="font-bold text-green-950 mb-3">Trạng thái</h2>
             <form action={updateAction} className="space-y-3">
               <select name="status" defaultValue={order.status}
-                className="w-full border border-green-200 rounded px-3 py-2 bg-white text-sm">
+                className="w-full admin-input bg-white text-sm">
                 {statusRows.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
               </select>
               <button type="submit"

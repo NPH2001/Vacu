@@ -18,14 +18,14 @@ export default function TestimonialForm({
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <L label="Tên" required>
-          <input name="name" defaultValue={d.name ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="name" defaultValue={d.name ?? ''} required className="w-full admin-input" />
         </L>
         <L label="Vai trò / Mô tả ngắn" required>
-          <input name="role" defaultValue={d.role ?? ''} required className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="role" defaultValue={d.role ?? ''} required className="w-full admin-input" />
         </L>
         <L label="Số sao">
           <select name="rating" defaultValue={String(d.rating ?? 5)}
-            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            className="w-full admin-input bg-white">
             <option value="5">★★★★★ (5 sao)</option>
             <option value="4">★★★★ (4 sao)</option>
             <option value="3">★★★ (3 sao)</option>
@@ -34,13 +34,13 @@ export default function TestimonialForm({
           </select>
         </L>
         <L label="Thứ tự">
-          <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0} className="w-full border border-green-200 rounded px-3 py-2" />
+          <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0} className="w-full admin-input" />
         </L>
       </div>
       <ImageUpload name="avatar" defaultValue={d.avatar ?? ''} label="Ảnh đại diện *" />
       <L label="Nội dung" required>
         <textarea name="content" defaultValue={d.content ?? ''} required rows={4}
-          className="w-full border border-green-200 rounded px-3 py-2" />
+          className="w-full admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

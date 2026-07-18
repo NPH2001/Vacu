@@ -15,7 +15,7 @@ export default function ForgotPasswordForm() {
           name="email"
           type="email"
           required
-          className="mt-1 w-full border border-green-200 rounded px-3 py-2"
+          className="mt-1 w-full admin-input"
           placeholder="admin@vacu.com.vn"
         />
       </label>

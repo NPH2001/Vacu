@@ -19,11 +19,11 @@ export default function OrderStatusForm({
       </div>
       <L label="Nhãn hiển thị" required>
         <input name="label" defaultValue={defaults.label} required
-          className="w-full border border-green-200 rounded px-3 py-2" />
+          className="w-full admin-input" />
       </L>
       <L label="Màu (tailwind class)" required>
         <input name="color" defaultValue={defaults.color} required
-          className="w-full border border-green-200 rounded px-3 py-2 font-mono text-sm"
+          className="w-full admin-input font-mono text-sm"
           placeholder="VD: bg-amber-100 text-amber-800" />
         <p className="text-xs text-green-900/60 mt-1">
           Viết như: <code>bg-amber-100 text-amber-800</code>.
@@ -32,7 +32,7 @@ export default function OrderStatusForm({
       </L>
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={defaults.sortOrder}
-          className="w-32 border border-green-200 rounded px-3 py-2" />
+          className="w-32 admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

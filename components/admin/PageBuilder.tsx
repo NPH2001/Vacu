@@ -468,7 +468,7 @@ function Select({
     <label className="block">
       <span className="text-[13px] font-medium text-stone-900">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
+        className="mt-1 w-full admin-input text-sm bg-white">
         {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
     </label>
@@ -486,7 +486,7 @@ function NumberField({
           const n = Number(e.target.value);
           onChange(Number.isFinite(n) ? Math.min(Math.max(n, min), max) : min);
         }}
-        className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+        className="mt-1 w-full admin-input text-sm" />
     </label>
   );
 }
@@ -637,7 +637,7 @@ function Text({
     <label className="block">
       <span className="text-[13px] font-medium text-stone-900">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+        className="mt-1 w-full admin-input text-sm" />
     </label>
   );
 }
@@ -649,7 +649,7 @@ function Area({
     <label className="block">
       <span className="text-[13px] font-medium text-stone-900">{label}</span>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={2}
-        className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+        className="mt-1 w-full admin-input text-sm" />
     </label>
   );
 }

@@ -44,7 +44,7 @@ export default function PostForm({
           <Field label="Tiêu đề bài viết" required>
             <input name="title" defaultValue={d.title ?? ''} required autoFocus={!editing}
               placeholder="Ví dụ: Bí quyết chọn rau tươi ngon cho bữa cơm gia đình"
-              className="w-full border border-stone-300 rounded px-3 py-2 text-[15px]" />
+              className="w-full admin-input text-[15px]" />
           </Field>
 
           <Field label="Đường dẫn" required
@@ -79,17 +79,17 @@ export default function PostForm({
               hint="Hiện ở thẻ bài viết ngoài trang tin tức. Bỏ trống thì hệ thống tự lấy đoạn đầu bài.">
               <textarea name="excerpt" defaultValue={d.excerpt ?? ''} rows={3} maxLength={500}
                 placeholder="Một hai câu tóm tắt bài viết…"
-                className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+                className="w-full admin-input text-sm" />
             </Field>
             <Field label="Tiêu đề trên Google"
               hint="Bỏ trống thì dùng tiêu đề bài viết. Nên dưới 60 ký tự.">
               <input name="metaTitle" defaultValue={d.metaTitle ?? ''} maxLength={200}
-                className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+                className="w-full admin-input text-sm" />
             </Field>
             <Field label="Mô tả trên Google"
               hint="Đoạn chữ xám hiện dưới tiêu đề khi tìm trên Google. Bỏ trống thì dùng tóm tắt.">
               <textarea name="metaDescription" defaultValue={d.metaDescription ?? ''} rows={2} maxLength={300}
-                className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+                className="w-full admin-input text-sm" />
             </Field>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function PostForm({
           <h3 className="font-display text-[15px] text-stone-900">Phân loại</h3>
           <Field label="Chuyên mục">
             <select name="categoryId" defaultValue={d.categoryId ?? ''}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
+              className="w-full admin-input text-sm bg-white">
               <option value="">— Chưa phân loại —</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -135,7 +135,7 @@ export default function PostForm({
           )}
           <Field label="Thẻ" hint="Ngăn cách bằng dấu phẩy.">
             <input name="tags" defaultValue={(d.tags ?? []).join(', ')} placeholder="rau sạch, mẹo bếp"
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+              className="w-full admin-input text-sm" />
           </Field>
           <label className="flex items-center gap-2 text-[13.5px] text-stone-900">
             <input type="checkbox" name="featured" defaultChecked={d.featured ?? false} className="accent-green-700" />

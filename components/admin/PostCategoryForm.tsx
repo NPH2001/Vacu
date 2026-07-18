@@ -21,7 +21,7 @@ export default function PostCategoryForm({
         <span className="text-[13px] font-medium text-stone-900">Tên chuyên mục <span className="text-red-500">*</span></span>
         <input name="name" defaultValue={d.name ?? ''} required autoFocus={!editing}
           placeholder="Ví dụ: Mẹo nhà bếp"
-          className="mt-1 w-full border border-stone-300 rounded px-3 py-2" />
+          className="mt-1 w-full admin-input" />
       </label>
 
       <label className="block">
@@ -31,21 +31,21 @@ export default function PostCategoryForm({
           {editing && ' — không đổi được sau khi tạo.'}
         </span>
         <SlugInput defaultValue={d.id ?? ''} sourceName="name" editing={editing} mono
-          className="mt-1 w-full border border-stone-300 rounded px-3 py-2 read-only:bg-stone-50 read-only:text-stone-500" />
+          className="mt-1 w-full admin-input read-only:bg-stone-50 read-only:text-stone-500" />
       </label>
 
       <label className="block">
         <span className="text-[13px] font-medium text-stone-900">Mô tả</span>
         <span className="block text-[11.5px] text-stone-500 mt-0.5">Hiện ở đầu trang khi lọc theo chuyên mục này.</span>
         <textarea name="description" defaultValue={d.description ?? ''} rows={2} maxLength={300}
-          className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+          className="mt-1 w-full admin-input text-sm" />
       </label>
 
       <label className="block max-w-[160px]">
         <span className="text-[13px] font-medium text-stone-900">Thứ tự</span>
         <span className="block text-[11.5px] text-stone-500 mt-0.5">Số nhỏ hiện trước.</span>
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-          className="mt-1 w-full border border-stone-300 rounded px-3 py-2" />
+          className="mt-1 w-full admin-input" />
       </label>
 
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}

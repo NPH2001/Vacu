@@ -96,7 +96,7 @@ export default function MenuItemForm({
 
       <L label="Nhãn hiển thị" required>
         <input name="label" defaultValue={d.label ?? ''} required maxLength={120}
-          className="w-full border border-green-200 rounded px-3 py-2"
+          className="w-full admin-input"
           placeholder="VD: Trang chủ" />
       </L>
 
@@ -123,7 +123,7 @@ export default function MenuItemForm({
       {linkType === 'category' && (
         <L label="Chọn danh mục" required>
           <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} required
-            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            className="w-full admin-input bg-white">
             <option value="">— Chọn —</option>
             {flatCategories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -137,7 +137,7 @@ export default function MenuItemForm({
       {linkType === 'page' && (
         <L label="Chọn trang" required>
           <select value={pageHref} onChange={(e) => setPageHref(e.target.value)} required
-            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            className="w-full admin-input bg-white">
             {STATIC_PAGES.map((p) => (
               <option key={p.href} value={p.href}>{p.label}</option>
             ))}
@@ -149,7 +149,7 @@ export default function MenuItemForm({
         <L label="Đường dẫn tùy chỉnh" required>
           <input value={customHref} onChange={(e) => setCustomHref(e.target.value)}
             required maxLength={500}
-            className="w-full border border-green-200 rounded px-3 py-2"
+            className="w-full admin-input"
             placeholder="VD: /khuyen-mai hoặc https://zalo.me/..." />
         </L>
       )}
@@ -170,7 +170,7 @@ export default function MenuItemForm({
       </L>
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-          className="w-32 border border-green-200 rounded px-3 py-2" />
+          className="w-32 admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

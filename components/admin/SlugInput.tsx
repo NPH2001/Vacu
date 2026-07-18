@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { slugify } from '@/lib/slugify';
 
 const DEFAULT_CLASS =
-  'w-full border border-green-200 rounded px-3 py-2 read-only:bg-green-50 read-only:text-green-900/70';
+  'w-full admin-input read-only:bg-green-50 read-only:text-green-900/70';
 
 export default function SlugInput({
   defaultValue, sourceName = 'name', editing, className, placeholder, mono,

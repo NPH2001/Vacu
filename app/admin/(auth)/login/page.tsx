@@ -15,18 +15,18 @@ function LoginForm() {
     <form action={action} className="bg-white rounded-2xl shadow-sm border border-green-100 p-8 w-full max-w-md space-y-4">
       <h1 className="text-2xl font-bold font-display text-green-950">Đăng nhập quản trị</h1>
       {reset && (
-        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
+        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
           ✓ Đặt mật khẩu mới thành công. Hãy đăng nhập.
         </p>
       )}
       <input type="hidden" name="next" value={next} />
       <label className="block">
         <span className="text-sm font-medium text-green-950">Email</span>
-        <input name="email" type="email" required className="mt-1 w-full border border-green-200 rounded px-3 py-2" />
+        <input name="email" type="email" required className="mt-1 w-full admin-input" />
       </label>
       <label className="block">
         <span className="text-sm font-medium text-green-950">Mật khẩu</span>
-        <input name="password" type="password" required className="mt-1 w-full border border-green-200 rounded px-3 py-2" />
+        <input name="password" type="password" required className="mt-1 w-full admin-input" />
       </label>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <button

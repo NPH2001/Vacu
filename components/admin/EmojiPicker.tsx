@@ -60,7 +60,7 @@ export default function EmojiPicker({
           required={required}
           placeholder={placeholder}
           aria-label="Biểu tượng (emoji)"
-          className="w-20 border border-green-200 rounded px-3 py-2 text-2xl text-center"
+          className="w-20 admin-input text-2xl text-center"
         />
         <button
           ref={triggerRef}
@@ -85,7 +85,7 @@ export default function EmojiPicker({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Tìm emoji (VD: rau, cà rốt, gia đình, tim)…"
-            className="w-full border border-green-200 rounded px-3 py-2 text-sm mb-2"
+            className="w-full admin-input text-sm mb-2"
           />
           {!searching && (
             <div className="flex gap-1 mb-2 overflow-x-auto">

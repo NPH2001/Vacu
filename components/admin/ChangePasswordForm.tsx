@@ -37,7 +37,7 @@ export default function ChangePasswordForm({
   );
 }
 
-const inputCls = 'w-full border border-green-200 rounded px-3 py-2';
+const inputCls = 'w-full admin-input';
 
 function L({ label, children }: { label: string; children: React.ReactNode }) {
   return (

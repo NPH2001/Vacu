@@ -17,7 +17,7 @@ export default function DeliverySlotForm({
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <L label="Nhãn khung giờ" required>
         <input name="label" defaultValue={d.label ?? ''} required
-          className="w-full border border-green-200 rounded px-3 py-2"
+          className="w-full admin-input"
           placeholder="VD: Sáng mai (7:00 - 11:00)" />
       </L>
       <L label="Kích hoạt">
@@ -28,7 +28,7 @@ export default function DeliverySlotForm({
       </L>
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-          className="w-32 border border-green-200 rounded px-3 py-2" />
+          className="w-32 admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

@@ -355,7 +355,7 @@ export default function SettingsForm({
                   name="emailHeaderHtml"
                   defaultValue={d.emailHeaderHtml}
                   rows={6}
-                  className="w-full border border-green-200 rounded px-3 py-2 font-mono text-xs"
+                  className="w-full admin-input font-mono text-xs"
                   placeholder='<div style="background:#1f6b3a;color:#fff;padding:18px 28px;font-size:20px;font-weight:700">🌱 {{siteName}}</div>'
                 />
               </L>
@@ -364,7 +364,7 @@ export default function SettingsForm({
                   name="emailFooterHtml"
                   defaultValue={d.emailFooterHtml}
                   rows={8}
-                  className="w-full border border-green-200 rounded px-3 py-2 font-mono text-xs"
+                  className="w-full admin-input font-mono text-xs"
                   placeholder='<div style="background:#f0f4e8;padding:18px 28px;font-size:12px;color:#556;border-top:1px solid #e5ead8"><strong>{{siteName}}</strong><br>{{siteAddress}}<br>{{siteEmail}} · {{sitePhone}}<br><span style="color:#888">© {{year}} {{siteName}}</span></div>'
                 />
               </L>
@@ -562,7 +562,7 @@ export default function SettingsForm({
   );
 }
 
-const inputCls = 'w-full border border-green-200 rounded px-3 py-2';
+const inputCls = 'w-full admin-input';
 
 function L({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
@@ -640,7 +640,7 @@ function TestMailBox() {
           value={to}
           onChange={(e) => setTo(e.target.value)}
           placeholder="email nhận thử (để trống = email của bạn)"
-          className="flex-1 min-w-[14rem] border border-green-200 rounded px-3 py-2 text-sm bg-white"
+          className="flex-1 min-w-[14rem] admin-input text-sm bg-white"
         />
         <button
           type="button"
