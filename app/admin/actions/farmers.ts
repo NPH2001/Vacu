@@ -33,7 +33,7 @@ export async function createFarmer(_p: FarmerFormState, fd: FormData): Promise<F
   try { await db.insert(farmers).values(r.data); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
-  redirect('/admin/farmers');
+  redirect('/admin/farmers?ok=da-tao');
 }
 
 export async function updateFarmer(originalId: string, _p: FarmerFormState, fd: FormData): Promise<FarmerFormState> {
@@ -43,7 +43,7 @@ export async function updateFarmer(originalId: string, _p: FarmerFormState, fd: 
   try { await db.update(farmers).set({ ...r.data, updatedAt: new Date() }).where(eq(farmers.id, originalId)); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
-  redirect('/admin/farmers');
+  redirect('/admin/farmers?ok=da-luu');
 }
 
 // See the note in actions/products.ts: uploads are shared, so files outlive the

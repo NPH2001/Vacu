@@ -94,7 +94,7 @@ export async function createPost(_prev: PostFormState, fd: FormData): Promise<Po
   }
   revalidatePath('/admin/posts');
   revalidatePath('/tin-tuc');
-  redirect('/admin/posts');
+  redirect('/admin/posts?ok=da-tao');
 }
 
 export async function updatePost(originalId: string, _prev: PostFormState, fd: FormData): Promise<PostFormState> {
@@ -117,7 +117,7 @@ export async function updatePost(originalId: string, _prev: PostFormState, fd: F
   revalidatePath('/tin-tuc');
   revalidatePath(`/tin-tuc/${originalId}`);
   revalidatePath(`/tin-tuc/${row.id}`);
-  redirect('/admin/posts');
+  redirect('/admin/posts?ok=da-luu');
 }
 
 export async function deletePost(id: string): Promise<void> {

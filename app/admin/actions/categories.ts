@@ -64,7 +64,7 @@ export async function createCategory(_prev: CategoryFormState, fd: FormData): Pr
   try { await db.insert(categories).values(r.data); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/categories');
-  redirect('/admin/categories');
+  redirect('/admin/categories?ok=da-tao');
 }
 
 export async function updateCategory(originalId: string, _prev: CategoryFormState, fd: FormData): Promise<CategoryFormState> {
@@ -89,7 +89,7 @@ export async function updateCategory(originalId: string, _prev: CategoryFormStat
     return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/categories');
-  redirect('/admin/categories');
+  redirect('/admin/categories?ok=da-luu');
 }
 
 // A blocked delete is an ordinary outcome, not a crash: it redirects back with

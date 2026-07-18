@@ -78,7 +78,7 @@ export default async function CategoriesAdminPage({
 
   return (
     <div className="space-y-4">
-      <FlashBanner code={sp.loi} basePath={BASE} />
+      <FlashBanner code={sp.ok ?? sp.loi} basePath={BASE} />
       <div className="flex items-center justify-between">
         <h1 className="admin-title text-[28px]">Danh mục</h1>
         <Link

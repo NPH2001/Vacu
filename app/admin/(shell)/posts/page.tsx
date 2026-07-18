@@ -12,6 +12,7 @@ import SortableTh from '@/components/admin/list/SortableTh';
 import Pagination from '@/components/admin/list/Pagination';
 import PageSizeSelect from '@/components/admin/list/PageSizeSelect';
 import ClearFiltersLink from '@/components/admin/list/ClearFiltersLink';
+import FlashBanner from '@/components/admin/FlashBanner';
 import { getAllPostCategories } from '@/lib/posts';
 import {
   parseListParams, buildWhere, buildOrderBy, buildPagination, type ListSchema,
@@ -84,6 +85,8 @@ export default async function PostsAdminPage({
         </div>
         <Link href="/admin/posts/new" className="admin-btn-primary">+ Viết bài mới</Link>
       </div>
+
+      <FlashBanner code={sp.ok ?? sp.loi} basePath={BASE} />
 
       <div className="flex flex-wrap items-center gap-2">
         <SearchInput placeholder="Tìm theo tiêu đề / đường dẫn…" />
