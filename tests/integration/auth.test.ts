@@ -63,6 +63,35 @@ describe('signIn action', () => {
   });
 });
 
+describe('logout revocation', () => {
+  it('logout bumps sessionsRevokedAt past the token issue time (revokes it)', async () => {
+    cookieStore.clear();
+    process.env.AUTH_SECRET = 'test-secret-that-is-long-enough-for-test';
+    const { signIn } = await import('@/app/admin/actions/auth');
+    const { verifySession } = await import('@/lib/auth');
+    const { SESSION_COOKIE } = await import('@/lib/session');
+    const { db } = await import('@/db/client');
+    const { users } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const fd = new FormData();
+    fd.set('email', 'admin@vacu.com.vn');
+    fd.set('password', 'adminpass123');
+    await expect(signIn(null, fd)).rejects.toThrow();
+    const claims = await verifySession(cookieStore.get(SESSION_COOKIE)!);
+
+    const { POST } = await import('@/app/api/auth/logout/route');
+    const { NextRequest } = await import('next/server');
+    await POST(new NextRequest('http://localhost:3000/api/auth/logout', { method: 'POST' }));
+
+    const [u] = await db.select().from(users).where(eq(users.id, claims.sub));
+    // A token issued at claims.iam is now older than sessionsRevokedAt → rejected
+    // by getCurrentUser's revocation check.
+    expect(u.sessionsRevokedAt.getTime()).toBeGreaterThan(claims.iam!);
+    expect(cookieStore.has(SESSION_COOKIE)).toBe(false); // cookie also cleared
+  });
+});
+
 describe('verifyPassword / hashPassword', () => {
   it('hashes and verifies round-trip', async () => {
     const { hashPassword, verifyPassword } = await import('@/lib/auth');

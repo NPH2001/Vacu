@@ -127,6 +127,13 @@
       "when": 1784368281893,
       "tag": "0017_chemical_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784373273284,
+      "tag": "0018_military_gwen_stacy",
+      "breakpoints": true
     }
   ]
 }
