@@ -12,6 +12,11 @@ const FOCUSABLE = 'button, a[href], input, select, textarea, [tabindex]:not([tab
 export function useModalA11y<T extends HTMLElement>(open: boolean, onClose: () => void) {
   const ref = useRef<T | null>(null);
   const restoreTo = useRef<HTMLElement | null>(null);
+  // Keep the latest onClose in a ref so the effect depends only on `open` — else
+  // a fresh onClose closure on every parent re-render (e.g. a cart quantity
+  // change) would re-run the effect and yank focus back to the first element.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
 
   useEffect(() => {
     if (!open) return;
@@ -20,7 +25,7 @@ export function useModalA11y<T extends HTMLElement>(open: boolean, onClose: () =
     panel?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
       if (e.key !== 'Tab' || !panel) return;
       const items = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null);
       if (items.length === 0) return;
@@ -34,7 +39,7 @@ export function useModalA11y<T extends HTMLElement>(open: boolean, onClose: () =
       document.removeEventListener('keydown', onKey);
       restoreTo.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return ref;
 }

@@ -298,7 +298,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
 
     case 'farmers': {
       const all = await getAllFarmers();
-      const items = all.slice(0, block.limit);
+      const items = block.limit > 0 ? all.slice(0, block.limit) : all;
       if (items.length === 0) return null;
       return (
         <Band tone={block.tone}>

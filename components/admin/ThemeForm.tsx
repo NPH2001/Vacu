@@ -62,7 +62,7 @@ export default function ThemeForm({ defaults }: { defaults: ThemeConfig }) {
       </form>
 
       {/* Live preview: sample public UI that reads the scoped variables. */}
-      <div className="theme-preview admin-panel overflow-hidden">
+      <div className="theme-preview font-sans admin-panel overflow-hidden">
         <div className="relative bg-green-950 text-white p-8">
           <div className="absolute inset-0 bg-gradient-to-br from-green-900/70 to-amber-900/30" />
           <div className="relative">

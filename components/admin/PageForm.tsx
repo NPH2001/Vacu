@@ -65,20 +65,30 @@ export default function PageForm({
             Trang hiện ra theo đúng thứ tự các khối bên dưới. Dùng ↑ ↓ để đổi thứ tự, “Ẩn” để tạm giấu một khối
             mà không xóa nó.
           </p>
-          <PageBuilder defaultValue={blocks} categoryOptions={categoryOptions} productOptions={productOptions} />
+          <PageBuilder defaultValue={blocks} categoryOptions={categoryOptions} productOptions={productOptions}
+            onDirty={() => setDirty(true)} />
         </div>
       </div>
 
       <div className="space-y-4 lg:sticky lg:top-4">
         <div className="admin-panel p-4 space-y-3">
           <h3 className="font-display text-[15px] text-stone-900">Xuất bản</h3>
-          <label className="block">
-            <select name="status" defaultValue={d.status ?? 'draft'}
-              className="w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
-              <option value="draft">Nháp — chỉ mình bạn thấy</option>
-              <option value="published">Đã đăng — khách xem được</option>
-            </select>
-          </label>
+          {isHome ? (
+            // The homepage must stay published — a draft would make `/` fall back
+            // to the code default and silently hide the admin's arranged layout.
+            <>
+              <input type="hidden" name="status" value="published" />
+              <p className="text-[12.5px] text-stone-500">Trang chủ luôn ở trạng thái <b>đã đăng</b>.</p>
+            </>
+          ) : (
+            <label className="block">
+              <select name="status" defaultValue={d.status ?? 'draft'}
+                className="w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
+                <option value="draft">Nháp — chỉ mình bạn thấy</option>
+                <option value="published">Đã đăng — khách xem được</option>
+              </select>
+            </label>
+          )}
           <div className="pt-2 border-t border-stone-200 flex items-center gap-2">
             <button type="submit" disabled={pending}
               className="admin-btn-primary disabled:opacity-60 flex-1 justify-center">

@@ -10,8 +10,19 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const [q, setQ] = useState(params.get('q') ?? '');
+  const urlQ = params.get('q') ?? '';
+  const [q, setQ] = useState(urlQ);
+  const [lastUrlQ, setLastUrlQ] = useState(urlQ);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Re-sync the box when the URL query changes from something other than typing
+  // (Back/Forward, the "Tất cả" pill, "Xem tất cả" in the empty state). This is
+  // the React "adjust state when a prop changes during render" pattern; safe vs
+  // typing because urlQ only changes after our own debounce already wrote it.
+  if (urlQ !== lastUrlQ) {
+    setLastUrlQ(urlQ);
+    setQ(urlQ);
+  }
 
   const setParam = (patch: Record<string, string>) => {
     const next = new URLSearchParams(params.toString());

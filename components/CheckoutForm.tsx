@@ -161,9 +161,12 @@ export default function CheckoutForm({
           )}
 
           {error && <p role="alert" aria-live="assertive" className="text-sm text-red-600">{error}</p>}
+          {slots.length === 0 && (
+            <p className="text-sm text-amber-700">Cửa hàng chưa mở khung giờ giao — vui lòng quay lại sau.</p>
+          )}
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || slots.length === 0}
             className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition text-lg disabled:opacity-60"
           >
             Đặt hàng · {formatPrice(total)}

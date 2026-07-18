@@ -117,7 +117,7 @@ export const farmersBlock = z.object({
   title: z.string().max(200).default(''),
   ...sectionHeader,
   ...tone,
-  limit: z.coerce.number().int().min(1).max(24).default(3),
+  limit: z.coerce.number().int().min(0).max(24).default(3), // 0 = show all
 });
 
 export const testimonialsBlock = z.object({

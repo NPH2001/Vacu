@@ -7,6 +7,9 @@ import { BLOCK_LABELS, emptyBlock, type Block, type BlockEntry, type BlockType }
 
 const TYPES = Object.keys(BLOCK_LABELS) as BlockType[];
 
+let keySeq = 0;
+const genKey = () => `blk-${keySeq++}`;
+
 export type PickOption = { id: string; name: string };
 
 /**
@@ -17,39 +20,58 @@ export type PickOption = { id: string; name: string };
  * pickers; the page passes the full lists so an admin can hand-pick items.
  */
 export default function PageBuilder({
-  name = 'blocks', defaultValue = [], categoryOptions = [], productOptions = [],
+  name = 'blocks', defaultValue = [], categoryOptions = [], productOptions = [], onDirty,
 }: {
   name?: string;
   defaultValue?: BlockEntry[];
   categoryOptions?: PickOption[];
   productOptions?: PickOption[];
+  onDirty?: () => void;
 }) {
-  const [blocks, setBlocks] = useState<BlockEntry[]>(defaultValue);
+  // Each block carries a stable client key so reordering moves the whole
+  // component instance (and its uncontrolled rich-text/image editor state) with
+  // it — an index key would leave an open editor bound to the wrong block.
+  const [rows, setRows] = useState<{ key: string; entry: BlockEntry }[]>(
+    () => defaultValue.map((entry) => ({ key: genKey(), entry })),
+  );
   const [open, setOpen] = useState<number | null>(defaultValue.length === 0 ? null : 0);
   const [adding, setAdding] = useState(false);
+  const dirty = () => onDirty?.();
 
   function patch(i: number, data: Block) {
-    setBlocks((prev) => prev.map((b, idx) => (idx === i ? { ...b, data } : b)));
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, entry: { ...r.entry, data } } : r)));
+    dirty();
   }
   function move(i: number, to: number) {
-    if (to < 0 || to >= blocks.length) return;
-    const next = [...blocks];
+    if (to < 0 || to >= rows.length) return;
+    const next = [...rows];
     const [item] = next.splice(i, 1);
     next.splice(to, 0, item);
-    setBlocks(next);
+    setRows(next);
     setOpen(to);
+    dirty();
   }
   function add(type: BlockType) {
-    setBlocks((prev) => [...prev, { visible: true, data: emptyBlock(type) }]);
-    setOpen(blocks.length);
+    setRows((prev) => [...prev, { key: genKey(), entry: { visible: true, data: emptyBlock(type) } }]);
+    setOpen(rows.length);
     setAdding(false);
+    dirty();
+  }
+  function toggleVisible(i: number) {
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, entry: { ...r.entry, visible: !r.entry.visible } } : r)));
+    dirty();
+  }
+  function remove(i: number) {
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+    setOpen(null);
+    dirty();
   }
 
   return (
     <div className="space-y-3">
-      <input type="hidden" name={name} value={JSON.stringify(blocks)} />
+      <input type="hidden" name={name} value={JSON.stringify(rows.map((r) => r.entry))} />
 
-      {blocks.length === 0 && (
+      {rows.length === 0 && (
         <div className="admin-panel p-8 text-center">
           <div className="text-4xl mb-2">▤</div>
           <p className="text-sm text-stone-600">
@@ -58,11 +80,11 @@ export default function PageBuilder({
         </div>
       )}
 
-      {blocks.map((b, i) => {
+      {rows.map(({ key, entry: b }, i) => {
         const meta = BLOCK_LABELS[b.data.type];
         const isOpen = open === i;
         return (
-          <div key={i} className={`admin-panel overflow-hidden ${b.visible ? '' : 'opacity-60'}`}>
+          <div key={key} className={`admin-panel overflow-hidden ${b.visible ? '' : 'opacity-60'}`}>
             <div className="flex items-center gap-2 px-3 py-2.5 bg-stone-50 border-b border-stone-200">
               <span className="text-stone-400 text-sm w-5 text-center">{meta.icon}</span>
               <button type="button" onClick={() => setOpen(isOpen ? null : i)}
@@ -73,10 +95,10 @@ export default function PageBuilder({
 
               <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0}
                 title="Chuyển lên trên" className="admin-btn-ghost px-2 disabled:opacity-25">↑</button>
-              <button type="button" onClick={() => move(i, i + 1)} disabled={i === blocks.length - 1}
+              <button type="button" onClick={() => move(i, i + 1)} disabled={i === rows.length - 1}
                 title="Chuyển xuống dưới" className="admin-btn-ghost px-2 disabled:opacity-25">↓</button>
               <button type="button"
-                onClick={() => setBlocks((prev) => prev.map((x, idx) => (idx === i ? { ...x, visible: !x.visible } : x)))}
+                onClick={() => toggleVisible(i)}
                 title={b.visible ? 'Đang hiện — bấm để ẩn' : 'Đang ẩn — bấm để hiện'}
                 className={`text-[11.5px] px-2 py-1 rounded border ${
                   b.visible
@@ -86,11 +108,7 @@ export default function PageBuilder({
                 {b.visible ? 'Hiện' : 'Ẩn'}
               </button>
               <button type="button"
-                onClick={() => {
-                  if (!confirm(`Xóa khối "${meta.name}" khỏi trang?`)) return;
-                  setBlocks((prev) => prev.filter((_, idx) => idx !== i));
-                  setOpen(null);
-                }}
+                onClick={() => { if (confirm(`Xóa khối "${meta.name}" khỏi trang?`)) remove(i); }}
                 title="Xóa khối này" className="text-red-600 hover:text-red-800 px-2 text-sm">🗑</button>
               <button type="button" onClick={() => setOpen(isOpen ? null : i)}
                 className="admin-btn-ghost px-2" title={isOpen ? 'Thu gọn' : 'Mở ra sửa'}>
@@ -146,7 +164,9 @@ function summary(b: Block): string {
     case 'stats': return b.title || `${b.items.length} số liệu`;
     case 'cta': return b.title || b.label || 'Chưa có nội dung';
     case 'gallery': return `${b.images.length} ảnh`;
-    case 'products': return `${b.title || 'Sản phẩm'} · ${PRODUCT_SOURCE_LABELS[b.source]}${b.source === 'manual' ? ` (${b.productIds.length})` : ` · ${b.limit}`}`;
+    case 'products':
+      if (b.source === 'category' && !b.categoryId) return `${b.title || 'Sản phẩm'} · ⚠ chưa chọn danh mục`;
+      return `${b.title || 'Sản phẩm'} · ${PRODUCT_SOURCE_LABELS[b.source]}${b.source === 'manual' ? ` (${b.productIds.length})` : ` · ${b.limit}`}`;
     case 'categories': return `${b.title || 'Danh mục'} · ${b.source === 'manual' ? `chọn tay (${b.categoryIds.length})` : 'tất cả'}`;
     case 'heroSlider': return 'Slider trang chủ + dải số liệu';
     case 'valueProps': return b.title || 'Điểm giá trị';
@@ -283,9 +303,14 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
             ]} />
 
           {block.source === 'category' && (
-            <Select label="Danh mục" value={block.categoryId}
-              onChange={(v) => onChange({ ...block, categoryId: v })}
-              options={[['', '— Chọn danh mục —'], ...categoryOptions.map((c) => [c.id, c.name] as [string, string])]} />
+            <>
+              <Select label="Danh mục" value={block.categoryId}
+                onChange={(v) => onChange({ ...block, categoryId: v })}
+                options={[['', '— Chọn danh mục —'], ...categoryOptions.map((c) => [c.id, c.name] as [string, string])]} />
+              {!block.categoryId && (
+                <p className="text-[11.5px] text-amber-700">Chưa chọn danh mục — khối này sẽ không hiện gì trên trang.</p>
+              )}
+            </>
           )}
 
           {block.source === 'manual' ? (
@@ -355,7 +380,7 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
           <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
             set={(p) => onChange({ ...block, ...p })} />
           <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
-          <NumberField label="Hiện bao nhiêu nông dân" min={1} max={24} value={block.limit}
+          <NumberField label="Hiện bao nhiêu nông dân (0 = tất cả)" min={0} max={24} value={block.limit}
             onChange={(n) => onChange({ ...block, limit: n })} />
           <p className="text-[11.5px] text-stone-500">Nội dung sửa ở mục <b>Nông dân</b>.</p>
         </div>
