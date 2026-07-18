@@ -76,7 +76,15 @@ export default function PageBuilder({
   }
   function remove(i: number) {
     setRows((prev) => prev.filter((_, idx) => idx !== i));
-    setOpen(null);
+    // Keep the editor open on whatever the admin was editing (like move does):
+    // close it only if the removed block WAS the open one; otherwise shift the
+    // index down when a block above it was removed. Blanket setOpen(null) here
+    // collapsed the open editor whenever any other block was deleted.
+    setOpen((prev) => {
+      if (prev === null) return null;
+      if (prev === i) return null;
+      return prev > i ? prev - 1 : prev;
+    });
     dirty();
   }
 
@@ -549,12 +557,19 @@ function MultiPick({
             {avail.length === 0 ? (
               <p className="text-[12px] text-stone-400 px-2.5 py-2">Không còn mục nào.</p>
             ) : (
-              avail.slice(0, 60).map((o) => (
-                <button type="button" key={o.id} onClick={() => onChange([...chosen, o.id])}
-                  className="block w-full text-left px-2.5 py-1.5 text-[13px] text-stone-700 hover:bg-green-50 border-b border-stone-100 last:border-0">
-                  <span className="text-green-700 mr-1">+</span>{o.name}
-                </button>
-              ))
+              <>
+                {avail.slice(0, 60).map((o) => (
+                  <button type="button" key={o.id} onClick={() => onChange([...chosen, o.id])}
+                    className="block w-full text-left px-2.5 py-1.5 text-[13px] text-stone-700 hover:bg-green-50 border-b border-stone-100 last:border-0">
+                    <span className="text-green-700 mr-1">+</span>{o.name}
+                  </button>
+                ))}
+                {avail.length > 60 && (
+                  <p className="text-[11.5px] text-stone-400 px-2.5 py-2">
+                    Còn {avail.length - 60} mục nữa — gõ để tìm nhanh.
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

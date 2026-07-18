@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import type { CategoryFormState } from '@/app/admin/actions/categories';
 import type { CategoryRow } from '@/db/schema';
 import CategoryIconField from './CategoryIconField';
@@ -17,8 +17,18 @@ export default function CategoryForm({
 }) {
   const [state, formAction, pending] = useActionState<CategoryFormState, FormData>(action, null);
   const d = defaults ?? {};
+
+  // Warn before leaving with unsaved changes (image + required description).
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty || pending) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty, pending]);
+
   return (
-    <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
+    <form action={formAction} onChange={() => setDirty(true)} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <div className="grid md:grid-cols-2 gap-4">
         <L label="Slug (ID)" required>
           <SlugInput defaultValue={d.id ?? ''} editing={editing} />
