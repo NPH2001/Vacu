@@ -37,8 +37,17 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       UPLOADS_DIR: /app/public/uploads
       NODE_ENV: production
+      # Canonical origin fallback for security-sensitive links (password reset)
+      # when Cài đặt → siteUrl is not set. Never derived from request headers.
+      APP_URL: https://${APP_DOMAIN}
     volumes:
       - uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     networks:
       - internal
       - traefik

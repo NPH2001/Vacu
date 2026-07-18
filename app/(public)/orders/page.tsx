@@ -9,6 +9,7 @@ import { MY_ORDERS_COOKIE, parseMyOrders } from '@/lib/orders-cookie';
 import { formatPrice } from '@/lib/format';
 import { getOrderStatusMap, getSiteInfo } from '@/lib/data';
 import { findBank, vietQrImageUrl } from '@/lib/banks';
+import PurchaseEvent from '@/components/PurchaseEvent';
 
 export default async function OrdersPage({
   searchParams,
@@ -33,8 +34,19 @@ export default async function OrdersPage({
     itemsByOrder.set(it.orderId, arr);
   }
 
+  const newOrder = newId ? myOrders.find((o) => o.id === newId) : undefined;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+      {newOrder && (
+        <PurchaseEvent
+          orderId={newOrder.id}
+          value={newOrder.total}
+          items={(itemsByOrder.get(newOrder.id) ?? []).map((it) => ({
+            item_id: it.productId, item_name: it.name, price: it.price, quantity: it.qty,
+          }))}
+        />
+      )}
       {newId && (
         <div className="bg-gradient-to-r from-green-700 to-green-800 text-white rounded-3xl p-8 mb-8 text-center">
           <div className="text-6xl mb-3">🌱</div>

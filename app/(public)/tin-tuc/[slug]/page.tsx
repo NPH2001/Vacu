@@ -6,6 +6,8 @@ import type { Metadata } from 'next';
 import { getPublishedPost, getAnyPost, getRelatedPosts, getLatestPosts, getPostCategoriesWithCounts } from '@/lib/posts';
 import { getSiteInfo } from '@/lib/data';
 import { getCurrentUser } from '@/lib/session';
+import { articleLd } from '@/lib/jsonld';
+import JsonLd from '@/components/JsonLd';
 import NewsSidebar from '@/components/NewsSidebar';
 
 type Props = {
@@ -74,6 +76,7 @@ export default async function PostDetailPage({ params, searchParams }: Props) {
 
   return (
     <div>
+      {isLive && <JsonLd data={articleLd(info, post)} />}
       {previewing && !isLive && (
         <div className="bg-amber-400 text-green-950 text-sm font-medium px-4 py-2.5 text-center">
           👁 Đang xem thử — bài này {post.status === 'draft' ? 'còn là bản nháp' : 'đã hẹn giờ đăng'}, khách chưa nhìn thấy.{' '}

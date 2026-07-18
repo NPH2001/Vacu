@@ -8,6 +8,8 @@ import { CartProvider } from '@/components/CartProvider';
 import CartDrawer from '@/components/CartDrawer';
 import ScrollToTop from '@/components/ScrollToTop';
 import Analytics from '@/components/Analytics';
+import JsonLd from '@/components/JsonLd';
+import { organizationLd } from '@/lib/jsonld';
 import { getSiteInfo, getAllCategories, getMenu } from '@/lib/data';
 
 export async function generateMetadata() {
@@ -24,6 +26,7 @@ export default async function PublicLayout({ children }: { children: React.React
   ]);
   return (
     <CartProvider>
+      <JsonLd data={organizationLd(info)} />
       <a href="#main" className="skip-link">Bỏ qua tới nội dung</a>
       <Navbar info={info} items={headerMenu} />
       <main id="main" className="flex-1">{children}</main>
