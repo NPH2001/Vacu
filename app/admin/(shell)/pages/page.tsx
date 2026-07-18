@@ -1,10 +1,16 @@
 import Link from 'next/link';
 import { getAllPages } from '@/lib/pages';
 import DeleteButton from '@/components/admin/DeleteButton';
+import FlashBanner from '@/components/admin/FlashBanner';
 import { deletePage } from '@/app/admin/actions/pages';
+import { HOME_PAGE_ID } from '@/lib/blocks';
 
-export default async function PagesAdminPage() {
-  const rows = await getAllPages();
+export default async function PagesAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [rows, sp] = await Promise.all([getAllPages(), searchParams]);
 
   return (
     <div className="space-y-4">
@@ -17,6 +23,8 @@ export default async function PagesAdminPage() {
         </div>
         <Link href="/admin/pages/new" className="admin-btn-primary">+ Tạo trang mới</Link>
       </div>
+
+      <FlashBanner code={sp.loi} basePath="/admin/pages" />
 
       {rows.length === 0 ? (
         <div className="admin-panel p-8 text-center">
@@ -37,14 +45,22 @@ export default async function PagesAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((p) => (
+              {rows.map((p) => {
+                const isHome = p.id === HOME_PAGE_ID;
+                const publicHref = isHome ? '/' : `/${p.id}`;
+                return (
                 <tr key={p.id}>
                   <td>
                     <Link href={`/admin/pages/${p.id}`} className="font-medium text-stone-900 hover:underline">
                       {p.title}
                     </Link>
+                    {isHome && (
+                      <span className="ml-2 admin-badge align-middle" style={{ background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }}>
+                        Trang gốc
+                      </span>
+                    )}
                   </td>
-                  <td className="text-stone-500 font-mono text-[12px]">/{p.id}</td>
+                  <td className="text-stone-500 font-mono text-[12px]">{publicHref}</td>
                   <td className="tabular-nums text-stone-700">{p.blockCount}</td>
                   <td>
                     {p.status === 'published' ? (
@@ -59,16 +75,21 @@ export default async function PagesAdminPage() {
                   </td>
                   <td className="text-right">
                     <div className="inline-flex items-center gap-3">
-                      <Link href={`/${p.id}?preview=1`} target="_blank"
+                      <Link href={isHome ? publicHref : `${publicHref}?preview=1`} target="_blank"
                         className="text-[12.5px] text-stone-600 hover:text-stone-900">Xem</Link>
                       <Link href={`/admin/pages/${p.id}`}
                         className="text-[12.5px] text-stone-600 hover:text-stone-900">Sửa</Link>
-                      <DeleteButton action={deletePage.bind(null, p.id)}
-                        confirmText={`Xóa trang "${p.title}"? Toàn bộ khối nội dung của trang cũng mất theo.`} />
+                      {isHome ? (
+                        <span className="text-[12.5px] text-stone-300" title="Không thể xóa trang gốc">Xóa</span>
+                      ) : (
+                        <DeleteButton action={deletePage.bind(null, p.id)}
+                          confirmText={`Xóa trang "${p.title}"? Toàn bộ khối nội dung của trang cũng mất theo.`} />
+                      )}
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

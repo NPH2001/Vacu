@@ -23,6 +23,10 @@ export const FLASH: Record<string, { kind: 'error' | 'ok'; text: string }> = {
     kind: 'error',
     text: 'Bạn không thể tự xóa tài khoản đang đăng nhập. Nhờ một quản trị viên khác xóa giúp nếu cần.',
   },
+  'khong-xoa-trang-chu': {
+    kind: 'error',
+    text: 'Không xóa được Trang chủ — đây là trang gốc của website. Bạn có thể ẩn/sắp xếp lại các khối bên trong thay vì xóa cả trang.',
+  },
 };
 
 export function flashOf(code: string | string[] | undefined) {

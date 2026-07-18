@@ -1,0 +1,53 @@
+[
+  { "visible": true, "data": { "type": "heroSlider" } },
+  { "visible": true, "data": { "type": "valueProps", "title": "", "limit": 0 } },
+  {
+    "visible": true,
+    "data": {
+      "type": "categories",
+      "title": "Thứ gì bạn đang cần?",
+      "eyebrow": "Danh mục",
+      "linkLabel": "Tất cả",
+      "linkHref": "/products",
+      "source": "all",
+      "categoryIds": [],
+      "limit": 0
+    }
+  },
+  {
+    "visible": true,
+    "data": {
+      "type": "products",
+      "title": "Mùa nào thức nấy",
+      "eyebrow": "Nổi bật tuần này",
+      "linkLabel": "Xem tất cả",
+      "linkHref": "/products",
+      "tone": "muted",
+      "source": "featured",
+      "categoryId": "",
+      "productIds": [],
+      "limit": 8
+    }
+  },
+  { "visible": true, "data": { "type": "subBox" } },
+  {
+    "visible": true,
+    "data": {
+      "type": "farmers",
+      "title": "Người trồng rau cho bạn",
+      "eyebrow": "Gặp bà con",
+      "linkLabel": "Toàn bộ",
+      "linkHref": "/farmers",
+      "limit": 3
+    }
+  },
+  { "visible": true, "data": { "type": "testimonials", "title": "28.000+ gia đình đã tin dùng", "tone": "muted", "limit": 0 } },
+  {
+    "visible": true,
+    "data": {
+      "type": "faq",
+      "title": "Câu hỏi thường gặp",
+      "subtitle": "Còn thắc mắc? Gọi {phone} để trò chuyện với chúng tôi."
+    }
+  }
+]

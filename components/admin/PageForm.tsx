@@ -5,7 +5,7 @@ import SlugInput from '@/components/admin/SlugInput';
 import PageBuilder, { type PickOption } from '@/components/admin/PageBuilder';
 import type { PageFormState } from '@/app/admin/actions/pages';
 import type { PageRow } from '@/db/schema';
-import type { BlockEntry } from '@/lib/blocks';
+import { HOME_PAGE_ID, type BlockEntry } from '@/lib/blocks';
 
 export default function PageForm({
   action, defaults, blocks = [], editing, categoryOptions = [], productOptions = [],
@@ -20,6 +20,7 @@ export default function PageForm({
   const [state, formAction, pending] = useActionState<PageFormState, FormData>(action, null);
   const [dirty, setDirty] = useState(false);
   const d = defaults ?? {};
+  const isHome = editing && d.id === HOME_PAGE_ID;
 
   useEffect(() => {
     if (!dirty || pending) return;
@@ -42,8 +43,14 @@ export default function PageForm({
           <label className="block">
             <span className="text-[13px] font-medium text-stone-900">Đường dẫn <span className="text-red-500">*</span></span>
             <span className="block text-[11.5px] text-stone-500 mt-0.5">
-              Địa chỉ trang: /{d.id || 'duong-dan'}
-              {editing ? ' — không đổi được sau khi tạo.' : ' — tự điền theo tên, bạn có thể sửa.'}
+              {isHome ? (
+                <>Đây là <b>Trang chủ</b> — hiển thị ngay tại <code className="font-mono">/</code>, không đổi đường dẫn được.</>
+              ) : (
+                <>
+                  Địa chỉ trang: /{d.id || 'duong-dan'}
+                  {editing ? ' — không đổi được sau khi tạo.' : ' — tự điền theo tên, bạn có thể sửa.'}
+                </>
+              )}
             </span>
             <SlugInput defaultValue={d.id ?? ''} sourceName="title" editing={editing} mono
               className="mt-1 w-full border border-stone-300 rounded px-3 py-2 read-only:bg-stone-50 read-only:text-stone-500" />
