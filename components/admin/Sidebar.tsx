@@ -53,9 +53,9 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Hệ thống',
     items: [
-      { href: '/admin/theme', label: 'Giao diện', icon: '◑' },
+      { href: '/admin/theme', label: 'Giao diện', icon: '◑', adminOnly: true },
       { href: '/admin/users', label: 'Tài khoản', icon: '◉', adminOnly: true },
-      { href: '/admin/settings', label: 'Cài đặt', icon: '⚙' },
+      { href: '/admin/settings', label: 'Cài đặt', icon: '⚙', adminOnly: true },
     ],
   },
 ];

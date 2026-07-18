@@ -1,7 +1,9 @@
 import ThemeForm from '@/components/admin/ThemeForm';
 import { getTheme } from '@/lib/data';
+import { requireRole } from '@/lib/session';
 
 export default async function ThemeAdminPage() {
+  await requireRole('admin');
   const theme = await getTheme();
   return (
     <div className="space-y-4">

@@ -445,6 +445,9 @@ export const orders = pgTable('orders', {
   paymentMethod: text('payment_method', { enum: ['cod', 'bank'] }).notNull().default('cod'),
   paymentStatus: text('payment_status', { enum: ['unpaid', 'paid'] }).notNull().default('unpaid'),
   customerEmail: text('customer_email'),
+  // Client-generated key so a retried/double-fired checkout resolves to the same
+  // order instead of creating a duplicate.
+  idempotencyKey: text('idempotency_key').unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

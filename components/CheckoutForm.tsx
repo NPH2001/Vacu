@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
@@ -26,6 +26,9 @@ export default function CheckoutForm({
   const { items, total, clear } = useCart();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Stable across retries of the same submission so a double-fire/network retry
+  // resolves to one order; reset after a successful checkout.
+  const idempotencyKey = useRef<string>(crypto.randomUUID());
   const [form, setForm] = useState<{
     name: string; phone: string; email: string; address: string; note: string; slot: string; payment: PaymentMethod;
   }>({
@@ -49,12 +52,13 @@ export default function CheckoutForm({
     fd.set('paymentMethod', form.payment);
     if (form.email) fd.set('customerEmail', form.email);
     if (form.note) fd.set('note', form.note);
-    fd.set('cart', JSON.stringify(items.map((i) => ({
-      id: i.id, name: i.name, price: i.price, qty: i.qty, unit: i.unit, image: i.image,
-    }))));
+    // Only id + qty are trusted; the server rebuilds price/name/stock from the DB.
+    fd.set('cart', JSON.stringify(items.map((i) => ({ id: i.id, qty: i.qty }))));
+    fd.set('idempotencyKey', idempotencyKey.current);
     startTransition(async () => {
       const res = await placeOrder(fd);
       if (!res.ok) { setError(res.error); return; }
+      idempotencyKey.current = crypto.randomUUID(); // next order gets a fresh key
       clear();
       router.push(`/orders?new=${res.orderId}`);
     });
