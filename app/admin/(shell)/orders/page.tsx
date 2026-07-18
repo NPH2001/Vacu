@@ -133,7 +133,7 @@ export default async function OrdersAdminPage({
                   const s = statusMap[r.status];
                   return (
                     <tr key={r.id}>
-                      <td><input type="checkbox" name="ids" value={r.id} /></td>
+                      <td><input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} /></td>
                       <td>
                         <Link href={`/admin/orders/${r.id}`} className="font-mono text-[12.5px] text-stone-900 hover:underline">{r.id}</Link>
                       </td>

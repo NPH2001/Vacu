@@ -80,7 +80,7 @@ export default async function MenuAdminPage({
             <ul className="divide-y divide-stone-100">
               {rows.map((r) => (
                 <li key={r.id} className="p-5 flex gap-4 items-center">
-                  <input type="checkbox" name="ids" value={r.id} />
+                  <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} />
                   <div className="flex-1 min-w-0">
                     <Link href={`/admin/menu/${r.id}`} className="font-semibold text-green-950 hover:underline">
                       {r.label} {r.openInNewTab && <span title="Mở tab mới" className="text-xs text-green-700">↗</span>}

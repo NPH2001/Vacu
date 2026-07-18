@@ -151,7 +151,7 @@ export default async function PostsAdminPage({
                   const st = statusOf(p.status, p.publishedAt);
                   return (
                     <tr key={p.id}>
-                      <td><input type="checkbox" name="ids" value={p.id} /></td>
+                      <td><input type="checkbox" name="ids" aria-label="Chọn để xóa" value={p.id} /></td>
                       <td>
                         {p.coverImage ? (
                           // eslint-disable-next-line @next/next/no-img-element
