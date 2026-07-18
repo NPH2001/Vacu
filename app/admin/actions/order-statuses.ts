@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -23,7 +24,7 @@ export async function updateOrderStatus(
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(orderStatuses).set(r.data).where(eq(orderStatuses.key, key));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/order-statuses');
   revalidatePath('/admin/orders');
   revalidatePath('/orders');

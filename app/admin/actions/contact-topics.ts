@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -22,7 +23,7 @@ export async function createContactTopic(_p: ContactTopicFormState, fd: FormData
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(contactTopics).values(r.data);
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/contact-topics');
   revalidatePath('/contact');
   redirect('/admin/contact-topics');
@@ -34,7 +35,7 @@ export async function updateContactTopic(id: number, _p: ContactTopicFormState, 
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(contactTopics).set(r.data).where(eq(contactTopics.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/contact-topics');
   revalidatePath('/contact');
   redirect('/admin/contact-topics');

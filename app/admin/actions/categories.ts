@@ -14,7 +14,7 @@ export type CategoryFormState = { error?: string } | null;
 function friendlyWriteError(e: unknown): string {
   if (isUniqueViolation(e)) return 'Slug đã tồn tại — chọn slug khác.';
   if (isFkViolation(e)) return 'Danh mục cha không tồn tại.';
-  return (e as Error).message;
+  return 'Không lưu được, vui lòng thử lại.';
 }
 
 function parse(fd: FormData) {

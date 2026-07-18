@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -30,7 +31,7 @@ export async function createHeroSlide(_p: HeroSlideFormState, fd: FormData): Pro
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(heroSlides).values(r.data);
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/hero-slides');
   revalidatePath('/');
   redirect('/admin/hero-slides');
@@ -42,7 +43,7 @@ export async function updateHeroSlide(id: number, _p: HeroSlideFormState, fd: Fo
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(heroSlides).set(r.data).where(eq(heroSlides.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/hero-slides');
   revalidatePath('/');
   redirect('/admin/hero-slides');

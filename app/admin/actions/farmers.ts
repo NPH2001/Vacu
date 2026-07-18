@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -30,7 +31,7 @@ export async function createFarmer(_p: FarmerFormState, fd: FormData): Promise<F
   const r = parse(fd);
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try { await db.insert(farmers).values(r.data); }
-  catch (e) { return { error: (e as Error).message }; }
+  catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
   redirect('/admin/farmers');
 }
@@ -40,7 +41,7 @@ export async function updateFarmer(originalId: string, _p: FarmerFormState, fd: 
   const r = parse(fd);
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try { await db.update(farmers).set({ ...r.data, updatedAt: new Date() }).where(eq(farmers.id, originalId)); }
-  catch (e) { return { error: (e as Error).message }; }
+  catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
   redirect('/admin/farmers');
 }

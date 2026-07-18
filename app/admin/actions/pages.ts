@@ -8,7 +8,7 @@ import { pages, pageBlocks } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { sanitizeRichText } from '@/lib/sanitize';
 import { blockListSchema, RESERVED_SLUGS, HOME_PAGE_ID, type BlockEntry } from '@/lib/blocks';
-import { isUniqueViolation } from '@/lib/db-errors';
+import { isUniqueViolation, friendlyWriteError } from '@/lib/db-errors';
 
 export type PageFormState = { error?: string } | null;
 
@@ -78,7 +78,7 @@ export async function createPage(_prev: PageFormState, fd: FormData): Promise<Pa
     await replaceBlocks(r.meta.id, r.blocks);
   } catch (e) {
     if (isUniqueViolation(e)) return { error: 'Đường dẫn này đã có trang khác dùng — hãy đổi đường dẫn.' };
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/pages');
   revalidatePath(`/${r.meta.id}`);
@@ -100,7 +100,7 @@ export async function updatePage(originalId: string, _prev: PageFormState, fd: F
     }).where(eq(pages.id, originalId));
     await replaceBlocks(originalId, r.blocks);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/pages');
   revalidatePath(`/admin/pages/${originalId}`);

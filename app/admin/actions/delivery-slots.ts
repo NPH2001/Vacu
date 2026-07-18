@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -23,7 +24,7 @@ export async function createDeliverySlot(_p: DeliverySlotFormState, fd: FormData
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(deliverySlots).values(r.data);
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/delivery-slots');
   revalidatePath('/checkout');
   redirect('/admin/delivery-slots');
@@ -35,7 +36,7 @@ export async function updateDeliverySlot(id: number, _p: DeliverySlotFormState, 
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(deliverySlots).set(r.data).where(eq(deliverySlots.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/delivery-slots');
   revalidatePath('/checkout');
   redirect('/admin/delivery-slots');

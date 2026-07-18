@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -33,7 +34,7 @@ export async function createUser(_p: UserFormState, fd: FormData): Promise<UserF
     await db.insert(users).values({ email, name, role, passwordHash: await hashPassword(password) });
   } catch (e) {
     if (isUniqueViolation(e)) return { error: 'Email đã tồn tại.' };
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/users');
   redirect('/admin/users');
@@ -64,7 +65,7 @@ export async function updateUser(id: string, _p: UserFormState, fd: FormData): P
     await db.update(users).set(patch).where(eq(users.id, id));
   } catch (e) {
     if (isUniqueViolation(e)) return { error: 'Email đã tồn tại.' };
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/users');
   redirect('/admin/users');

@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -24,7 +25,7 @@ export async function createFaq(_p: FaqFormState, fd: FormData): Promise<FaqForm
   try {
     const { question, answer, sortOrder } = r.data;
     await db.insert(faqItems).values({ question, answer, sortOrder });
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/faq');
   redirect('/admin/faq');
 }
@@ -36,7 +37,7 @@ export async function updateFaq(id: number, _p: FaqFormState, fd: FormData): Pro
   try {
     const { question, answer, sortOrder } = r.data;
     await db.update(faqItems).set({ question, answer, sortOrder }).where(eq(faqItems.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/faq');
   redirect('/admin/faq');
 }

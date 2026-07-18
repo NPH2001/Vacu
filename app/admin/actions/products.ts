@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -58,7 +59,7 @@ export async function createProduct(_prev: ProductFormState, fd: FormData): Prom
     });
     await replaceGallery(data.id, gallery);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/products');
   revalidatePath('/products');
@@ -80,7 +81,7 @@ export async function updateProduct(originalId: string, _prev: ProductFormState,
     }).where(eq(products.id, originalId));
     await replaceGallery(originalId, gallery);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/products');
   revalidatePath(`/admin/products/${originalId}`);

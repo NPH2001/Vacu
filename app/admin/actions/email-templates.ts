@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -27,7 +28,7 @@ export async function updateEmailTemplate(
     await db.update(emailTemplates)
       .set({ ...r.data, updatedAt: new Date() })
       .where(eq(emailTemplates.key, key));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/email-templates');
   redirect('/admin/email-templates');
 }
