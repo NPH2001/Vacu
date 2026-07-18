@@ -6,7 +6,7 @@ export default function FarmerCard({ f }: { f: FarmerRow }) {
   return (
     <Link
       href={`/farmers/${f.id}`}
-      className="group relative block rounded-3xl overflow-hidden border border-green-100 bg-white hover:shadow-xl transition"
+      className="group relative block rounded-3xl overflow-hidden border border-green-100 bg-white shadow-[0_1px_3px_rgba(20,60,30,0.05)] hover:shadow-[0_16px_32px_-12px_rgba(20,83,45,0.22)] hover:-translate-y-1 transition duration-300"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <SmartImage src={f.cover} alt={f.farm} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
