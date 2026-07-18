@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: on-demand + refreshed by admin revalidatePath, 5-min ceiling
 
 import { notFound } from 'next/navigation';
 import {

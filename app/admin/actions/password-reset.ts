@@ -7,6 +7,7 @@ import { users, passwordResetTokens, siteInfo } from '@/db/schema';
 import { hashPassword } from '@/lib/auth';
 import { sendTemplatedMail } from '@/lib/mail';
 import { requestPasswordResetSchema, resetPasswordSchema } from '@/lib/validators';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export type RequestResetState = { ok?: boolean; error?: string } | null;
 export type ResetPasswordState = { error?: string } | null;
@@ -41,6 +42,13 @@ export async function requestPasswordReset(
 
   // Always respond generic to avoid email enumeration
   const generic = { ok: true };
+
+  // Cap reset emails per IP and per address so this can't be used to flood a
+  // victim's inbox or burn the SMTP quota. Stay generic on limit, too.
+  const ip = await clientIp();
+  for (const key of [`reset:ip:${ip}`, `reset:email:${parsed.data.email.toLowerCase()}`]) {
+    if (!rateLimit(key, { limit: 5, windowMs: 15 * 60_000 }).ok) return generic;
+  }
 
   const [user] = await db.select().from(users).where(eq(users.email, parsed.data.email)).limit(1);
   if (!user) return generic;

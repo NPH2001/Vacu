@@ -28,10 +28,12 @@ export type SiteInfo = SiteInfoRow;
 export async function getAllProducts() {
   return db.select().from(products).orderBy(asc(products.name));
 }
-export async function getProduct(id: string) {
+// Cached per request: the product detail page reads it in both generateMetadata
+// and the page body.
+export const getProduct = cache(async (id: string) => {
   const rows = await db.select().from(products).where(eq(products.id, id)).limit(1);
   return rows[0] ?? null;
-}
+});
 /** Extra gallery shots, in display order. `products.image` is the primary one. */
 export async function getProductGallery(productId: string): Promise<string[]> {
   const rows = await db.select({ url: productImages.url }).from(productImages)
@@ -126,11 +128,14 @@ export const getCategory = cache(async (id: string) => {
 export async function getAllFarmers() {
   return db.select().from(farmers).orderBy(asc(farmers.name));
 }
-export async function getFarmer(id: string | null) {
+// Cached per request: ProductCard resolves the farmer for every card, so a
+// listing of N products that share a handful of farmers collapses to one query
+// per distinct farmer instead of one per card.
+export const getFarmer = cache(async (id: string | null) => {
   if (!id) return null;
   const rows = await db.select().from(farmers).where(eq(farmers.id, id)).limit(1);
   return rows[0] ?? null;
-}
+});
 export async function getProductsByFarmer(farmerId: string) {
   return db.select().from(products).where(eq(products.farmerId, farmerId)).orderBy(asc(products.name));
 }
