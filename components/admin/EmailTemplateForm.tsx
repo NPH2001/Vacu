@@ -87,7 +87,7 @@ export default function EmailTemplateForm({
           onChange={(e) => setBody(e.target.value)}
           required
           rows={14}
-          className="w-full border border-green-200 rounded px-3 py-2 font-mono text-xs"
+          className="w-full admin-input font-mono text-xs"
         />
       </div>
 
@@ -180,7 +180,7 @@ function PreviewBlock({
   );
 }
 
-const inputCls = 'w-full border border-green-200 rounded px-3 py-2';
+const inputCls = 'w-full admin-input';
 
 function L({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (

@@ -194,7 +194,7 @@ function MediaDetail({
               </span>
               <input value={alt} onChange={(e) => setAlt(e.target.value)}
                 placeholder="Ví dụ: Rổ cà chua vừa hái tại vườn Đà Lạt"
-                className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+                className="mt-1 w-full admin-input text-sm" />
             </label>
 
             <div className="flex items-center gap-2">

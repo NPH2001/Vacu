@@ -18,15 +18,15 @@ export default function UserForm({
       <div className="grid md:grid-cols-2 gap-4">
         <L label="Email" required>
           <input name="email" type="email" defaultValue={d.email ?? ''} required
-            className="w-full border border-green-200 rounded px-3 py-2" />
+            className="w-full admin-input" />
         </L>
         <L label="Tên" required>
           <input name="name" defaultValue={d.name ?? ''} required
-            className="w-full border border-green-200 rounded px-3 py-2" />
+            className="w-full admin-input" />
         </L>
         <L label="Vai trò" required>
           <select name="role" defaultValue={d.role ?? 'staff'} required
-            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            className="w-full admin-input bg-white">
             <option value="staff">Nhân viên (staff)</option>
             <option value="admin">Quản trị (admin)</option>
           </select>
@@ -34,7 +34,7 @@ export default function UserForm({
         <L label={editing ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'} required={!editing}>
           <input name="password" type="password" minLength={8}
             required={!editing} placeholder={editing ? '••••••••' : ''}
-            className="w-full border border-green-200 rounded px-3 py-2" />
+            className="w-full admin-input" />
         </L>
       </div>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}

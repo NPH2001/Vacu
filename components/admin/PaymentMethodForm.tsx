@@ -30,12 +30,12 @@ export default function PaymentMethodForm({
       )}
       <L label="Nhãn hiển thị" required>
         <input name="label" defaultValue={d.label ?? ''} required
-          className="w-full border border-green-200 rounded px-3 py-2"
+          className="w-full admin-input"
           placeholder="VD: 💵 Tiền mặt khi nhận" />
       </L>
       <L label="Gợi ý (dòng nhỏ dưới nhãn)">
         <input name="hint" defaultValue={d.hint ?? ''}
-          className="w-full border border-green-200 rounded px-3 py-2"
+          className="w-full admin-input"
           placeholder="VD: Trả khi nông dân giao tới" />
       </L>
       <L label="Kích hoạt">
@@ -46,7 +46,7 @@ export default function PaymentMethodForm({
       </L>
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-          className="w-32 border border-green-200 rounded px-3 py-2" />
+          className="w-32 admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

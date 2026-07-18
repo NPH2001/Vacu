@@ -69,7 +69,7 @@ export default function HeroSlideForm({
   );
 }
 
-const inputCls = 'mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm';
+const inputCls = 'mt-1 w-full admin-input text-sm';
 
 function L({ label, required, hint, children }: {
   label: string; required?: boolean; hint?: string; children: React.ReactNode;

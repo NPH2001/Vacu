@@ -22,15 +22,15 @@ export default function ValuePropForm({
       </L>
       <L label="Tiêu đề" required>
         <input name="title" defaultValue={d.title ?? ''} required
-          className="w-full border border-green-200 rounded px-3 py-2" />
+          className="w-full admin-input" />
       </L>
       <L label="Mô tả ngắn" required>
         <textarea name="description" defaultValue={d.description ?? ''} required rows={3}
-          className="w-full border border-green-200 rounded px-3 py-2" />
+          className="w-full admin-input" />
       </L>
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-          className="w-32 border border-green-200 rounded px-3 py-2" />
+          className="w-32 admin-input" />
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

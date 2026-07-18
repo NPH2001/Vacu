@@ -38,7 +38,7 @@ export default function PageForm({
             <span className="text-[13px] font-medium text-stone-900">Tên trang <span className="text-red-500">*</span></span>
             <input name="title" defaultValue={d.title ?? ''} required autoFocus={!editing}
               placeholder="Ví dụ: Tuyển dụng"
-              className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-[15px]" />
+              className="mt-1 w-full admin-input text-[15px]" />
           </label>
           <label className="block">
             <span className="text-[13px] font-medium text-stone-900">Đường dẫn <span className="text-red-500">*</span></span>
@@ -53,7 +53,7 @@ export default function PageForm({
               )}
             </span>
             <SlugInput defaultValue={d.id ?? ''} sourceName="title" editing={editing} mono
-              className="mt-1 w-full border border-stone-300 rounded px-3 py-2 read-only:bg-stone-50 read-only:text-stone-500" />
+              className="mt-1 w-full admin-input read-only:bg-stone-50 read-only:text-stone-500" />
           </label>
         </div>
 
@@ -83,7 +83,7 @@ export default function PageForm({
           ) : (
             <label className="block">
               <select name="status" defaultValue={d.status ?? 'draft'}
-                className="w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
+                className="w-full admin-input text-sm bg-white">
                 <option value="draft">Nháp — chỉ mình bạn thấy</option>
                 <option value="published">Đã đăng — khách xem được</option>
               </select>
@@ -115,12 +115,12 @@ export default function PageForm({
             <span className="text-[13px] font-medium text-stone-900">Tiêu đề trên Google</span>
             <span className="block text-[11.5px] text-stone-500 mt-0.5">Bỏ trống thì dùng tên trang.</span>
             <input name="metaTitle" defaultValue={d.metaTitle ?? ''} maxLength={200}
-              className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+              className="mt-1 w-full admin-input text-sm" />
           </label>
           <label className="block">
             <span className="text-[13px] font-medium text-stone-900">Mô tả trên Google</span>
             <textarea name="metaDescription" defaultValue={d.metaDescription ?? ''} rows={3} maxLength={300}
-              className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+              className="mt-1 w-full admin-input text-sm" />
           </label>
         </div>
 

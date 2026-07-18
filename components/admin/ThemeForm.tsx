@@ -110,7 +110,7 @@ function ColorField({
         <input type="color" value={value} onChange={(e) => onChange(e.target.value)}
           className="h-9 w-12 rounded border border-stone-300 bg-white p-0.5 cursor-pointer" aria-label={label} />
         <input type="text" value={value} onChange={(e) => onChange(e.target.value)} spellCheck={false}
-          className="w-32 border border-stone-300 rounded px-3 py-2 text-sm font-mono" />
+          className="w-32 admin-input text-sm font-mono" />
       </div>
     </div>
   );
@@ -123,7 +123,7 @@ function FontSelect({
     <label className="block">
       <span className="text-[13px] font-medium text-stone-900">{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full border border-stone-300 rounded px-3 py-2 text-sm bg-white">
+        className="mt-1 w-full admin-input text-sm bg-white">
         {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
       </select>
     </label>

@@ -18,7 +18,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           required
           minLength={8}
           autoComplete="new-password"
-          className="mt-1 w-full border border-green-200 rounded px-3 py-2"
+          className="mt-1 w-full admin-input"
         />
       </label>
       <button type="submit" disabled={pending}

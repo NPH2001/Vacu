@@ -64,34 +64,34 @@ export default function ProductForm({
               <Field label="Tên sản phẩm" required>
                 <input name="name" defaultValue={d.name ?? ''} required autoFocus={!editing}
                   placeholder="Ví dụ: Cà chua bi Đà Lạt"
-                  className="w-full border border-stone-300 rounded px-3 py-2" />
+                  className="w-full admin-input" />
               </Field>
               <Field label="Đường dẫn" required
                 hint={editing ? 'Không đổi được sau khi tạo.' : 'Tự điền theo tên, bạn có thể sửa.'}>
                 <SlugInput defaultValue={d.id ?? ''} editing={editing} mono
-                  className="w-full border border-stone-300 rounded px-3 py-2 read-only:bg-stone-50 read-only:text-stone-500" />
+                  className="w-full admin-input read-only:bg-stone-50 read-only:text-stone-500" />
               </Field>
               <Field label="Danh mục" required>
                 <select name="categoryId" defaultValue={d.categoryId ?? ''} required
-                  className="w-full border border-stone-300 rounded px-3 py-2 bg-white">
+                  className="w-full admin-input bg-white">
                   <option value="" disabled>— Chọn danh mục —</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </Field>
               <Field label="Nông dân" hint="Gắn sản phẩm với người trồng để khách xem được câu chuyện.">
                 <select name="farmerId" defaultValue={d.farmerId ?? ''}
-                  className="w-full border border-stone-300 rounded px-3 py-2 bg-white">
+                  className="w-full admin-input bg-white">
                   <option value="">— Không gán —</option>
                   {farmers.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
               </Field>
               <Field label="Đơn vị bán" required hint="Khách sẽ thấy: 25.000đ / bó 250g">
                 <input name="unit" defaultValue={d.unit ?? ''} required placeholder="bó 250g"
-                  className="w-full border border-stone-300 rounded px-3 py-2" />
+                  className="w-full admin-input" />
               </Field>
               <Field label="Thẻ" hint="Ngăn cách bằng dấu phẩy.">
                 <input name="tags" defaultValue={(d.tags ?? []).join(', ')} placeholder="Hữu cơ, PGS"
-                  className="w-full border border-stone-300 rounded px-3 py-2" />
+                  className="w-full admin-input" />
               </Field>
               <PriceField label="Giá bán" name="price" required defaultValue={d.price ?? null}
                 hint="Giá khách phải trả." />
@@ -103,7 +103,7 @@ export default function ProductForm({
               hint="Một hai câu hiện ở thẻ sản phẩm và đầu trang chi tiết.">
               <textarea name="description" defaultValue={d.description ?? ''} required rows={3} maxLength={2000}
                 placeholder="Cà chua bi trồng nhà kính Đà Lạt, hái sáng, ngọt và chắc thịt."
-                className="w-full border border-stone-300 rounded px-3 py-2 text-sm" />
+                className="w-full admin-input text-sm" />
             </Field>
           </div>
 
@@ -189,7 +189,7 @@ function PriceField({
       <div className="relative">
         <input name={name} type="number" min="0" step="1000" required={required}
           value={value} onChange={(e) => setValue(e.target.value)}
-          className="w-full border border-stone-300 rounded px-3 py-2 pr-24 tabular-nums" />
+          className="w-full admin-input pr-24 tabular-nums" />
         {preview && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-green-700 font-medium pointer-events-none">
             {preview}

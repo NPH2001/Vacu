@@ -35,18 +35,18 @@ export default function CategoryForm({
         </L>
         <L label="Tên" required>
           <input name="name" defaultValue={d.name ?? ''} required
-            className="w-full border border-green-200 rounded px-3 py-2" />
+            className="w-full admin-input" />
         </L>
         <L label="Icon" required>
           <CategoryIconField defaultValue={d.icon ?? ''} />
         </L>
         <L label="Thứ tự">
           <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
-            className="w-full border border-green-200 rounded px-3 py-2" />
+            className="w-full admin-input" />
         </L>
         <L label="Danh mục cha">
           <select name="parentId" defaultValue={d.parentId ?? ''}
-            className="w-full border border-green-200 rounded px-3 py-2 bg-white">
+            className="w-full admin-input bg-white">
             <option value="">— Không có (cấp gốc) —</option>
             {availableParents.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -56,7 +56,7 @@ export default function CategoryForm({
       </div>
       <L label="Mô tả" required>
         <textarea name="description" defaultValue={d.description ?? ''} required rows={3}
-          className="w-full border border-green-200 rounded px-3 py-2" />
+          className="w-full admin-input" />
       </L>
       <ImageUpload
         name="coverImage"
