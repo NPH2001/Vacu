@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import type { SettingsFormState } from '@/app/admin/actions/settings';
 import type { SiteInfoRow } from '@/db/schema';
 import { VN_BANKS } from '@/lib/banks';
@@ -31,6 +31,17 @@ export default function SettingsForm({
   const [tab, setTab] = useState<TabId>('brand');
   const [features, setFeatures] = useState<string[]>(d.subBoxFeatures ?? []);
 
+  // Warn before leaving with unsaved changes — this is the biggest, most
+  // tab-heavy form in the admin, so a misclick losing everything is costly.
+  // (Same beforeunload guard the product/post editors use.)
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty || pending) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty, pending]);
+
   const addFeature = () => setFeatures((xs) => [...xs, '']);
   const updateFeature = (i: number, v: string) => setFeatures((xs) => xs.map((x, idx) => (idx === i ? v : x)));
   const removeFeature = (i: number) => setFeatures((xs) => xs.filter((_, idx) => idx !== i));
@@ -48,7 +59,7 @@ export default function SettingsForm({
   };
 
   return (
-    <form action={formAction} onInvalidCapture={revealInvalid}
+    <form action={formAction} onInvalidCapture={revealInvalid} onChange={() => setDirty(true)}
       className="bg-white rounded-2xl border border-green-100 overflow-hidden">
       <nav className="flex gap-1 p-2 border-b border-green-100 bg-green-50/50 overflow-x-auto">
         {TABS.map((t) => (
