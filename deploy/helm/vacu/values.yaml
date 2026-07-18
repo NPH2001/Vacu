@@ -41,17 +41,16 @@ config:
 extraEnv: []
 
 # ---------------------------------------------------------------------------
-# Database migrations run once per release as a Helm pre-install/pre-upgrade
-# hook Job (not per-pod), so the app container just serves.
+# Database migrations run in an initContainer before the app container starts,
+# so the app itself just serves. The migration is idempotent; keep replicaCount
+# at 1 (with the Recreate strategy) so two pods never migrate concurrently.
 # ---------------------------------------------------------------------------
 migrations:
   enabled: true
-  # backoffLimit for the migrate Job.
-  backoffLimit: 2
 
-# Command for the app container. With migrations.enabled the Job handles
-# migrating, so the app only serves. Set to [] to fall back to the image's
-# default CMD (migrate + serve) — use that if you disable the hook.
+# Command for the app container. With migrations.enabled the initContainer
+# handles migrating, so the app only serves. Set to [] to fall back to the
+# image's default CMD (migrate + serve) — use that if you disable migrations.
 command: ["node", "server.js"]
 
 service:

@@ -7,12 +7,18 @@ import path from 'node:path';
  *
  * Like ensureAboutPage, this runs from *migrate* and from the seed so a fresh
  * database gets an editable homepage without waiting for a restart. It is
- * idempotent — skipped once the row exists — so it never reverts admin edits.
- * The block layout lives in data/home-blocks.json, the same file the `/` route
- * falls back to, so code and seed can never drift.
+ * idempotent — skipped once the homepage has blocks — so it never reverts admin
+ * edits. The block layout lives in data/home-blocks.json, the same file the `/`
+ * route falls back to, so code and seed can never drift.
+ *
+ * The guard checks page_blocks, not the pages row: if a prior run inserted the
+ * pages row but died before the blocks (or an admin deleted every block leaving
+ * a bare row), guarding on the row alone would skip forever and leave `/` empty.
+ * Guarding on blocks makes the seed self-heal — the block INSERT is one atomic
+ * statement, so "any block exists" reliably means the seed already completed.
  */
 export async function ensureHomePage(db) {
-  const existing = await db.query("SELECT 1 FROM pages WHERE id = 'home'");
+  const existing = await db.query("SELECT 1 FROM page_blocks WHERE page_id = 'home' LIMIT 1");
   if (existing.rows.length > 0) return;
 
   const dir = path.dirname(fileURLToPath(import.meta.url));
