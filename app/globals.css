@@ -35,6 +35,36 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Visible keyboard focus for interactive elements that don't style it
+   themselves. Only on :focus-visible, so it never shows for mouse clicks. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--color-green-600);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Skip-to-content link: off-screen until focused. */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  transform: translateY(-150%);
+  transition: transform 0.15s ease;
+  background: var(--color-green-800);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 /* Subtle paper grain for organic feel */
 .texture-paper {
   background-image:

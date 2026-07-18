@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { CategoryRow } from '@/db/schema';
 import { buildCategoryTree, type CategoryNode } from '@/lib/categories';
 import CategoryIcon from '@/components/CategoryIcon';
+import { useModalA11y } from '@/components/useModalA11y';
 
 export default function CategoryDrawer({
   allCategories, productCounts, activeId,
@@ -23,6 +24,7 @@ export default function CategoryDrawer({
     // Reset drill state on close so reopening starts fresh.
     setPath([]);
   };
+  const panelRef = useModalA11y<HTMLElement>(open, close);
 
   // Resolve the current node and the children to render at this level.
   const currentNode = path.reduce<CategoryNode | null>((node, id) => {
@@ -58,10 +60,14 @@ export default function CategoryDrawer({
         }`}
       />
       <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Danh mục sản phẩm"
+        inert={!open || undefined}
         className={`fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-[70] shadow-2xl transition-transform duration-300 flex flex-col ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
-        aria-hidden={!open}
       >
         <div className="flex items-center justify-between p-5 border-b border-green-100">
           <h2 className="text-xl font-bold text-green-950 font-display flex items-center gap-2">

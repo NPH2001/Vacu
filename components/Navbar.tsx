@@ -48,7 +48,7 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
               // let the number burst out of its badge.
               <span
                 title={`${count} món`}
-                className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center"
+                className="absolute -top-0.5 -right-0.5 bg-amber-500 text-green-950 text-[10px] font-bold rounded-full min-w-5 h-5 px-1 flex items-center justify-center"
               >
                 {count > 99 ? '99+' : count}
               </span>

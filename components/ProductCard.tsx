@@ -27,7 +27,7 @@ export default async function ProductCard({ p }: { p: Product }) {
           ))}
         </div>
         {discount > 0 && (
-          <span className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+          <span className="absolute top-3 right-3 bg-amber-500 text-green-950 text-xs font-bold px-2.5 py-1 rounded-full">
             -{discount}%
           </span>
         )}
