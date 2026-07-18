@@ -121,7 +121,7 @@ export default async function NewsPage({
               {rows.map((p) => (
                 <AnimateOnScroll key={p.id}>
                   <Link href={`/tin-tuc/${p.id}`}
-                    className="group block bg-white rounded-3xl border border-green-100 overflow-hidden hover:border-green-300 hover:shadow-lg transition h-full">
+                    className="group block bg-white rounded-3xl border border-green-100 overflow-hidden shadow-[0_1px_3px_rgba(20,60,30,0.05)] hover:border-green-300 hover:shadow-[0_16px_32px_-12px_rgba(20,83,45,0.22)] hover:-translate-y-1 transition duration-300 h-full">
                     <div className="aspect-[16/10] bg-green-50 overflow-hidden relative">
                       {p.coverImage ? (
                         // eslint-disable-next-line @next/next/no-img-element

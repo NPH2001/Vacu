@@ -85,7 +85,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
             )}
             <div className={`grid gap-6 ${items.length >= 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
               {items.map((v, i) => (
-                <div key={i} className="bg-white rounded-3xl p-7 border border-green-100">
+                <div key={i} className="bg-white rounded-3xl p-7 border border-green-100 shadow-[0_1px_3px_rgba(20,60,30,0.05)]">
                   {v.num && <div className="text-amber-500 text-5xl font-display mb-2">{v.num}</div>}
                   <h3 className="font-bold text-green-950 font-display text-xl mb-2">{v.title}</h3>
                   <p className="text-green-900/70">{v.desc}</p>
@@ -107,7 +107,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
           )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {items.map((s, i) => (
-              <div key={i} className="bg-white rounded-3xl p-8 border border-green-100 text-center">
+              <div key={i} className="bg-white rounded-3xl p-8 border border-green-100 text-center shadow-[0_1px_3px_rgba(20,60,30,0.05)]">
                 <div className="text-4xl md:text-5xl font-bold text-green-800 font-display">{s.value}</div>
                 <div className="text-sm text-green-900/60 uppercase tracking-wider mt-2">{s.label}</div>
               </div>
@@ -326,7 +326,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
           )}
           <HScroll itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
             {items.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-green-100 p-5 h-full flex flex-col">
+              <div key={i} className="bg-white rounded-2xl border border-green-100 shadow-[0_1px_3px_rgba(20,60,30,0.05)] p-5 h-full flex flex-col">
                 {(() => { const r = Math.max(0, Math.min(5, t.rating)); return (
                   <div className="text-amber-500 text-sm mb-2" aria-label={`${r}/5 sao`}>
                     {'★'.repeat(r)}<span className="text-stone-300">{'★'.repeat(5 - r)}</span>
