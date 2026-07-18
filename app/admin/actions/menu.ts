@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -25,7 +26,7 @@ export async function createMenuItem(_p: MenuItemFormState, fd: FormData): Promi
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(menuItems).values(r.data);
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/menu');
   revalidatePath('/', 'layout');
   redirect('/admin/menu');
@@ -37,7 +38,7 @@ export async function updateMenuItem(id: number, _p: MenuItemFormState, fd: Form
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(menuItems).set(r.data).where(eq(menuItems.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/menu');
   revalidatePath('/', 'layout');
   redirect('/admin/menu');

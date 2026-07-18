@@ -15,7 +15,7 @@ export type PostFormState = { error?: string } | null;
 function friendlyWriteError(e: unknown): string {
   if (isUniqueViolation(e)) return 'Đường dẫn này đã có bài viết khác dùng rồi — hãy đổi đường dẫn.';
   if (isFkViolation(e)) return 'Chuyên mục đã chọn không còn tồn tại — hãy chọn lại.';
-  return (e as Error).message;
+  return 'Không lưu được, vui lòng thử lại.';
 }
 
 function parseForm(fd: FormData) {

@@ -1,5 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { siteInfo } from '@/db/schema';
@@ -137,7 +138,7 @@ export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Pr
   try {
     await db.update(siteInfo).set(parsed.data).where(eq(siteInfo.id, 1));
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: friendlyWriteError(e) };
   }
   revalidatePath('/admin/settings');
   revalidatePath('/', 'layout');

@@ -19,3 +19,13 @@ export function isUniqueViolation(e: unknown): boolean {
   const msg = `${err.message ?? ''} ${err.cause?.message ?? ''}`;
   return /duplicate key|unique constraint/i.test(msg);
 }
+
+/**
+ * A safe, friendly Vietnamese message for a failed write. Never returns the raw
+ * driver text (which leaked constraint names / SQL to the admin UI).
+ */
+export function friendlyWriteError(e: unknown): string {
+  if (isUniqueViolation(e)) return 'Giá trị này đã tồn tại — vui lòng chọn giá trị khác.';
+  if (isFkViolation(e)) return 'Không thực hiện được vì dữ liệu đang liên kết với mục khác.';
+  return 'Không lưu được, vui lòng thử lại.';
+}

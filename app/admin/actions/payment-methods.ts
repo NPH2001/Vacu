@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -26,7 +27,7 @@ export async function createPaymentMethod(_p: PaymentMethodFormState, fd: FormDa
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(paymentMethods).values(r.data as { id: string; label: string; hint: string; active: boolean; sortOrder: number });
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/payment-methods');
   revalidatePath('/checkout');
   redirect('/admin/payment-methods');
@@ -38,7 +39,7 @@ export async function updatePaymentMethod(id: string, _p: PaymentMethodFormState
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(paymentMethods).set(r.data).where(eq(paymentMethods.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/payment-methods');
   revalidatePath('/checkout');
   redirect('/admin/payment-methods');

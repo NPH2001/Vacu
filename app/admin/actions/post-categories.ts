@@ -21,7 +21,7 @@ function parse(fd: FormData) {
 
 function friendlyWriteError(e: unknown): string {
   if (isUniqueViolation(e)) return 'Đường dẫn này đã có chuyên mục khác dùng — hãy đổi đường dẫn.';
-  return (e as Error).message;
+  return 'Không lưu được, vui lòng thử lại.';
 }
 
 export async function createPostCategory(_prev: PostCategoryFormState, fd: FormData): Promise<PostCategoryFormState> {

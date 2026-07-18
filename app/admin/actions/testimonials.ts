@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -27,7 +28,7 @@ export async function createTestimonial(_p: TestimonialFormState, fd: FormData):
   try {
     const { name, role, avatar, content, rating, sortOrder } = r.data;
     await db.insert(testimonials).values({ name, role, avatar, content, rating, sortOrder });
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/testimonials');
   redirect('/admin/testimonials');
 }
@@ -39,7 +40,7 @@ export async function updateTestimonial(id: number, _p: TestimonialFormState, fd
   try {
     const { name, role, avatar, content, rating, sortOrder } = r.data;
     await db.update(testimonials).set({ name, role, avatar, content, rating, sortOrder }).where(eq(testimonials.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/testimonials');
   redirect('/admin/testimonials');
 }

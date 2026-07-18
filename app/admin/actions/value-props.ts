@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { friendlyWriteError } from '@/lib/db-errors';
 import { revalidatePath } from 'next/cache';
 import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -24,7 +25,7 @@ export async function createValueProp(_p: ValuePropFormState, fd: FormData): Pro
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.insert(valueProps).values(r.data);
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/value-props');
   revalidatePath('/', 'layout');
   redirect('/admin/value-props');
@@ -36,7 +37,7 @@ export async function updateValueProp(id: number, _p: ValuePropFormState, fd: Fo
   if (!r.success) return { error: r.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
   try {
     await db.update(valueProps).set(r.data).where(eq(valueProps.id, id));
-  } catch (e) { return { error: (e as Error).message }; }
+  } catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/value-props');
   revalidatePath('/', 'layout');
   redirect('/admin/value-props');
