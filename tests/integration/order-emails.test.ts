@@ -24,6 +24,7 @@ vi.mock('nodemailer', () => ({
 }));
 
 let ctx: TestDb;
+let validSlot: string; // checkout validates the slot against the active list
 
 async function seedBaseData(opts: { smtpEnabled: boolean; bankEnabled?: boolean }) {
   const { db } = await import('@/db/client');
@@ -67,7 +68,14 @@ async function resetTables() {
   await db.delete(siteInfo);
 }
 
-beforeAll(async () => { ctx = await bootPg(); }, 120_000);
+beforeAll(async () => {
+  ctx = await bootPg();
+  const { db } = await import('@/db/client');
+  const { deliverySlots } = await import('@/db/schema');
+  const { eq } = await import('drizzle-orm');
+  const active = await db.select().from(deliverySlots).where(eq(deliverySlots.active, true));
+  validSlot = active[0]?.label ?? 'Sáng mai';
+}, 120_000);
 afterAll(async () => { await stopPg(ctx); });
 beforeEach(async () => { sendMailCalls.length = 0; await resetTables(); });
 
@@ -76,12 +84,10 @@ function fdForOrder(opts: { email?: string; payment?: 'cod' | 'bank' }) {
   fd.set('customerName', 'Khách A');
   fd.set('phone', '0912345678');
   fd.set('address', '12 Lê Lợi');
-  fd.set('deliverySlot', 'Sáng mai');
+  fd.set('deliverySlot', validSlot);
   fd.set('paymentMethod', opts.payment ?? 'cod');
   if (opts.email) fd.set('customerEmail', opts.email);
-  fd.set('cart', JSON.stringify([
-    { id: 'p1', name: 'Rau cải', price: 50_000, qty: 2, unit: 'kg', image: '/x.jpg' },
-  ]));
+  fd.set('cart', JSON.stringify([{ id: 'p1', qty: 2 }]));
   return fd;
 }
 

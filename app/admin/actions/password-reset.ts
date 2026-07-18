@@ -1,6 +1,5 @@
 'use server';
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { randomBytes, createHash } from 'node:crypto';
 import { eq, and, gt, isNull } from 'drizzle-orm';
 import { db } from '@/db/client';
@@ -18,11 +17,19 @@ function hashToken(raw: string): string {
   return createHash('sha256').update(raw).digest('hex');
 }
 
-async function currentOrigin(): Promise<string> {
-  const h = await headers();
-  const proto = h.get('x-forwarded-proto') || 'http';
-  const host = h.get('host') || 'localhost:3000';
-  return `${proto}://${host}`;
+/**
+ * The reset link's origin — from the configured canonical site URL (or APP_URL),
+ * NEVER the request Host header. A Host header is attacker-controlled, so using
+ * it here would let anyone send a victim a real token pointing at their own
+ * domain (reset-poisoning → account takeover).
+ */
+function canonicalOrigin(siteUrl: string): string {
+  for (const candidate of [siteUrl, process.env.APP_URL ?? '']) {
+    try {
+      if (candidate.trim()) return new URL(candidate.trim()).origin;
+    } catch { /* try next */ }
+  }
+  return '';
 }
 
 export async function requestPasswordReset(
@@ -53,8 +60,7 @@ export async function requestPasswordReset(
     expiresAt,
   });
 
-  const origin = await currentOrigin();
-  const resetLink = `${origin}/admin/reset-password?token=${rawToken}`;
+  const resetLink = `${canonicalOrigin(info.siteUrl)}/admin/reset-password?token=${rawToken}`;
 
   const res = await sendTemplatedMail('forgot_password', user.email, {
     siteName: info.name,

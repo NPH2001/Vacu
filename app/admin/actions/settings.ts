@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { siteInfo } from '@/db/schema';
 import { siteInfoSchema } from '@/lib/validators';
-import { requireAdmin } from '@/lib/session';
+import { requireRole } from '@/lib/session';
 
 export type SettingsFormState = { error?: string; ok?: boolean } | null;
 
@@ -16,7 +16,10 @@ function parseFeatures(fd: FormData): string[] {
 }
 
 export async function updateSiteInfo(_prev: SettingsFormState, fd: FormData): Promise<SettingsFormState> {
-  await requireAdmin();
+  // Admin only: site settings include the payout bank account and SMTP
+  // credentials — a staff account must not be able to redirect payments or
+  // hijack outgoing mail.
+  await requireRole('admin');
   const parsed = siteInfoSchema.safeParse({
     name: fd.get('name'),
     shortName: fd.get('shortName'),

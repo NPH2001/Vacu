@@ -3,8 +3,10 @@ import { db } from '@/db/client';
 import { siteInfo } from '@/db/schema';
 import SettingsForm from '@/components/admin/SettingsForm';
 import { updateSiteInfo } from '@/app/admin/actions/settings';
+import { requireRole } from '@/lib/session';
 
 export default async function SettingsPage() {
+  await requireRole('admin'); // settings hold the bank account + SMTP secrets
   const rows = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   const row = rows[0];
   if (!row) {

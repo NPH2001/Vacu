@@ -4,13 +4,13 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db/client';
 import { theme } from '@/db/schema';
 import { themeSchema } from '@/lib/validators';
-import { requireAdmin } from '@/lib/session';
+import { requireRole } from '@/lib/session';
 import { DEFAULT_THEME } from '@/lib/theme';
 
 export type ThemeFormState = { error?: string; ok?: boolean } | null;
 
 export async function saveTheme(_prev: ThemeFormState, fd: FormData): Promise<ThemeFormState> {
-  await requireAdmin();
+  await requireRole('admin');
   const r = themeSchema.safeParse({
     brandColor: fd.get('brandColor'),
     accentColor: fd.get('accentColor'),
@@ -28,7 +28,7 @@ export async function saveTheme(_prev: ThemeFormState, fd: FormData): Promise<Th
 }
 
 export async function resetTheme(): Promise<void> {
-  await requireAdmin();
+  await requireRole('admin');
   await db.insert(theme).values({ id: 1, ...DEFAULT_THEME })
     .onConflictDoUpdate({ target: theme.id, set: DEFAULT_THEME });
   revalidatePath('/', 'layout');

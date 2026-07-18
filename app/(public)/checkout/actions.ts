@@ -1,9 +1,9 @@
 'use server';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { orders, orderItems, siteInfo } from '@/db/schema';
+import { orders, orderItems, siteInfo, products, deliverySlots } from '@/db/schema';
 import { placeOrderSchema } from '@/lib/validators';
 import {
   MY_ORDERS_COOKIE, MY_ORDERS_MAX_AGE,
@@ -12,27 +12,32 @@ import {
 import { formatPrice } from '@/lib/format';
 import { sendTemplatedMail } from '@/lib/mail';
 import { vietQrImageUrl, findBank } from '@/lib/banks';
+import { isUniqueViolation } from '@/lib/db-errors';
 
+// The client is trusted for the product id and quantity only — never the price,
+// name or unit. Everything money-related is rebuilt from the products table.
 const cartLineSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  price: z.coerce.number().int().positive(),
-  qty: z.coerce.number().int().positive(),
-  unit: z.string(),
-  image: z.string(),
+  id: z.string().min(1).max(80),
+  qty: z.coerce.number().int().positive().max(99),
 });
+
+type BuiltLine = { productId: string; name: string; price: number; qty: number; unit: string; image: string };
 
 export type PlaceOrderResult = { ok: true; orderId: string } | { ok: false; error: string };
 
+/** A collision-resistant, human-readable order id. */
 function newOrderId(): string {
-  return `NTX-${Date.now().toString().slice(-8)}`;
+  return `NTX-${globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`;
 }
 
-async function currentOrigin(): Promise<string> {
-  const h = await headers();
-  const proto = h.get('x-forwarded-proto') || 'http';
-  const host = h.get('host') || 'localhost:3000';
-  return `${proto}://${host}`;
+/** Security-sensitive links use the configured canonical site URL, never the
+ *  request Host header (which an attacker controls). */
+function siteOrigin(url: string): string {
+  try {
+    return url.trim() ? new URL(url.trim()).origin : '';
+  } catch {
+    return '';
+  }
 }
 
 function esc(s: string): string {
@@ -53,31 +58,81 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
   });
   if (!meta.success) return { ok: false, error: 'Thông tin không hợp lệ' };
 
-  let cart: z.infer<typeof cartLineSchema>[];
+  // Idempotency: a retried submit with the same key returns the existing order.
+  const idempotencyKey = String(formData.get('idempotencyKey') ?? '').slice(0, 100) || null;
+  if (idempotencyKey) {
+    const [existing] = await db.select({ id: orders.id }).from(orders)
+      .where(eq(orders.idempotencyKey, idempotencyKey)).limit(1);
+    if (existing) return { ok: true, orderId: existing.id };
+  }
+
+  let requested: z.infer<typeof cartLineSchema>[];
   try {
-    const raw = formData.get('cart');
-    cart = z.array(cartLineSchema).min(1).parse(JSON.parse(String(raw)));
+    requested = z.array(cartLineSchema).min(1).max(100).parse(JSON.parse(String(formData.get('cart'))));
   } catch {
     return { ok: false, error: 'Giỏ hàng trống hoặc không hợp lệ' };
   }
 
-  const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-  const orderId = newOrderId();
-  const { customerEmail, ...rest } = meta.data;
+  // Rebuild every line from the database — prices, names and stock are never
+  // trusted from the client.
+  const ids = [...new Set(requested.map((l) => l.id))];
+  const rows = await db.select().from(products).where(inArray(products.id, ids));
+  const byId = new Map(rows.map((p) => [p.id, p]));
 
-  await db.transaction(async (tx) => {
-    await tx.insert(orders).values({
-      id: orderId, total,
-      customerEmail: customerEmail ?? null,
-      ...rest,
+  const lines: BuiltLine[] = [];
+  for (const { id, qty } of requested) {
+    const p = byId.get(id);
+    if (!p) return { ok: false, error: 'Một sản phẩm trong giỏ không còn tồn tại. Vui lòng kiểm tra lại giỏ hàng.' };
+    if (!p.inStock) return { ok: false, error: `“${p.name}” hiện đã hết hàng. Vui lòng bỏ khỏi giỏ rồi thử lại.` };
+    lines.push({ productId: p.id, name: p.name, price: p.price, qty, unit: p.unit, image: p.image });
+  }
+  const total = lines.reduce((s, l) => s + l.qty * l.price, 0);
+
+  // Validate the delivery slot against the currently active ones.
+  const activeSlots = await db.select({ label: deliverySlots.label }).from(deliverySlots)
+    .where(eq(deliverySlots.active, true));
+  if (activeSlots.length > 0 && !activeSlots.some((s) => s.label === meta.data.deliverySlot)) {
+    return { ok: false, error: 'Khung giờ giao không hợp lệ. Vui lòng chọn lại.' };
+  }
+
+  // Bank transfer must be enabled server-side, else fall back to COD so the
+  // customer is never left without a payment path.
+  const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
+  const paymentMethod = meta.data.paymentMethod === 'bank' && info?.bankEnabled ? 'bank' : 'cod';
+
+  const { customerEmail, ...rest } = meta.data;
+  let orderId = newOrderId();
+  try {
+    await db.transaction(async (tx) => {
+      // Retry once on the astronomically-unlikely id collision.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await tx.insert(orders).values({
+            // `...rest` first so the explicit, server-validated paymentMethod wins
+            // over the un-coerced one from the form.
+            ...rest,
+            id: orderId, total, paymentMethod,
+            customerEmail: customerEmail ?? null,
+            idempotencyKey,
+          });
+          break;
+        } catch (e) {
+          if (attempt === 0 && isUniqueViolation(e)) { orderId = newOrderId(); continue; }
+          throw e;
+        }
+      }
+      await tx.insert(orderItems).values(lines.map((l) => ({ orderId, ...l })));
     });
-    await tx.insert(orderItems).values(
-      cart.map((l) => ({
-        orderId, productId: l.id, name: l.name, price: l.price,
-        qty: l.qty, unit: l.unit, image: l.image,
-      })),
-    );
-  });
+  } catch (e) {
+    // A racing duplicate idempotency key means the order already exists.
+    if (isUniqueViolation(e) && idempotencyKey) {
+      const [existing] = await db.select({ id: orders.id }).from(orders)
+        .where(eq(orders.idempotencyKey, idempotencyKey)).limit(1);
+      if (existing) return { ok: true, orderId: existing.id };
+    }
+    console.error('[placeOrder] insert error:', e);
+    return { ok: false, error: 'Không đặt được đơn, vui lòng thử lại.' };
+  }
 
   try {
     const store = await cookies();
@@ -90,11 +145,8 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
   }
 
   // Fire-and-notify emails (don't block success if SMTP fails)
-  void sendOrderEmails({
-    orderId,
-    total,
-    meta: meta.data,
-  }).catch((e) => console.error('[placeOrder] email error:', e));
+  void sendOrderEmails({ orderId, total, meta: { ...meta.data, paymentMethod } })
+    .catch((e) => console.error('[placeOrder] email error:', e));
 
   return { ok: true, orderId };
 }
@@ -109,7 +161,7 @@ async function sendOrderEmails({
   const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!info || !info.smtpEnabled) return;
 
-  const origin = await currentOrigin();
+  const origin = siteOrigin(info.siteUrl);
   const paymentMethodLabel = meta.paymentMethod === 'bank' ? 'Chuyển khoản ngân hàng' : 'Tiền mặt khi nhận (COD)';
 
   let paymentInfoHtml = '';
