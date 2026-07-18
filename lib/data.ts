@@ -121,7 +121,8 @@ export const getCategory = cache(async (id: string) => {
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
   return rows[0] ?? null;
 });
-export async function getAllFarmers() {
+// Cached per request: two `farmers` blocks on one page would otherwise re-query.
+export const getAllFarmers = cache(async () => {
   // Re-sort by name in JS with the Vietnamese locale: the DB is en_US-collated,
   // which folds Đ→D and so orders "Đào" before "Dưa" — wrong, since Đ is a
   // distinct letter that sorts after D. localeCompare('vi') gets it right, and
@@ -129,7 +130,7 @@ export async function getAllFarmers() {
   // public /farmers page renders this order directly.
   const rows = await db.select().from(farmers);
   return rows.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-}
+});
 // Cached per request: ProductCard resolves the farmer for every card, so a
 // listing of N products that share a handful of farmers collapses to one query
 // per distinct farmer instead of one per card.
@@ -141,12 +142,10 @@ export const getFarmer = cache(async (id: string | null) => {
 export async function getProductsByFarmer(farmerId: string) {
   return db.select().from(products).where(eq(products.farmerId, farmerId)).orderBy(asc(products.name));
 }
-export async function getAllTestimonials() {
-  return db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.id));
-}
-export async function getAllFaqItems() {
-  return db.select().from(faqItems).orderBy(asc(faqItems.sortOrder), asc(faqItems.id));
-}
+export const getAllTestimonials = cache(async () =>
+  db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.id)));
+export const getAllFaqItems = cache(async () =>
+  db.select().from(faqItems).orderBy(asc(faqItems.sortOrder), asc(faqItems.id)));
 
 /**
  * Cached per request: nearly every page reads site info, and generateMetadata
@@ -173,14 +172,12 @@ export const getTheme = cache(async (): Promise<ThemeConfig> => {
   };
 });
 
-export async function getActiveHeroSlides(): Promise<HeroSlideRow[]> {
-  return db.select().from(heroSlides)
+export const getActiveHeroSlides = cache((): Promise<HeroSlideRow[]> =>
+  db.select().from(heroSlides)
     .where(eq(heroSlides.active, true))
-    .orderBy(asc(heroSlides.sortOrder), asc(heroSlides.id));
-}
-export async function getAllValueProps(): Promise<ValuePropRow[]> {
-  return db.select().from(valueProps).orderBy(asc(valueProps.sortOrder), asc(valueProps.id));
-}
+    .orderBy(asc(heroSlides.sortOrder), asc(heroSlides.id)));
+export const getAllValueProps = cache((): Promise<ValuePropRow[]> =>
+  db.select().from(valueProps).orderBy(asc(valueProps.sortOrder), asc(valueProps.id)));
 export async function getActiveDeliverySlots(): Promise<DeliverySlotRow[]> {
   return db.select().from(deliverySlots)
     .where(eq(deliverySlots.active, true))

@@ -24,9 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * The homepage is a page-builder page (row id `home`, served here at `/`) so it
- * is edited in the same builder as every other page. Until that row is seeded —
- * or if it is ever missing — we fall back to the default block layout so `/`
- * always renders.
+ * is edited in the same builder as every other page. We fall back to the default
+ * block layout whenever the row is missing OR has no visible blocks (an admin
+ * removed/hid them all), so `/` is never a blank page.
  */
 export default async function HomePage({ searchParams }: Props) {
   const sp = await searchParams;
@@ -35,11 +35,13 @@ export default async function HomePage({ searchParams }: Props) {
     ? await getAnyPage(HOME_PAGE_ID)
     : await getPublishedPage(HOME_PAGE_ID);
 
-  const blocks: LoadedBlock[] = page
-    ? page.blocks
-    : DEFAULT_HOME_BLOCKS
-        .filter((b) => b.visible)
-        .map((b, i) => ({ id: i, visible: true, data: b.data }));
+  const fallback: LoadedBlock[] = DEFAULT_HOME_BLOCKS
+    .filter((b) => b.visible)
+    .map((b, i) => ({ id: i, visible: true, data: b.data }));
+
+  // page?.blocks already has hidden blocks stripped; an empty result means the
+  // homepage would render blank, so use the default layout instead.
+  const blocks: LoadedBlock[] = page && page.blocks.length > 0 ? page.blocks : fallback;
 
   return (
     <div>

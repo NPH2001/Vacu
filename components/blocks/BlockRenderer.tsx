@@ -135,14 +135,16 @@ export default async function BlockRenderer({ block }: { block: Block }) {
       );
 
     case 'gallery': {
-      if (block.images.length === 0) return null;
+      // Drop blank entries so an empty slot doesn't render a broken <img src="">.
+      const images = block.images.filter((src) => src.trim() !== '');
+      if (images.length === 0) return null;
       return (
         <section className="max-w-6xl mx-auto px-4 py-14">
           {block.title && (
             <h2 className="text-3xl font-bold text-green-950 font-display text-center mb-8 wrap-anywhere">{block.title}</h2>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {block.images.map((src, i) => (
+            {images.map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img key={i} src={src} alt="" loading="lazy"
                 className="w-full aspect-[4/3] object-cover rounded-2xl border border-green-100" />
