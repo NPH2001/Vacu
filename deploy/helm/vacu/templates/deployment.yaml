@@ -47,6 +47,10 @@ spec:
                 name: {{ include "vacu.fullname" . }}-config
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          # readOnlyRootFilesystem is on, so give the migrator a writable /tmp.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       {{- end }}
       containers:
         - name: app
@@ -80,9 +84,15 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          # With readOnlyRootFilesystem the app can only write to explicitly
+          # mounted paths: the uploads volume, Next's standalone cache, and /tmp.
           volumeMounts:
             - name: uploads
               mountPath: /app/public/uploads
+            - name: next-cache
+              mountPath: /app/.next/cache
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: uploads
           {{- if .Values.persistence.enabled }}
@@ -91,6 +101,12 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        # Ephemeral scratch space, safe to lose on restart — required because the
+        # root filesystem is read-only.
+        - name: next-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
