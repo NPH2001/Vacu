@@ -36,8 +36,19 @@ export default function ProductForm({
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [dirty, pending]);
 
+  // Every required field lives on the "info" tab. If the admin submits while the
+  // "detail" tab is showing, the browser can't focus a required control inside a
+  // `hidden` panel, so submit aborts with no visible feedback. Catch the invalid
+  // event (capture — it doesn't bubble), reveal the info tab, and focus the
+  // offender so the native validation bubble has something to point at.
+  const revealInvalid = (e: React.FormEvent) => {
+    const el = e.target as HTMLElement;
+    setTab('info');
+    requestAnimationFrame(() => { if (el.isConnected) (el as HTMLInputElement).focus?.(); });
+  };
+
   return (
-    <form action={formAction} onChange={() => setDirty(true)}
+    <form action={formAction} onChange={() => setDirty(true)} onInvalidCapture={revealInvalid}
       className="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
       <div className="space-y-4 min-w-0">
         <div className="admin-panel-flush">
@@ -104,6 +115,10 @@ export default function ProductForm({
               hint="Hiện ở mục 'Chi tiết sản phẩm' bên dưới khu vực mua hàng. Gõ như Word, có thể dán từ Word."
               placeholder="Ví dụ: đặc điểm, cách bảo quản, gợi ý chế biến…"
               minHeight={360}
+              // The editor writes its hidden input programmatically (no bubbling
+              // change event), so the form's onChange never sees body edits —
+              // mark dirty here or the unsaved-work guard misses a body-only edit.
+              onChange={() => setDirty(true)}
             />
           </div>
         </div>

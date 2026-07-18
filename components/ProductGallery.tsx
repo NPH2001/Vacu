@@ -29,7 +29,7 @@ export default function ProductGallery({
           {images.map((u, i) => (
             <button
               type="button"
-              key={u}
+              key={`${u}-${i}`}
               onClick={() => setActive(i)}
               aria-label={`Xem ảnh ${i + 1}`}
               aria-current={i === active}

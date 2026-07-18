@@ -64,7 +64,9 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
 
           {items.length > 0 && (
             <button
-              aria-label="Toggle menu"
+              aria-label={open ? 'Đóng menu' : 'Mở menu'}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
               onClick={() => setOpen(!open)}
               className="lg:hidden p-2 -mr-2 text-green-900"
             >
@@ -88,7 +90,7 @@ export default function Navbar({ info, items }: { info: SiteInfoRow; items: Menu
       </nav>
 
       {open && items.length > 0 && (
-        <div className="lg:hidden border-t border-green-100 bg-white">
+        <div id="mobile-nav" className="lg:hidden border-t border-green-100 bg-white">
           <ul className="px-4 py-4 space-y-1">
             {items.map((l) => (
               <li key={l.id}>

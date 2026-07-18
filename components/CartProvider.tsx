@@ -17,7 +17,7 @@ type CartContextValue = {
   items: CartLine[];
   count: number;
   total: number;
-  add: (item: ProductRow) => void;
+  add: (item: ProductRow, qty?: number) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -53,21 +53,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const add = (item: ProductRow) => {
+  const add = (item: ProductRow, qty = 1) => {
+    const n = Math.max(1, Math.floor(qty));
     setItems((prev) => {
       const found = prev.find((p) => p.id === item.id);
       if (found) {
-        return prev.map((p) => (p.id === item.id ? { ...p, qty: p.qty + 1 } : p));
+        return prev.map((p) => (p.id === item.id ? { ...p, qty: p.qty + n } : p));
       }
       return [
         ...prev,
-        { id: item.id, name: item.name, price: item.price, image: item.image, unit: item.unit, qty: 1 },
+        { id: item.id, name: item.name, price: item.price, image: item.image, unit: item.unit, qty: n },
       ];
     });
     trackEvent('add_to_cart', {
       currency: 'VND',
-      value: item.price,
-      items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: 1 }],
+      value: item.price * n,
+      items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: n }],
     });
     setOpen(true);
   };

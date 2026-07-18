@@ -35,8 +35,21 @@ export default function SettingsForm({
   const updateFeature = (i: number, v: string) => setFeatures((xs) => xs.map((x, idx) => (idx === i ? v : x)));
   const removeFeature = (i: number) => setFeatures((xs) => xs.filter((_, idx) => idx !== i));
 
+  // Required fields are spread across the tab panels, which hide inactive ones
+  // with the `hidden` attribute. The browser can't focus a required control
+  // inside a hidden panel, so submitting from the wrong tab aborts with no
+  // feedback. Catch the invalid event (capture — it doesn't bubble), reveal the
+  // panel the offender lives in (data-tab), and focus it.
+  const revealInvalid = (e: React.FormEvent) => {
+    const el = e.target as HTMLElement;
+    const panelTab = el.closest<HTMLElement>('[data-tab]')?.dataset.tab as TabId | undefined;
+    if (panelTab) setTab(panelTab);
+    requestAnimationFrame(() => { if (el.isConnected) (el as HTMLInputElement).focus?.(); });
+  };
+
   return (
-    <form action={formAction} className="bg-white rounded-2xl border border-green-100 overflow-hidden">
+    <form action={formAction} onInvalidCapture={revealInvalid}
+      className="bg-white rounded-2xl border border-green-100 overflow-hidden">
       <nav className="flex gap-1 p-2 border-b border-green-100 bg-green-50/50 overflow-x-auto">
         {TABS.map((t) => (
           <button
@@ -56,7 +69,7 @@ export default function SettingsForm({
 
       <div className="p-6 space-y-6">
         {/* ============ BRAND ============ */}
-        <div hidden={tab !== 'brand'} className="space-y-6">
+        <div data-tab="brand" hidden={tab !== 'brand'} className="space-y-6">
           <section>
             <SectionHead title="Thương hiệu" hint="Tên hiển thị, mô tả chính, tagline hero." />
             <div className="mb-5 p-4 bg-green-50/40 border border-green-100 rounded-xl space-y-5">
@@ -107,7 +120,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ CONTACT ============ */}
-        <div hidden={tab !== 'contact'} className="space-y-6">
+        <div data-tab="contact" hidden={tab !== 'contact'} className="space-y-6">
           <section>
             <SectionHead title="Thông tin liên hệ" hint="Hiện ở Footer và trang /contact." />
             <div className="grid md:grid-cols-2 gap-4">
@@ -157,7 +170,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ HOME ============ */}
-        <div hidden={tab !== 'home'} className="space-y-6">
+        <div data-tab="home" hidden={tab !== 'home'} className="space-y-6">
           <section>
             <SectionHead title="Hero trang chủ" hint="Ảnh nền, badge, CTA phía trên." />
             <div className="mb-4">
@@ -236,7 +249,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ FOOTER ============ */}
-        <div hidden={tab !== 'footer'} className="space-y-6">
+        <div data-tab="footer" hidden={tab !== 'footer'} className="space-y-6">
           <section>
             <SectionHead title="Footer & Mạng xã hội" hint="Để trống social nào không dùng → tự ẩn khỏi footer." />
             <div className="grid md:grid-cols-2 gap-4">
@@ -258,7 +271,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ ABOUT ============ */}
-        <div hidden={tab !== 'about'} className="space-y-6">
+        <div data-tab="about" hidden={tab !== 'about'} className="space-y-6">
           <section>
             <SectionHead
               title="Trang Câu chuyện đã chuyển sang mục Trang"
@@ -277,7 +290,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ SMTP ============ */}
-        <div hidden={tab !== 'smtp'} className="space-y-6">
+        <div data-tab="smtp" hidden={tab !== 'smtp'} className="space-y-6">
           <section>
             <SectionHead
               title="Cấu hình Email (SMTP)"
@@ -351,7 +364,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ PAGES (Trang phụ) ============ */}
-        <div hidden={tab !== 'pages'} className="space-y-6">
+        <div data-tab="pages" hidden={tab !== 'pages'} className="space-y-6">
           <section>
             <SectionHead title="Thanh điều hướng" />
             <div className="grid md:grid-cols-2 gap-4">
@@ -408,7 +421,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ COPY (Nội dung khác) ============ */}
-        <div hidden={tab !== 'copy'} className="space-y-6">
+        <div data-tab="copy" hidden={tab !== 'copy'} className="space-y-6">
           <section>
             <SectionHead title="Nút 'xem tất cả' trên trang chủ" />
             <div className="grid md:grid-cols-3 gap-4">
@@ -455,7 +468,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ SEO & TRACKING ============ */}
-        <div hidden={tab !== 'seo'} className="space-y-6">
+        <div data-tab="seo" hidden={tab !== 'seo'} className="space-y-6">
           <section>
             <SectionHead title="Địa chỉ website" hint="URL công khai của trang, ví dụ https://vacu.vn. Dùng cho ảnh chia sẻ mạng xã hội và Google. Để trống cũng được." />
             <div className="grid gap-4">
@@ -488,7 +501,7 @@ export default function SettingsForm({
         </div>
 
         {/* ============ BANK ============ */}
-        <div hidden={tab !== 'bank'} className="space-y-6">
+        <div data-tab="bank" hidden={tab !== 'bank'} className="space-y-6">
           <section>
             <SectionHead
               title="Thanh toán chuyển khoản (VietQR)"

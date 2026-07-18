@@ -9,7 +9,7 @@ export default function ProductBuyBox({ p }: { p: ProductRow }) {
   const [qty, setQty] = useState(1);
 
   function handleAdd() {
-    for (let i = 0; i < qty; i++) add(p);
+    add(p, qty); // one call adds all N units and emits a single add_to_cart event
     setOpen(true);
   }
 

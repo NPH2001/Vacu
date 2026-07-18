@@ -14,20 +14,25 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
   const [q, setQ] = useState(urlQ);
   const [lastUrlQ, setLastUrlQ] = useState(urlQ);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // The last value our own debounce pushed to the URL. When urlQ catches up to
-  // it, that change is our echo — not an external navigation — so we must NOT
-  // re-sync the box, or a keystroke typed during the router.replace round-trip
-  // gets clobbered back to the older debounced value. Kept in state (not a ref)
-  // so it is safe to read during render.
-  const [lastPushed, setLastPushed] = useState(urlQ);
+  // A one-shot token holding the value our own debounce just pushed to the URL,
+  // awaiting its echo. When urlQ catches up to it we skip re-syncing the box
+  // (else a keystroke typed during the router.replace round-trip is clobbered
+  // back to the older debounced value) — and immediately CONSUME the token, so a
+  // later Back/Forward that happens to land on the same value still re-syncs.
+  // `null` = no push pending. State, not a ref, so it is safe to read in render.
+  const [pending, setPending] = useState<string | null>(null);
 
   // Re-sync the box when the URL query changes from something other than typing
   // (Back/Forward, the "Tất cả" pill, "Xem tất cả" in the empty state). This is
-  // the React "adjust state when a prop changes during render" pattern. We skip
-  // the case where urlQ merely echoes our own debounced write (lastPushed).
+  // the React "adjust state when a prop changes during render" pattern.
   if (urlQ !== lastUrlQ) {
     setLastUrlQ(urlQ);
-    if (urlQ !== lastPushed) setQ(urlQ);
+    if (urlQ === pending) {
+      setPending(null);         // our own echo — consume it, leave the box alone
+    } else {
+      setQ(urlQ);               // external navigation — re-sync the box
+      setPending(null);         // any older pending push is now stale
+    }
   }
 
   const setParam = (patch: Record<string, string>) => {
@@ -42,7 +47,7 @@ export default function ProductFilters({ resultCount }: { resultCount: number })
   useEffect(() => {
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => {
-      if ((params.get('q') ?? '') !== q) { setLastPushed(q); setParam({ q }); }
+      if ((params.get('q') ?? '') !== q) { setPending(q); setParam({ q }); }
     }, 350);
     return () => { if (debounce.current) clearTimeout(debounce.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
