@@ -366,13 +366,13 @@ export const userUpdateSchema = userCreateSchema.partial({ password: true });
 export const orderStatusSchema = z.enum(['pending', 'preparing', 'delivering', 'delivered', 'cancelled']);
 
 export const placeOrderSchema = z.object({
-  customerName: z.string().min(1, 'Vui lòng nhập họ tên người nhận.').max(120),
-  phone: z.string().min(6).max(20)
+  customerName: z.string().min(1, 'Vui lòng nhập họ tên người nhận.').max(120, 'Họ tên quá dài (tối đa 120 ký tự).'),
+  phone: z.string().min(6, 'Số điện thoại quá ngắn.').max(20, 'Số điện thoại quá dài.')
     .refine((v) => { const d = v.replace(/\D/g, ''); return d.length >= 9 && d.length <= 11; },
       'Số điện thoại không hợp lệ (cần 9–11 chữ số).'),
-  address: z.string().min(5, 'Địa chỉ quá ngắn — vui lòng nhập số nhà, đường, phường/xã.').max(500),
-  deliverySlot: z.string().min(1, 'Vui lòng chọn khung giờ giao.').max(80),
-  note: z.string().max(500).optional(),
+  address: z.string().min(5, 'Địa chỉ quá ngắn — vui lòng nhập số nhà, đường, phường/xã.').max(500, 'Địa chỉ quá dài (tối đa 500 ký tự).'),
+  deliverySlot: z.string().min(1, 'Vui lòng chọn khung giờ giao.').max(80, 'Khung giờ không hợp lệ.'),
+  note: z.string().max(500, 'Ghi chú quá dài (tối đa 500 ký tự).').optional(),
   paymentMethod: z.enum(['cod', 'bank']).default('cod'),
-  customerEmail: z.string().email('Email không hợp lệ.').max(200).optional().or(z.literal('').transform(() => undefined)),
+  customerEmail: z.string().email('Email không hợp lệ.').max(200, 'Email quá dài.').optional().or(z.literal('').transform(() => undefined)),
 });

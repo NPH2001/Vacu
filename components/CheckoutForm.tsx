@@ -133,6 +133,7 @@ export default function CheckoutForm({
             <textarea
               id={noteId}
               rows={3}
+              maxLength={500}
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
               placeholder="Ví dụ: không gõ cửa, để cổng bảo vệ..."
