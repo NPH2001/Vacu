@@ -10,6 +10,16 @@ export type LoadedBlock = { id: number; visible: boolean; data: Block };
 export type LoadedPage = PageRow & { blocks: LoadedBlock[] };
 
 /**
+ * Index of the block that should carry the page's single <h1> — the first hero
+ * or hero-slider. Returns -1 if the page has no hero (the page then renders an
+ * sr-only <h1> so exactly one heading level 1 always exists). Every other hero
+ * is demoted to <h2> to avoid multiple <h1>s.
+ */
+export function primaryHeroIndex(blocks: LoadedBlock[]): number {
+  return blocks.findIndex((b) => b.data.type === 'hero' || b.data.type === 'heroSlider');
+}
+
+/**
  * Block `data` is jsonb and could have been written by an older build or edited
  * by hand, so each row is re-validated on read (shape dropped if invalid) AND
  * rich-text is re-sanitized — a row not written through the admin action (SQL

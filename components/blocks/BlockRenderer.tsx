@@ -29,7 +29,16 @@ function Band({
  * migrating a page (including the homepage) to the builder does not change how
  * it looks.
  */
-export default async function BlockRenderer({ block }: { block: Block }) {
+export default async function BlockRenderer({
+  block, heading = 'h1',
+}: {
+  block: Block;
+  // Which heading level a hero renders its title as. The page passes 'h1' to the
+  // primary hero and 'h2' to any others, so a page has exactly one <h1>.
+  heading?: 'h1' | 'h2';
+}) {
+  // Capitalized so JSX treats it as the intrinsic element named by the string.
+  const HeroHeading = heading;
   switch (block.type) {
     case 'hero':
       return (
@@ -48,9 +57,9 @@ export default async function BlockRenderer({ block }: { block: Block }) {
               </div>
             )}
             {block.title && (
-              <h1 className={`text-4xl md:text-6xl font-bold font-display leading-tight wrap-anywhere ${block.image ? '' : 'text-green-950'}`}>
+              <HeroHeading className={`text-4xl md:text-6xl font-bold font-display leading-tight wrap-anywhere ${block.image ? '' : 'text-green-950'}`}>
                 {block.title}
-              </h1>
+              </HeroHeading>
             )}
             {block.subtitle && (
               <p className={`mt-4 text-lg max-w-2xl ${block.image ? 'text-green-50/80' : 'text-green-900/70'}`}>
@@ -201,7 +210,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
         { value: info.statCustomers, label: info.statCustomersLabel },
         { value: info.statYears, label: info.statYearsLabel },
       ];
-      if (slides.length > 0) return <HeroSlider slides={slides} stats={stats} />;
+      if (slides.length > 0) return <HeroSlider slides={slides} stats={stats} heading={heading} />;
       // Static fallback when no slide is active.
       return (
         <section className="relative overflow-hidden">
@@ -216,7 +225,7 @@ export default async function BlockRenderer({ block }: { block: Block }) {
                 <span className="w-2 h-2 rounded-full bg-amber-300" />
                 {info.heroBadge}
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold font-display mb-6 leading-[1.1] wrap-anywhere">{info.tagline}</h1>
+              <HeroHeading className="text-4xl md:text-6xl font-bold font-display mb-6 leading-[1.1] wrap-anywhere">{info.tagline}</HeroHeading>
               <p className="text-lg md:text-xl text-green-50/90 mb-10 max-w-xl wrap-anywhere">{info.heroSubtitle}</p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/products" className="bg-amber-400 hover:bg-amber-500 text-green-950 font-bold px-7 py-4 rounded-full transition">
