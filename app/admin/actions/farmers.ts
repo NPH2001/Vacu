@@ -33,6 +33,7 @@ export async function createFarmer(_p: FarmerFormState, fd: FormData): Promise<F
   try { await db.insert(farmers).values(r.data); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
+  revalidatePath('/farmers'); // public ISR list — refresh now, not in 5 min
   redirect('/admin/farmers?ok=da-tao');
 }
 
@@ -43,6 +44,8 @@ export async function updateFarmer(originalId: string, _p: FarmerFormState, fd: 
   try { await db.update(farmers).set({ ...r.data, updatedAt: new Date() }).where(eq(farmers.id, originalId)); }
   catch (e) { return { error: friendlyWriteError(e) }; }
   revalidatePath('/admin/farmers');
+  revalidatePath('/farmers');                 // public ISR list
+  revalidatePath(`/farmers/${originalId}`);   // public ISR detail
   redirect('/admin/farmers?ok=da-luu');
 }
 
@@ -52,6 +55,8 @@ export async function deleteFarmer(id: string): Promise<void> {
   await requireAdmin();
   await db.delete(farmers).where(eq(farmers.id, id));
   revalidatePath('/admin/farmers');
+  revalidatePath('/farmers');
+  revalidatePath(`/farmers/${id}`); // else the deleted farmer's page renders until ISR expires
   redirect('/admin/farmers');
 }
 
@@ -61,5 +66,7 @@ export async function bulkDeleteFarmers(fd: FormData): Promise<void> {
   if (ids.length === 0) { redirect('/admin/farmers'); }
   await db.delete(farmers).where(inArray(farmers.id, ids));
   revalidatePath('/admin/farmers');
+  revalidatePath('/farmers');
+  for (const id of ids) revalidatePath(`/farmers/${id}`);
   redirect('/admin/farmers');
 }

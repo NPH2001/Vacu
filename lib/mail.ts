@@ -176,26 +176,3 @@ export async function sendTemplatedMail(
   const text = htmlToText(html);
   return sendMail({ to, subject, html, text, replyTo });
 }
-
-export async function verifyMailConfig(): Promise<SendMailResult> {
-  const cfg = await getMailConfig();
-  if (!cfg) return { ok: false, error: 'SMTP chưa bật hoặc chưa cấu hình' };
-  const transporter = nodemailer.createTransport({
-    host: cfg.host,
-    port: cfg.port,
-    secure: cfg.secure,
-    auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
-    // Bound the wait on a black-holed SMTP host: the contact form awaits
-    // sendMail, so without these it would hang on nodemailer's multi-minute
-    // defaults before returning a friendly error.
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 20_000,
-  });
-  try {
-    await transporter.verify();
-    return { ok: true, messageId: 'verified' };
-  } catch (e) {
-    return { ok: false, error: (e as Error).message };
-  }
-}
