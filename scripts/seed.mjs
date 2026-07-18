@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import pg from 'pg';
 import { ensureAboutPage } from './ensure-about-page.mjs';
+import { ensureHomePage } from './ensure-home-page.mjs';
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error('DATABASE_URL is required'); process.exit(1); }
@@ -176,6 +177,7 @@ try {
   // because it is independently idempotent and must not roll back the seed if
   // the page already exists.
   await ensureAboutPage(client);
+  await ensureHomePage(client);
 
   console.log('Done.');
 } catch (err) {

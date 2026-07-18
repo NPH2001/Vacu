@@ -7,7 +7,7 @@ import { db } from '@/db/client';
 import { pages, pageBlocks } from '@/db/schema';
 import { requireAdmin } from '@/lib/session';
 import { sanitizeRichText } from '@/lib/sanitize';
-import { blockListSchema, RESERVED_SLUGS, type BlockEntry } from '@/lib/blocks';
+import { blockListSchema, RESERVED_SLUGS, HOME_PAGE_ID, type BlockEntry } from '@/lib/blocks';
 import { isUniqueViolation } from '@/lib/db-errors';
 
 export type PageFormState = { error?: string } | null;
@@ -111,6 +111,9 @@ export async function updatePage(originalId: string, _prev: PageFormState, fd: F
 // page_blocks cascades, so the blocks go with the page.
 export async function deletePage(id: string): Promise<void> {
   await requireAdmin();
+  // The homepage row backs `/`; deleting it would strip the homepage to the
+  // code fallback and lose any layout the admin arranged. Never allow it.
+  if (id === HOME_PAGE_ID) redirect('/admin/pages?loi=khong-xoa-trang-chu');
   await db.delete(pages).where(eq(pages.id, id));
   revalidatePath('/admin/pages');
   revalidatePath(`/${id}`);

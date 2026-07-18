@@ -148,6 +148,12 @@ function summary(b: Block): string {
     case 'gallery': return `${b.images.length} ảnh`;
     case 'products': return `${b.title || 'Sản phẩm'} · ${PRODUCT_SOURCE_LABELS[b.source]}${b.source === 'manual' ? ` (${b.productIds.length})` : ` · ${b.limit}`}`;
     case 'categories': return `${b.title || 'Danh mục'} · ${b.source === 'manual' ? `chọn tay (${b.categoryIds.length})` : 'tất cả'}`;
+    case 'heroSlider': return 'Slider trang chủ + dải số liệu';
+    case 'valueProps': return b.title || 'Điểm giá trị';
+    case 'subBox': return 'Hộp rau tuần (Cài đặt → Trang chủ)';
+    case 'farmers': return `${b.title || 'Nông dân'} · ${b.limit} người`;
+    case 'testimonials': return b.title || 'Cảm nhận khách hàng';
+    case 'faq': return b.title || 'Câu hỏi thường gặp';
   }
 }
 
@@ -263,6 +269,9 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
       return (
         <div className="space-y-3">
           <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
           <Select label="Lấy sản phẩm từ đâu" value={block.source}
             onChange={(v) => onChange({ ...block, source: v as typeof block.source })}
             options={[
@@ -294,6 +303,9 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
       return (
         <div className="space-y-3">
           <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
           <Select label="Hiện danh mục nào" value={block.source}
             onChange={(v) => onChange({ ...block, source: v as typeof block.source })}
             options={[['all', 'Tất cả danh mục gốc'], ['manual', 'Chọn tay từng danh mục']]} />
@@ -307,7 +319,96 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
           )}
         </div>
       );
+
+    case 'heroSlider':
+      return (
+        <p className="text-[12.5px] text-stone-600">
+          Ảnh bìa lấy từ mục <b>Slider trang chủ</b> (các slide đang bật) và dải số liệu trong
+          <b> Cài đặt → Trang chủ</b>. Không có slide nào thì tự dùng ảnh bìa tĩnh. Khối này không cần cấu hình thêm.
+        </p>
+      );
+
+    case 'subBox':
+      return (
+        <p className="text-[12.5px] text-stone-600">
+          Nội dung hộp (huy hiệu, tiêu đề, mô tả, danh sách, ảnh, nút) sửa ở <b>Cài đặt → Trang chủ</b>.
+          Khối này không cần cấu hình thêm.
+        </p>
+      );
+
+    case 'valueProps':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục (bỏ trống nếu không cần)" value={block.title}
+            onChange={(v) => onChange({ ...block, title: v })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <NumberField label="Giới hạn số lượng (0 = hiện tất cả)" min={0} max={12} value={block.limit}
+            onChange={(n) => onChange({ ...block, limit: n })} />
+          <p className="text-[11.5px] text-stone-500">Nội dung sửa ở mục <b>Điểm giá trị</b>.</p>
+        </div>
+      );
+
+    case 'farmers':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <NumberField label="Hiện bao nhiêu nông dân" min={1} max={24} value={block.limit}
+            onChange={(n) => onChange({ ...block, limit: n })} />
+          <p className="text-[11.5px] text-stone-500">Nội dung sửa ở mục <b>Nông dân</b>.</p>
+        </div>
+      );
+
+    case 'testimonials':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <NumberField label="Giới hạn số lượng (0 = hiện tất cả)" min={0} max={24} value={block.limit}
+            onChange={(n) => onChange({ ...block, limit: n })} />
+          <p className="text-[11.5px] text-stone-500">Nội dung sửa ở mục <b>Cảm nhận</b>.</p>
+        </div>
+      );
+
+    case 'faq':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <Area label="Mô tả ngắn (dùng {phone} để chèn số điện thoại)" value={block.subtitle}
+            onChange={(v) => onChange({ ...block, subtitle: v })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <p className="text-[11.5px] text-stone-500">Danh sách hỏi–đáp sửa ở mục <b>Câu hỏi</b>.</p>
+        </div>
+      );
   }
+}
+
+/** Eyebrow + "see all" link fields shared by section-style blocks. */
+function HeaderFields({
+  eyebrow, linkLabel, linkHref, set,
+}: {
+  eyebrow: string; linkLabel: string; linkHref: string;
+  set: (patch: { eyebrow?: string; linkLabel?: string; linkHref?: string }) => void;
+}) {
+  return (
+    <>
+      <Text label="Chữ nhỏ phía trên" value={eyebrow} onChange={(v) => set({ eyebrow: v })} placeholder="Danh mục" />
+      <div className="grid grid-cols-2 gap-2">
+        <Text label="Chữ trên link “xem tất cả”" value={linkLabel} onChange={(v) => set({ linkLabel: v })} placeholder="Xem tất cả" />
+        <Text label="Link tới đâu" value={linkHref} onChange={(v) => set({ linkHref: v })} placeholder="/products" />
+      </div>
+    </>
+  );
+}
+
+/** Section background: white (default) or the soft green band. */
+function ToneField({ value, onChange }: { value: 'default' | 'muted'; onChange: (v: 'default' | 'muted') => void }) {
+  return (
+    <Select label="Nền section" value={value} onChange={(v) => onChange(v as 'default' | 'muted')}
+      options={[['default', 'Trắng (mặc định)'], ['muted', 'Xanh nhạt']]} />
+  );
 }
 
 /** A labelled <select>. */

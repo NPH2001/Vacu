@@ -29,8 +29,8 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Nội dung',
     items: [
+      { href: '/admin/pages/home', label: 'Trang chủ', icon: '⌂' },
       { href: '/admin/hero-slides', label: 'Slider trang chủ', icon: '▭' },
-      { href: '/admin/home-sections', label: 'Bố cục trang chủ', icon: '⌂' },
       { href: '/admin/pages', label: 'Trang', icon: '▤' },
       { href: '/admin/media', label: 'Thư viện ảnh', icon: '▣' },
       { href: '/admin/farmers', label: 'Nông dân', icon: '❀' },

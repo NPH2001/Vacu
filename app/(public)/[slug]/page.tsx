@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { getPublishedPage, getAnyPage } from '@/lib/pages';
 import { getSiteInfo } from '@/lib/data';
 import { getCurrentUser } from '@/lib/session';
+import { HOME_PAGE_ID } from '@/lib/blocks';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 
 type Props = {
@@ -19,6 +20,8 @@ type Props = {
  * who guessed the URL.
  */
 async function loadPage(slug: string, preview: boolean) {
+  // The homepage lives under id `home` but is served at `/`; never expose it here.
+  if (slug === HOME_PAGE_ID) return { page: null, previewing: false };
   if (!preview) return { page: await getPublishedPage(slug), previewing: false };
   const user = await getCurrentUser();
   if (!user) return { page: await getPublishedPage(slug), previewing: false };
