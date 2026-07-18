@@ -12,13 +12,14 @@ defaultNamespace: vacu
 
 helm:
   releaseName: vacu
-  # Wait for the rollout to be healthy before marking the bundle Ready.
+  # Adopt resources that already exist in the namespace (e.g. a chart installed
+  # by hand before Fleet took over) instead of failing on an ownership conflict.
   takeOwnership: true
   values:
     image:
       # Pin the released tag. Bump on each release (or let CI update it — see
       # deploy/README.md). Avoid `latest` in GitOps so rollbacks are precise.
-      tag: "latest"
+      tag: "v1.0.0"
       pullPolicy: IfNotPresent
     # imagePullSecrets: [{ name: ghcr-creds }]   # if the GHCR package is private
 
