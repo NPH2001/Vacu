@@ -12,7 +12,7 @@ export default async function ProductCard({ p }: { p: Product }) {
       : 0;
 
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden border border-green-100 hover:shadow-xl transition flex flex-col">
+    <div className="group bg-white rounded-3xl overflow-hidden border border-green-100 shadow-[0_1px_3px_rgba(20,60,30,0.05)] hover:shadow-[0_16px_32px_-12px_rgba(20,83,45,0.22)] hover:-translate-y-1 transition duration-300 flex flex-col">
       <Link href={`/products/${p.id}`} className="relative aspect-[4/3] overflow-hidden bg-green-50 block">
         <SmartImage
           src={p.image}
