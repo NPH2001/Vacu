@@ -80,3 +80,41 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo "$IMAGE_TAGS" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # After the image is on GHCR, point Fleet at the new tag and commit it back to
+  # main. That git change is what Rancher Fleet watches, so a single
+  # `gh release create vX.Y.Z` builds the image AND triggers the redeploy — no
+  # manual fleet.yaml edit. Runs only for real release tags (not workflow_dispatch),
+  # and needs contents:write, which the build job deliberately doesn't hold.
+  bump-fleet:
+    needs: build-push
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: main
+
+      - name: Point Fleet at the released tag
+        env:
+          REF_NAME: ${{ github.ref_name }}   # e.g. v1.1.0
+        run: |
+          # metadata-action strips the leading "v", so the image tag is the bare
+          # semver — match fleet.yaml's image.tag to it.
+          V="${REF_NAME#v}"
+          if ! printf '%s' "$V" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "Tag $REF_NAME is not semver; skipping Fleet bump."; exit 0
+          fi
+          sed -i -E 's|^      tag: "[^"]*"|      tag: "'"$V"'"|' deploy/fleet/fleet.yaml
+          if git diff --quiet -- deploy/fleet/fleet.yaml; then
+            echo "fleet.yaml already at $V; nothing to commit."; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # [skip ci] is belt-and-suspenders — no push-triggered workflow exists,
+          # and this commit is by GITHUB_TOKEN so it wouldn't re-trigger anyway.
+          git commit -m "chore(deploy): Fleet image tag -> $V [skip ci]" -- deploy/fleet/fleet.yaml
+          git push origin HEAD:main
