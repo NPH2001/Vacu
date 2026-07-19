@@ -337,6 +337,19 @@ textarea:not(.sr-only):focus-visible,
   display: none;                    /* WebKit — the swipe is the affordance */
 }
 
+/* Slim scrollbar for the dark admin sidebar nav — the default track is chunky. */
+.thin-scrollbar {
+  scrollbar-width: thin;                                  /* Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent; /* thumb / track */
+}
+.thin-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.32); }
+
 /* ─── overflow guards for admin-entered text ─────────────────────────
    Anything the admin types can be longer than the design assumed, and a single
    long word with no spaces has nowhere to break: it sets the element's
