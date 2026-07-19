@@ -24,7 +24,7 @@
 {{- define "vacu.labels" -}}
 helm.sh/chart: {{ include "vacu.chart" . }}
 {{ include "vacu.selectorLabels" . }}
-app.kubernetes.io/version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
+app.kubernetes.io/version: {{ .Values.image.tag | default .Chart.AppVersion | replace "+" "_" | trunc 63 | trimSuffix "-" | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
