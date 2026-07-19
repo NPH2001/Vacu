@@ -412,7 +412,7 @@ export default function SettingsForm({
           </section>
 
           <section>
-            <SectionHead title="Trang Tin tức" hint="Tiêu đề mặc định của /tin-tuc (khi không lọc chuyên mục)." />
+            <SectionHead title="Trang Tin tức" hint="Tiêu đề mặc định của trang /tin-tuc (chuyên mục hiển thị theo tên riêng)." />
             <div className="grid gap-4">
               <L label="Tiêu đề" required><input name="newsTitle" defaultValue={d.newsTitle} required className={inputCls} /></L>
               <L label="Mô tả ngắn" required>

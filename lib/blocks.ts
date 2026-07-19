@@ -197,7 +197,10 @@ export function emptyBlock(type: BlockType): Block {
  */
 export const RESERVED_SLUGS = new Set([
   'admin', 'api', 'products', 'farmers', 'checkout', 'orders', 'contact',
-  'danh-muc', 'tin-tuc', 'uploads', '_next',
+  // 'danh-muc-tin-tuc' has no bare static route (only /danh-muc-tin-tuc/[id]),
+  // so a page there would technically render — but reserve it anyway to keep the
+  // news-category namespace clean and future-proof against a listing page.
+  'danh-muc', 'danh-muc-tin-tuc', 'tin-tuc', 'uploads', '_next',
   // The homepage is a real page row with id 'home', but it is served at `/`,
   // so it must never be created by hand or reachable at `/home`.
   'home',
