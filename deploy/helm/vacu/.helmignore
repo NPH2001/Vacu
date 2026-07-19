@@ -2,5 +2,3 @@
 *.tmp
 *.bak
 .git
-# Fleet reads this from git directly; keep it out of `helm package`.
-fleet.yaml

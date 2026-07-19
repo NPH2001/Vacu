@@ -1,0 +1,57 @@
+name: Publish Helm chart
+
+# Packages the Helm chart in deploy/helm/vacu and pushes it to GHCR as an OCI
+# artifact (oci://ghcr.io/<owner>/charts/vacu), which Rancher Fleet pulls from
+# (see deploy/fleet/fleet.yaml). Trigger by pushing a `chart-v<version>` tag,
+# e.g. `git tag chart-v0.1.0 && git push origin chart-v0.1.0`. Keep the tag /
+# Chart.yaml version / fleet.yaml `version` in sync.
+on:
+  push:
+    tags: ["chart-v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-chart-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # Third-party actions are pinned to a full commit SHA (not a mutable tag):
+      # this job holds packages:write, so a retagged/compromised action could
+      # otherwise push a poisoned chart to GHCR. Bump the SHA deliberately.
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # helm is preinstalled on ubuntu-latest runners and supports OCI (3.8+), so
+      # no extra action is needed. Verify it's present and OCI-capable.
+      - name: Helm version
+        run: helm version --short
+
+      - name: Log in to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | helm registry login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: Package and push chart
+        run: |
+          # GHCR namespaces must be lowercase; the owner (e.g. NPH2001) may not be.
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          helm package deploy/helm/vacu --destination dist
+          helm push dist/vacu-*.tgz "oci://ghcr.io/${owner}/charts"
+
+      - name: Summary
+        run: |
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          {
+            echo "### Published Helm chart"
+            echo '```'
+            echo "oci://ghcr.io/${owner}/charts/vacu"
+            echo '```'
+            echo "Referenced by deploy/fleet/fleet.yaml. Make the GHCR package public or add pull creds for Fleet."
+          } >> "$GITHUB_STEP_SUMMARY"
