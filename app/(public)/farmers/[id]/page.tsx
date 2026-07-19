@@ -1,4 +1,4 @@
-export const revalidate = 300; // ISR: on-demand + refreshed by admin revalidatePath, 5-min ceiling
+export const dynamic = 'force-dynamic'; // Nonce-based CSP (proxy.ts) requires dynamic rendering; was ISR revalidate=300
 
 import type { Metadata } from "next";
 import Link from "next/link";

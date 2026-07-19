@@ -11,6 +11,7 @@ import Analytics from '@/components/Analytics';
 import JsonLd from '@/components/JsonLd';
 import { organizationLd } from '@/lib/jsonld';
 import { getSiteInfo, getAllCategories, getMenu } from '@/lib/data';
+import { headers } from 'next/headers';
 
 export async function generateMetadata() {
   const info = await getSiteInfo();
@@ -24,6 +25,9 @@ export default async function PublicLayout({ children }: { children: React.React
     getMenu('header'),
     getMenu('footer'),
   ]);
+  // Nonce minted per-request by proxy.ts; GA's inline <Script> needs it to run
+  // under the strict-dynamic CSP.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <CartProvider>
       <JsonLd data={organizationLd(info)} />
@@ -40,7 +44,7 @@ export default async function PublicLayout({ children }: { children: React.React
         shippingLabel={info.shippingLabel}
       />
       <ScrollToTop />
-      <Analytics measurementId={info.gaMeasurementId} />
+      <Analytics measurementId={info.gaMeasurementId} nonce={nonce} />
     </CartProvider>
   );
 }
