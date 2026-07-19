@@ -5,24 +5,37 @@
 # another tenant's hostname and hijack or intercept their traffic. This is a
 # CLUSTER-ADMIN control (an app chart cannot protect itself from this):
 #
-#   Rule 1 (host-belongs-to-namespace): a namespace may only use hostnames under
-#          its own domain — namespace "foo" -> foo.<BASE> or <sub>.foo.<BASE>.
-#   Rule 2 (no-hostless-ingress):        reject a catch-all (host-less) Ingress.
+#   Rule 1 (host-in-namespace-allowed-domains): each namespace declares the
+#          domains it may use via an annotation; hosts must be one of them or a
+#          subdomain. A namespace WITHOUT the annotation may not host any Ingress.
+#   Rule 2 (no-hostless-ingress): reject a catch-all (host-less) Ingress.
 #   Rule 3 (host-must-be-globally-unique): reject a host already claimed by an
 #          Ingress in a different namespace.
 #
-# ── Before applying ──────────────────────────────────────────────────────────
-#  1. Replace every `example.com` with your platform base domain.
-#  2. Tune the `exclude` namespaces to where shared/system ingresses live.
-#  3. Roll out as Audit first (validationFailureAction: Audit), inspect
-#     `kubectl get policyreport -A` / `clusterpolicyreport`, fix existing
-#     violations, THEN switch to Enforce.
-#  4. Validate the templating BEFORE trusting it — this file has not been run
-#     against a live Kyverno here:
-#        kyverno apply kyverno-ingress-host-isolation.yaml \
-#          --resource my-ingress.yaml --policy-report
+# This annotation model (vs a rigid "<ns>.<base>" convention) lets a namespace
+# own an arbitrary apex/vanity domain like vacu.com.vn.
 #
-# Requires Kyverno >= 1.11 (uses operations[], apiCall context, JMESPath funcs).
+# ── Declare a namespace's allowed domains ────────────────────────────────────
+#   kubectl annotate namespace vacu \
+#     platform.example.com/allowed-domains=vacu.com.vn
+#   # multiple, comma-separated:  =vacu.com.vn,shop.vacu.com.vn
+#   # then ns "vacu" may use vacu.com.vn and *.vacu.com.vn (and shop.vacu.com.vn …)
+#
+# ── Before applying ──────────────────────────────────────────────────────────
+#  1. (optional) rename the annotation key `platform.example.com/allowed-domains`
+#     to your platform's prefix — change it in BOTH the apiCall and this comment.
+#  2. Annotate every tenant namespace with its domains (see above). Namespaces
+#     without the annotation can't create hosted Ingresses.
+#  3. Tune the `exclude` namespaces to where shared/system ingresses live.
+#  4. Roll out as Audit first (validationFailureAction: Audit), inspect
+#     `kubectl get clusterpolicyreport,policyreport -A`, fix violations, THEN
+#     switch to Enforce.
+#  5. Validate the templating BEFORE trusting it — NOT run against a live Kyverno
+#     here (JMESPath/substitution is fiddly):
+#        kyverno apply kyverno-ingress-host-isolation.yaml \
+#          --resource test-ingress.yaml --values-file values.yaml --policy-report
+#
+# Requires Kyverno >= 1.11 (operations[], apiCall context, split/ends_with).
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -33,16 +46,15 @@ metadata:
     policies.kyverno.io/subject: Ingress
     policies.kyverno.io/description: >-
       Stops one tenant from hijacking another tenant's HTTP(S) traffic through a
-      shared ingress controller: binds each namespace to its own domain and
-      rejects hosts already used by another namespace.
+      shared ingress controller: each namespace declares its allowed domains via
+      annotation, hosts must match, and a host may not be used by two namespaces.
 spec:
   # Start as Audit; flip to Enforce once PolicyReports are clean.
   validationFailureAction: Enforce
   background: true
   rules:
-    # ── Rule 1: a namespace may only use hosts under its own domain ──────────
-    # namespace "foo" -> foo.example.com or <label>.foo.example.com
-    - name: host-belongs-to-namespace
+    # ── Rule 1: host must be under a domain the namespace is allowed to use ───
+    - name: host-in-namespace-allowed-domains
       match:
         any:
           - resources:
@@ -58,26 +70,34 @@ spec:
                 - cattle-system
                 - cattle-fleet-system
       context:
-        # Anchored regex for this namespace's allowed hosts. Change the suffix.
-        # Matches  foo.example.com  and  <sub>.foo.example.com  (dot boundary,
-        # so it will NOT match evilfoo.example.com).
-        - name: hostRegex
+        # Comma-separated allowed domains from the namespace annotation ('' if none).
+        - name: allowedRaw
+          apiCall:
+            urlPath: "/api/v1/namespaces/{{ request.namespace }}"
+            jmesPath: "metadata.annotations.\"platform.example.com/allowed-domains\" || ''"
+        # As a trimmed list. Empty annotation -> [''] which matches no real host.
+        - name: allowedDomains
           variable:
-            value: "^([a-z0-9-]+\\.)?{{ request.namespace }}\\.example\\.com$"
+            jmesPath: "split(allowedRaw, ',')"
+            default: [""]
       validate:
         message: >-
-          Ingress host must be {{ request.namespace }}.example.com or
-          <sub>.{{ request.namespace }}.example.com — this namespace may not use
-          another tenant's domain.
+          Ingress host is not permitted for this namespace. Allowed domains
+          (namespace annotation platform.example.com/allowed-domains): {{ allowedRaw }}
+          — a host must equal one of them or be a subdomain of it.
         foreach:
           - list: "request.object.spec.rules || `[]`"
             deny:
               conditions:
                 all:
-                  # host defaults to 'no-host' so a null host fails the regex.
-                  - key: "{{ regex_match(hostRegex, element.host || 'no-host') }}"
+                  # Deny when NO allowed domain matches the host (exact or subdomain).
+                  # element.host is substituted in as a literal so the filter can
+                  # compare each allowed domain (@) against it.
+                  - key: >-
+                      {{ length(allowedDomains[?trim(@) == '{{ element.host || 'no-host' }}'
+                         || ends_with('{{ element.host || 'no-host' }}', join('', ['.', trim(@)]))]) }}
                     operator: Equals
-                    value: false
+                    value: 0
 
     # ── Rule 2: reject a catch-all (host-less) Ingress ───────────────────────
     - name: no-hostless-ingress
@@ -100,11 +120,9 @@ spec:
         deny:
           conditions:
             any:
-              # a rule with no host
               - key: "{{ request.object.spec.rules[?host == null] | length(@) }}"
                 operator: GreaterThan
                 value: 0
-              # or no rules at all (defaultBackend-only)
               - key: "{{ length(request.object.spec.rules || `[]`) }}"
                 operator: Equals
                 value: 0
@@ -132,12 +150,13 @@ spec:
                 operator: AnyIn
                 value: "{{ otherHosts }}"
 ---
-# Kyverno needs permission to LIST Ingresses cluster-wide for Rule 3's apiCall.
-# Aggregation labels pull this into Kyverno's controller ClusterRoles (>= 1.11).
+# Kyverno needs to READ namespaces (Rule 1's apiCall) and LIST ingresses
+# cluster-wide (Rule 3's apiCall). Aggregation labels pull this into Kyverno's
+# controller ClusterRoles (>= 1.11).
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kyverno:view-ingresses
+  name: kyverno:view-ingresses-namespaces
   labels:
     app.kubernetes.io/part-of: kyverno
     rbac.kyverno.io/aggregate-to-admission-controller: "true"
@@ -145,4 +164,7 @@ metadata:
 rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
     verbs: ["get", "list", "watch"]
