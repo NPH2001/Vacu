@@ -1,17 +1,30 @@
-# Rancher Continuous Delivery (Fleet) bundle.
+# Rancher Continuous Delivery (Fleet) bundle — pulls the Helm chart FROM GHCR
+# instead of bundling it from git. This directory holds only this file, so the
+# git bundle Fleet creates is ~1 KB: the repo's heavy assets (public/ images,
+# ~3.6 MB) can never end up in the bundle and trip the 3 MiB Kubernetes request
+# limit ("Request entity too large: limit is 3145728").
 #
-# Fleet detects the Chart.yaml next to this file and deploys it as a Helm chart.
-# Register this repo in Rancher → Continuous Delivery → Git Repos, with
-#   Path: deploy/helm/vacu
-# and a target cluster/group. Fleet then installs/upgrades on every git change.
+# Register in Rancher → Continuous Delivery → Git Repos with
+#   Path: deploy/fleet
+# and a target cluster/group. Fleet installs/upgrades on every git change.
+#
+# The chart is published to GHCR as an OCI artifact by
+# .github/workflows/publish-chart.yml (tag `chart-v<version>`). Make that GHCR
+# package PUBLIC (Packages → vacu → Package settings → Change visibility), or set
+# `helmSecretName` on the Rancher GitRepo to a Secret holding a GHCR
+# username + read:packages token so Fleet can pull a private chart.
 #
 # Secrets are NOT in git: create the `vacu-env` Secret in the target namespace
-# (DATABASE_URL + AUTH_SECRET) — see deploy/README.md — and reference it below.
+# (DATABASE_URL + AUTH_SECRET) — see deploy/README.md — referenced below.
 
 defaultNamespace: vacu
 
 helm:
   releaseName: vacu
+  # Remote OCI chart. Keep `version` in sync with deploy/helm/vacu/Chart.yaml —
+  # the publish workflow packages that chart and pushes it here.
+  chart: oci://ghcr.io/nph2001/charts/vacu
+  version: "0.1.0"
   # Adopt resources that already exist in the namespace (e.g. a chart installed
   # by hand before Fleet took over) instead of failing on an ownership conflict.
   takeOwnership: true
@@ -21,7 +34,7 @@ helm:
       # deploy/README.md). Avoid `latest` in GitOps so rollbacks are precise.
       tag: "v1.0.0"
       pullPolicy: IfNotPresent
-    # imagePullSecrets: [{ name: ghcr-creds }]   # if the GHCR package is private
+    # imagePullSecrets: [{ name: ghcr-creds }]   # if the GHCR image is private
 
     secret:
       existingSecret: vacu-env   # you create this in the vacu namespace
