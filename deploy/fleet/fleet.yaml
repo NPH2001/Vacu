@@ -43,6 +43,12 @@ helm:
 
     config:
       APP_URL: https://vacu.com.vn
+      # TLS terminates upstream (Cloudflare → ingress), so the app sits behind
+      # TWO proxies. The rate limiter reads the client IP from X-Forwarded-For by
+      # trusting this many right-most hops; too low and a spoofed XFF bypasses the
+      # limit. 2 = Cloudflare + ingress. Bump to 3 if a separate LB also sits
+      # between Cloudflare and the ingress.
+      TRUSTED_PROXY_HOPS: "2"
 
     ingress:
       enabled: true
