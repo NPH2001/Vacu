@@ -1,37 +1,51 @@
 'use client';
+import Image from 'next/image';
 import { useState } from 'react';
 
 /**
- * Drop-in replacement for a raw <img> that degrades to a neutral placeholder
- * tile when the source is empty or fails to load (e.g. an admin deleted/moved
- * the uploaded file, or a seed/external URL 404s). Without this the browser
- * shows its broken-image glyph on product cards, the cart, order history, etc.
+ * Drop-in image that:
+ *  - optimizes same-origin uploads via next/image (responsive srcset + lazy),
+ *  - renders external URLs `unoptimized` (skips the optimizer — external images
+ *    are admin-set, so we don't turn the optimizer into an open image proxy),
+ *  - degrades to a neutral placeholder tile when the src is empty or 404s.
  *
- * Pass the same `className` you'd give the <img> (e.g. "w-full h-full
- * object-cover"); the placeholder reuses it so it fills the same box. `fallback`
- * is the emoji shown in the placeholder (defaults to the 🌿 the post covers
- * already use).
+ * It self-wraps in a sized, relative box, so pass the same `className` you'd give
+ * a plain <img> (e.g. "w-full h-full object-cover", or a fixed "w-14 h-14
+ * rounded-full") — the wrapper takes the size/rounding and the image fills it
+ * with object-cover. Callers already sit inside aspect-ratio / fixed-size boxes.
+ * `sizes` is the responsive hint for the layout (default a conservative 100vw).
  */
 export default function SmartImage({
-  src, alt, className = '', fallback = '🌿',
+  src, alt, className = '', fallback = '🌿', sizes = '100vw',
 }: {
   src: string | null | undefined;
   alt: string;
   className?: string;
   fallback?: string;
+  sizes?: string;
 }) {
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {
     return (
-      <div className={`${className} flex items-center justify-center bg-green-50 text-green-300`} role="img" aria-label={alt}>
+      <span className={`${className} relative flex items-center justify-center bg-green-50 text-green-300 overflow-hidden`} role="img" aria-label={alt}>
         <span className="text-4xl select-none" aria-hidden>{fallback}</span>
-      </div>
+      </span>
     );
   }
 
+  const external = /^https?:\/\//i.test(src);
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />
+    <span className={`${className} relative block overflow-hidden`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        unoptimized={external}
+        onError={() => setFailed(true)}
+        className="object-cover"
+      />
+    </span>
   );
 }

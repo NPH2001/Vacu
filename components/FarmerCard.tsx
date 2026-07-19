@@ -9,10 +9,10 @@ export default function FarmerCard({ f }: { f: FarmerRow }) {
       className="group relative block rounded-3xl overflow-hidden border border-green-100 bg-white shadow-[0_1px_3px_rgba(20,60,30,0.05)] hover:shadow-[0_16px_32px_-12px_rgba(20,83,45,0.22)] hover:-translate-y-1 transition duration-300"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <SmartImage src={f.cover} alt={f.farm} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+        <SmartImage src={f.cover} alt={f.farm} sizes="(max-width: 768px) 100vw, 33vw" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
         <div className="absolute inset-0 bg-gradient-to-t from-green-950/80 via-green-950/20 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3 text-white">
-          <SmartImage src={f.avatar} alt={f.name} fallback="👨‍🌾" className="w-14 h-14 rounded-full border-2 border-white object-cover" />
+          <SmartImage src={f.avatar} alt={f.name} fallback="👨‍🌾" sizes="64px" className="w-14 h-14 rounded-full border-2 border-white object-cover" />
           <div className="min-w-0">
             <div className="text-xs text-green-200">{f.years} năm kinh nghiệm</div>
             <div className="font-bold font-display text-lg truncate">{f.name}</div>

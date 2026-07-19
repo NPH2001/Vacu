@@ -72,6 +72,7 @@ export default function CartDrawer({
                 >
                   <SmartImage
                     src={it.image}
+                    sizes="80px"
                     alt={it.name}
                     className="w-16 h-16 rounded-xl object-cover shrink-0"
                   />

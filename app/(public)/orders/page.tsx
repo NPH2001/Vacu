@@ -95,7 +95,7 @@ export default async function OrdersPage({
                 <ul className="space-y-2 mb-4 divide-y divide-green-50">
                   {items.map((it) => (
                     <li key={it.id} className="flex items-center gap-3 text-sm pt-2 first:pt-0">
-                      <SmartImage src={it.image} alt={it.name} className="w-11 h-11 rounded-lg object-cover" />
+                      <SmartImage src={it.image} alt={it.name} sizes="64px" className="w-11 h-11 rounded-lg object-cover" />
                       <div className="flex-1 min-w-0">
                         <div className="text-green-950 font-semibold line-clamp-1">{it.name}</div>
                         <div className="text-xs text-green-900/60">{it.qty} × {it.unit}</div>

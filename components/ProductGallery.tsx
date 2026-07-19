@@ -16,7 +16,7 @@ export default function ProductGallery({
   return (
     <div className="space-y-3">
       <div className="relative aspect-square rounded-3xl overflow-hidden bg-green-50">
-        <SmartImage src={current} alt={alt} className="w-full h-full object-cover" />
+        <SmartImage src={current} alt={alt} sizes="(max-width: 1024px) 100vw, 45vw" className="w-full h-full object-cover" />
         {discount > 0 && (
           <span className="absolute top-4 right-4 bg-amber-500 text-green-950 text-sm font-bold px-3 py-1.5 rounded-full">
             -{discount}%
