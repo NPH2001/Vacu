@@ -1,35 +1,11 @@
 import type { NextConfig } from "next";
 
-const isDev = process.env.NODE_ENV !== "production";
-
-// Content-Security-Policy. Next injects inline bootstrap/hydration scripts and
-// the app uses an inline theme <style> + inline GA snippet, so `script-src`/
-// `style-src` keep `'unsafe-inline'` (a nonce-based strict policy would be the
-// stricter follow-up). Even so, this locks the high-value directives:
-//   - object-src 'none'      → no plugins/Flash
-//   - base-uri 'self'        → no injected <base> to hijack relative URLs
-//   - frame-ancestors 'none' → clickjacking protection
-//   - form-action 'self'     → forms can't be pointed at an attacker origin
-//   - script/connect allow-listed to self + Google Analytics only
-// `img-src https:` allows admin-set external images and the VietQR image.
-const csp = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "img-src 'self' data: https:",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.google-analytics.com`,
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' data:",
-  // *.google-analytics.com covers www + the region1..N geo-collection hosts GA4
-  // beacons to (region1 alone would drop analytics for other regions).
-  "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com",
-  "frame-src 'self'",
-].join("; ");
-
+// Static security headers. The Content-Security-Policy is NOT here — it's set
+// per-request in proxy.ts, which mints a fresh nonce so `script-src` can drop
+// `'unsafe-inline'`. A second CSP header from this file would be intersected
+// with the proxy's by the browser and the nonce would stop matching, so CSP
+// must live in exactly one place.
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

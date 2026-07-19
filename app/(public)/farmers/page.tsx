@@ -1,7 +1,7 @@
-// No searchParams/cookies here — just farmer + site data — so this page can be
-// ISR like farmers/[id], instead of re-querying on every hit. Admin edits fire
-// revalidatePath, and the 5-min ceiling bounds staleness.
-export const revalidate = 300;
+// Nonce-based CSP (proxy.ts) requires dynamic rendering, so this can't be ISR:
+// a statically-cached page would ship scripts stamped with a stale nonce and the
+// browser would block them. Rendered per-request; content is always fresh.
+export const dynamic = 'force-dynamic';
 
 import type { Metadata } from "next";
 import { getAllFarmers, getSiteInfo } from "@/lib/data";

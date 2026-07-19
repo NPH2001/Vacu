@@ -10,7 +10,7 @@ import Script from 'next/script';
  * `afterInteractive` defers gtag until the page is usable, so analytics never
  * delays first paint.
  */
-export default function Analytics({ measurementId }: { measurementId: string }) {
+export default function Analytics({ measurementId, nonce }: { measurementId: string; nonce?: string }) {
   const id = measurementId.trim();
   // The id is interpolated raw into the inline gtag() script below, so a value
   // like `');<script>…` would execute for every visitor. The settings schema
@@ -21,8 +21,9 @@ export default function Analytics({ measurementId }: { measurementId: string }) 
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" />
-      <Script id="ga4-init" strategy="afterInteractive">
+      {/* nonce lets these run under the strict-dynamic CSP set in proxy.ts */}
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" nonce={nonce} />
+      <Script id="ga4-init" strategy="afterInteractive" nonce={nonce}>
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
