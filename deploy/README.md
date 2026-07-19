@@ -43,9 +43,9 @@ kubectl create secret generic vacu-env \
 helm upgrade --install vacu deploy/helm/vacu \
   --set image.tag=1.4.0 \
   --set secret.existingSecret=vacu-env \
-  --set config.APP_URL=https://vacu.example.com \
+  --set config.APP_URL=https://vacu.com.vn \
   --set ingress.enabled=true \
-  --set ingress.hosts[0].host=vacu.example.com \
+  --set ingress.hosts[0].host=vacu.com.vn \
   --set ingress.hosts[0].paths[0].path=/ \
   --set ingress.hosts[0].paths[0].pathType=Prefix
 ```

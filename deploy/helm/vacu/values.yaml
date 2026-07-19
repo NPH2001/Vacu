@@ -35,7 +35,7 @@ secret:
 # Non-secret environment. UPLOADS_DIR/PORT/NODE_ENV are already baked into the
 # image; APP_URL is the canonical origin fallback for password-reset links.
 config:
-  APP_URL: "https://vacu.example.com"
+  APP_URL: "https://vacu.com.vn"
   # Number of trusted proxies in front of the app, used to pick the real client
   # IP from X-Forwarded-For for rate limiting. 1 = a single ingress (e.g.
   # Traefik). Increase (e.g. "2") if a CDN also fronts the app, or the limiter
@@ -67,13 +67,13 @@ ingress:
   className: ""
   annotations: {}
   hosts:
-    - host: vacu.example.com
+    - host: vacu.com.vn
       paths:
         - path: /
           pathType: Prefix
   tls: []
   # - secretName: vacu-tls
-  #   hosts: [vacu.example.com]
+  #   hosts: [vacu.com.vn]
 
 # Persistent uploads (product/farmer images written to /app/public/uploads).
 persistence:

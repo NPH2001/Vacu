@@ -42,13 +42,13 @@ helm:
       existingSecret: vacu-env   # you create this in the vacu namespace
 
     config:
-      APP_URL: https://vacu.example.com
+      APP_URL: https://vacu.com.vn
 
     ingress:
       enabled: true
       className: ""              # e.g. nginx / traefik
       hosts:
-        - host: vacu.example.com
+        - host: vacu.com.vn
           paths:
             - path: /
               pathType: Prefix
@@ -67,5 +67,5 @@ helm:
 #     helm:
 #       values:
 #         image: { tag: "main" }
-#         config: { APP_URL: https://staging.vacu.example.com }
-#         ingress: { hosts: [{ host: staging.vacu.example.com, paths: [{ path: /, pathType: Prefix }] }] }
+#         config: { APP_URL: https://staging.vacu.com.vn }
+#         ingress: { hosts: [{ host: staging.vacu.com.vn, paths: [{ path: /, pathType: Prefix }] }] }
