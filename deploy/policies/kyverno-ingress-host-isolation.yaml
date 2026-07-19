@@ -1,0 +1,148 @@
+# Kyverno ClusterPolicy — Ingress host isolation for a shared multi-tenant cluster.
+#
+# Problem it solves: Kubernetes does NOT enforce host ownership. On a shared
+# ingress controller, a hostile/careless tenant can create an Ingress claiming
+# another tenant's hostname and hijack or intercept their traffic. This is a
+# CLUSTER-ADMIN control (an app chart cannot protect itself from this):
+#
+#   Rule 1 (host-belongs-to-namespace): a namespace may only use hostnames under
+#          its own domain — namespace "foo" -> foo.<BASE> or <sub>.foo.<BASE>.
+#   Rule 2 (no-hostless-ingress):        reject a catch-all (host-less) Ingress.
+#   Rule 3 (host-must-be-globally-unique): reject a host already claimed by an
+#          Ingress in a different namespace.
+#
+# ── Before applying ──────────────────────────────────────────────────────────
+#  1. Replace every `example.com` with your platform base domain.
+#  2. Tune the `exclude` namespaces to where shared/system ingresses live.
+#  3. Roll out as Audit first (validationFailureAction: Audit), inspect
+#     `kubectl get policyreport -A` / `clusterpolicyreport`, fix existing
+#     violations, THEN switch to Enforce.
+#  4. Validate the templating BEFORE trusting it — this file has not been run
+#     against a live Kyverno here:
+#        kyverno apply kyverno-ingress-host-isolation.yaml \
+#          --resource my-ingress.yaml --policy-report
+#
+# Requires Kyverno >= 1.11 (uses operations[], apiCall context, JMESPath funcs).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: ingress-host-isolation
+  annotations:
+    policies.kyverno.io/title: Ingress host isolation (multi-tenancy)
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Ingress
+    policies.kyverno.io/description: >-
+      Stops one tenant from hijacking another tenant's HTTP(S) traffic through a
+      shared ingress controller: binds each namespace to its own domain and
+      rejects hosts already used by another namespace.
+spec:
+  # Start as Audit; flip to Enforce once PolicyReports are clean.
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    # ── Rule 1: a namespace may only use hosts under its own domain ──────────
+    # namespace "foo" -> foo.example.com or <label>.foo.example.com
+    - name: host-belongs-to-namespace
+      match:
+        any:
+          - resources:
+              kinds: [Ingress]
+              operations: [CREATE, UPDATE]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - ingress-nginx
+                - cattle-system
+                - cattle-fleet-system
+      context:
+        # Anchored regex for this namespace's allowed hosts. Change the suffix.
+        # Matches  foo.example.com  and  <sub>.foo.example.com  (dot boundary,
+        # so it will NOT match evilfoo.example.com).
+        - name: hostRegex
+          variable:
+            value: "^([a-z0-9-]+\\.)?{{ request.namespace }}\\.example\\.com$"
+      validate:
+        message: >-
+          Ingress host must be {{ request.namespace }}.example.com or
+          <sub>.{{ request.namespace }}.example.com — this namespace may not use
+          another tenant's domain.
+        foreach:
+          - list: "request.object.spec.rules || `[]`"
+            deny:
+              conditions:
+                all:
+                  # host defaults to 'no-host' so a null host fails the regex.
+                  - key: "{{ regex_match(hostRegex, element.host || 'no-host') }}"
+                    operator: Equals
+                    value: false
+
+    # ── Rule 2: reject a catch-all (host-less) Ingress ───────────────────────
+    - name: no-hostless-ingress
+      match:
+        any:
+          - resources:
+              kinds: [Ingress]
+              operations: [CREATE, UPDATE]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - ingress-nginx
+                - cattle-system
+                - cattle-fleet-system
+      validate:
+        message: "A host-less (catch-all) Ingress is not allowed in a tenant namespace."
+        deny:
+          conditions:
+            any:
+              # a rule with no host
+              - key: "{{ request.object.spec.rules[?host == null] | length(@) }}"
+                operator: GreaterThan
+                value: 0
+              # or no rules at all (defaultBackend-only)
+              - key: "{{ length(request.object.spec.rules || `[]`) }}"
+                operator: Equals
+                value: 0
+
+    # ── Rule 3: a host may not already be claimed by another namespace ───────
+    - name: host-must-be-globally-unique
+      match:
+        any:
+          - resources:
+              kinds: [Ingress]
+              operations: [CREATE, UPDATE]
+      context:
+        - name: otherHosts
+          apiCall:
+            urlPath: "/apis/networking.k8s.io/v1/ingresses"
+            jmesPath: "items[?metadata.namespace != '{{ request.namespace }}'].spec.rules[].host"
+      validate:
+        message: >-
+          One or more of these hosts is already used by an Ingress in another
+          namespace. Pick a hostname under your own domain.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.rules[].host }}"
+                operator: AnyIn
+                value: "{{ otherHosts }}"
+---
+# Kyverno needs permission to LIST Ingresses cluster-wide for Rule 3's apiCall.
+# Aggregation labels pull this into Kyverno's controller ClusterRoles (>= 1.11).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:view-ingresses
+  labels:
+    app.kubernetes.io/part-of: kyverno
+    rbac.kyverno.io/aggregate-to-admission-controller: "true"
+    rbac.kyverno.io/aggregate-to-background-controller: "true"
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
