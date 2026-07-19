@@ -32,11 +32,13 @@ export default async function FarmerDetailPage({ params }: { params: Params }) {
   return (
     <div>
       <section className="relative h-[55vh] min-h-[420px] overflow-hidden">
-        <SmartImage src={f.cover} alt={f.farm} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0">
+          <SmartImage src={f.cover} alt={f.farm} className="w-full h-full" sizes="100vw" />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-green-950 via-green-950/50 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 max-w-7xl mx-auto px-4 pb-10 text-white">
           <div className="flex items-end gap-5">
-            <SmartImage src={f.avatar} alt={f.name} fallback="👨‍🌾" className="w-24 h-24 rounded-full border-4 border-white object-cover" />
+            <SmartImage src={f.avatar} alt={f.name} fallback="👨‍🌾" sizes="112px" className="w-24 h-24 rounded-full border-4 border-white object-cover" />
             <div>
               <div className="text-amber-300 text-sm font-bold mb-1">📍 {f.location} · {f.years} năm</div>
               <h1 className="text-3xl md:text-5xl font-bold font-display wrap-anywhere">{f.name}</h1>
