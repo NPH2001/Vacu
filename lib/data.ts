@@ -158,10 +158,22 @@ export const getSiteInfo = cache(async (): Promise<SiteInfoRow> => {
   return rows[0];
 });
 
-/** Site theme (single row id=1); falls back to defaults before it is saved. */
+/**
+ * Site theme (single row id=1); falls back to defaults before it is saved.
+ * The root layout renders this on every page, so it must survive the DB being
+ * unavailable — notably during `next build`, where a page that isn't forced
+ * dynamic gets prerendered with no database reachable. On any connection error
+ * we return DEFAULT_THEME so the build (and a transient DB blip) degrades to the
+ * default look instead of crashing the whole render.
+ */
 export const getTheme = cache(async (): Promise<ThemeConfig> => {
-  const rows = await db.select().from(theme).where(eq(theme.id, 1)).limit(1);
-  const r = rows[0];
+  let r;
+  try {
+    const rows = await db.select().from(theme).where(eq(theme.id, 1)).limit(1);
+    r = rows[0];
+  } catch {
+    return DEFAULT_THEME;
+  }
   if (!r) return DEFAULT_THEME;
   return {
     brandColor: r.brandColor,
