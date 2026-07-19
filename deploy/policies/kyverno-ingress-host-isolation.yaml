@@ -168,3 +168,61 @@ rules:
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["get", "list", "watch"]
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Guard: the whole model above is only safe if a TENANT cannot set the
+# allowed-domains annotation on their own namespace (else they'd self-authorize
+# another tenant's domain). Kubernetes already blocks this for tenants confined
+# to namespaced RBAC (Namespace is cluster-scoped), but some platforms (e.g.
+# Rancher "Project Owner") can edit namespace metadata — so lock it explicitly:
+# only allow-listed admin identities may add/change/remove the annotation.
+#
+# ── Before applying ──────────────────────────────────────────────────────────
+#  * Replace the identities below with YOUR platform admins AND the automation
+#    that provisions namespaces (its ServiceAccount username, e.g.
+#    system:serviceaccount:fleet-system:gitjob) — otherwise legitimate namespace
+#    creation that carries the annotation will be blocked.
+#  * background: false is required — request.userInfo only exists at admission.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-allowed-domains-annotation
+  annotations:
+    policies.kyverno.io/title: Lock the ingress allowed-domains annotation
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Namespace
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: only-admins-change-allowed-domains
+      match:
+        any:
+          - resources:
+              kinds: [Namespace]
+              operations: [CREATE, UPDATE]
+      preconditions:
+        all:
+          # Fire only when the annotation's value actually changes (set/edit/clear).
+          - key: "{{ request.object.metadata.annotations.\"platform.example.com/allowed-domains\" || '' }}"
+            operator: NotEquals
+            value: "{{ request.oldObject.metadata.annotations.\"platform.example.com/allowed-domains\" || '' }}"
+      validate:
+        message: >-
+          Only platform admins may set/modify the
+          platform.example.com/allowed-domains annotation on a namespace.
+        deny:
+          conditions:
+            all:
+              # Deny when the requester is NOT in an admin group ...
+              - key: "{{ request.userInfo.groups || `[]` }}"
+                operator: AllNotIn
+                value:
+                  - "system:masters"
+                  - "platform:admins"          # <-- your admin group
+              # ... AND not an allow-listed admin/automation identity.
+              - key: "{{ request.userInfo.username }}"
+                operator: AnyNotIn
+                value:
+                  - "kubernetes-admin"          # <-- your admin user(s)
+                  - "system:serviceaccount:fleet-system:gitjob"  # <-- your namespace provisioner
