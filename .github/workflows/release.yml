@@ -44,7 +44,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
-          # ghcr.io/<owner>/<repo>, e.g. ghcr.io/thang14/vato
+          # ghcr.io/<owner>/<repo> (auto-lowercased), e.g. ghcr.io/nph2001/vacu
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}

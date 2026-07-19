@@ -32,7 +32,9 @@ helm:
     image:
       # Pin the released tag. Bump on each release (or let CI update it — see
       # deploy/README.md). Avoid `latest` in GitOps so rollbacks are precise.
-      tag: "v1.0.0"
+      # NOTE: docker/metadata-action strips the leading "v" — a GitHub Release
+      # tagged `v1.0.0` publishes the image as `1.0.0`, so pin without the "v".
+      tag: "1.0.0"
       pullPolicy: IfNotPresent
     # imagePullSecrets: [{ name: ghcr-creds }]   # if the GHCR image is private
 

@@ -10,9 +10,9 @@ reaches by connection string / config.
 Registry when a **GitHub Release is published**:
 
 ```
-ghcr.io/thang14/vato:<release-version>   # e.g. 1.4.0 and 1.4
-ghcr.io/thang14/vato:latest
-ghcr.io/thang14/vato:sha-<short>
+ghcr.io/nph2001/vacu:<release-version>   # e.g. 1.4.0 and 1.4
+ghcr.io/nph2001/vacu:latest
+ghcr.io/nph2001/vacu:sha-<short>
 ```
 
 To cut a release: tag `vX.Y.Z` and publish a Release on GitHub (the semver tags
@@ -70,9 +70,23 @@ kubectl exec deploy/vacu -- node scripts/seed-admin.mjs   # uses ADMIN_EMAIL / A
 
 ## 3. Rancher Continuous Delivery (Fleet)
 
-Rancher CD is Fleet — it watches this repo and deploys the chart via GitOps.
-`deploy/helm/vacu/fleet.yaml` is the Fleet bundle (Fleet auto-detects the
-`Chart.yaml` beside it and installs it as Helm).
+Rancher CD is Fleet. It bundles **git content**, and this repo carries ~3.6 MB of
+committed images under `public/` — bundling those blows past Kubernetes' 3 MiB
+request limit (`Request entity too large: limit is 3145728`). So Fleet pulls the
+chart **from GHCR as an OCI artifact** instead, and the bundle it builds from git
+is only `deploy/fleet/fleet.yaml` (~1 KB).
+
+### Publish the chart
+
+`.github/workflows/publish-chart.yml` packages `deploy/helm/vacu` and pushes it to
+`oci://ghcr.io/<owner>/charts/vacu` on a `chart-v<version>` tag:
+
+```bash
+git tag chart-v0.1.0 && git push origin chart-v0.1.0   # → oci://ghcr.io/nph2001/charts/vacu:0.1.0
+```
+
+Keep the tag, `Chart.yaml` `version`, and `fleet.yaml` `version` in sync. Make the
+GHCR chart package **public** (or configure a pull secret — see below).
 
 ### One-time setup
 
@@ -87,37 +101,28 @@ Rancher CD is Fleet — it watches this repo and deploys the chart via GitOps.
    (Or use a SealedSecret / external-secrets so it *can* live in git.)
 
 2. **Register the repo** in Rancher → **Continuous Delivery → Git Repos → Create**:
-   - Repository URL: `https://github.com/thang14/vato`
+   - Repository URL: `https://github.com/NPH2001/Vacu`
    - Branch: `main`
-   - Paths: `deploy/helm/vacu`
+   - Paths: `deploy/fleet`   ← the tiny bundle dir, NOT `deploy/helm/vacu`
    - Target: the cluster or cluster group to deploy to.
 
-   Fleet reads `fleet.yaml`, installs the release `vacu` in namespace `vacu`, and
-   re-syncs on every push. Edit the values in `fleet.yaml` (host, ingress class,
-   storageClass, image tag) to match your cluster.
+   Fleet reads `deploy/fleet/fleet.yaml`, pulls the chart from GHCR, installs the
+   release `vacu` in namespace `vacu`, and re-syncs on every push. Edit the values
+   in `fleet.yaml` (host, ingress class, storageClass, image tag) to match your
+   cluster.
 
-3. **Private image**: make the GHCR package public, or add
-   `imagePullSecrets: [{ name: ghcr-creds }]` in `fleet.yaml` and create that
-   secret in the namespace.
+3. **Private packages**: make the GHCR chart package public, or set
+   `helmSecretName` on the Rancher GitRepo to a Secret with a `read:packages`
+   token. For a private **image**, also add `imagePullSecrets: [{ name: ghcr-creds }]`
+   in `fleet.yaml` and create that secret in the namespace.
 
 ### Updating the deployed version
 
-Fleet deploys exactly what's in git, so bump `image.tag` in `fleet.yaml` when you
-release. Either:
-
-- **Manual (simple):** edit `fleet.yaml` → `image.tag: "1.4.0"`, commit → Fleet
-  rolls it out.
-- **Automatic:** add a step to `release.yml` that rewrites the tag and commits
-  back to `main` (needs `permissions: contents: write`):
-  ```yaml
-  - name: Bump Fleet image tag
-    run: |
-      V="${GITHUB_REF_NAME#v}"
-      sed -i -E 's|^      tag: "[^"]*"|      tag: "'"$V"'"|' deploy/helm/vacu/fleet.yaml
-      git config user.name  github-actions
-      git config user.email github-actions@github.com
-      git commit -am "chore: deploy $V via Fleet" && git push || true
-  ```
+- **New app image:** publish a Release `vX.Y.Z`, then bump `image.tag` in
+  `fleet.yaml` to `X.Y.Z` (no leading `v` — see the note in `fleet.yaml`), commit
+  → Fleet rolls it out.
+- **New chart:** bump `Chart.yaml` `version` + `fleet.yaml` `version`, push a
+  matching `chart-v<version>` tag to republish, commit → Fleet pulls it.
 
 ### Notes
 

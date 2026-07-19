@@ -4,7 +4,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/thang14/vato
+  repository: ghcr.io/nph2001/vacu
   # Overrides Chart.appVersion. Pin to a released tag in production.
   tag: ""
   pullPolicy: IfNotPresent
