@@ -52,7 +52,7 @@ export default function NewsSidebar({
             </li>
             {categories.map((c) => (
               <li key={c.id}>
-                <Link href={`/tin-tuc?chuyen-muc=${c.id}`}
+                <Link href={`/danh-muc-tin-tuc/${c.id}`}
                   className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition ${
                     activeCategoryId === c.id ? 'bg-green-700 text-white' : 'text-green-900 hover:bg-green-50'
                   }`}>

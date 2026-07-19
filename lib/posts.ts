@@ -130,6 +130,12 @@ export async function getAllPostCategories(): Promise<PostCategoryRow[]> {
     .orderBy(postCategories.sortOrder, postCategories.name);
 }
 
+/** A single post category by id — backs the /danh-muc-tin-tuc/[id] page. */
+export const getPostCategory = cache(async (id: string): Promise<PostCategoryRow | null> => {
+  const rows = await db.select().from(postCategories).where(eq(postCategories.id, id)).limit(1);
+  return rows[0] ?? null;
+});
+
 /** Categories that actually have something live in them, with counts. */
 export async function getPostCategoriesWithCounts() {
   return db.select({

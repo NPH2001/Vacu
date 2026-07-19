@@ -100,7 +100,7 @@ export default async function PostDetailPage({ params, searchParams }: Props) {
           {post.categoryName && (
             <>
               {' / '}
-              <Link href={`/tin-tuc?chuyen-muc=${post.categoryId}`} className="hover:underline">
+              <Link href={`/danh-muc-tin-tuc/${post.categoryId}`} className="hover:underline">
                 {post.categoryName}
               </Link>
             </>

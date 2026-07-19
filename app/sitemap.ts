@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getSiteInfo, getAllProducts, getAllCategories, getAllFarmers } from '@/lib/data';
-import { getPublishedPosts } from '@/lib/posts';
+import { getPublishedPosts, getPostCategoriesWithCounts } from '@/lib/posts';
 import { getAllPages } from '@/lib/pages';
 import { HOME_PAGE_ID } from '@/lib/blocks';
 
@@ -36,9 +36,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // nothing rather than wrong/relative URLs.
     if (!base) return [];
 
-    const [products, categories, farmers, posts, pages] = await Promise.all([
+    const [products, categories, farmers, posts, postCats, pages] = await Promise.all([
       getAllProducts(), getAllCategories(), getAllFarmers(),
-      getAllPublishedPosts(), getAllPages(),
+      getAllPublishedPosts(), getPostCategoriesWithCounts(), getAllPages(),
     ]);
 
     const entry = (path: string, lastModified?: Date): MetadataRoute.Sitemap[number] =>
@@ -52,6 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...categories.map((c) => entry(`/danh-muc/${c.id}`, c.updatedAt)),
       ...farmers.map((f) => entry(`/farmers/${f.id}`, f.updatedAt)),
       ...posts.map((p) => entry(`/tin-tuc/${p.id}`, p.updatedAt ?? p.publishedAt ?? undefined)),
+      // News category pages (path-based, not ?chuyen-muc=): only those with ≥1 live post.
+      ...postCats.map((c) => entry(`/danh-muc-tin-tuc/${c.id}`)),
       ...pages
         .filter((pg) => pg.status === 'published' && pg.id !== HOME_PAGE_ID)
         .map((pg) => entry(`/${pg.id}`, pg.updatedAt)),

@@ -27,7 +27,7 @@ export default function PostCategoryForm({
       <label className="block">
         <span className="text-[13px] font-medium text-stone-900">Đường dẫn <span className="text-red-500">*</span></span>
         <span className="block text-[11.5px] text-stone-500 mt-0.5">
-          Địa chỉ lọc theo chuyên mục: /tin-tuc?chuyen-muc={d.id || 'duong-dan'}
+          Địa chỉ chuyên mục: /danh-muc-tin-tuc/{d.id || 'duong-dan'}
           {editing && ' — không đổi được sau khi tạo.'}
         </span>
         <SlugInput defaultValue={d.id ?? ''} sourceName="name" editing={editing} mono
