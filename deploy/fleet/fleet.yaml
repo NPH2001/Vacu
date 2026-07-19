@@ -62,7 +62,7 @@ helm:
     persistence:
       enabled: true
       size: 5Gi
-      # storageClass: ""         # set to your cluster's RWO class
+      storageClass: "ceph-hdd"   # pin the uploads PVC to this RWO class
 
 # Per-cluster/-environment overrides (optional). Match clusters by label in the
 # Rancher GitRepo target, then override values here.
