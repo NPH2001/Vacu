@@ -4,8 +4,10 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
+import type { EditorView } from '@tiptap/pm/view';
 import { useCallback, useState } from 'react';
 import MediaPicker from '@/components/admin/MediaPicker';
+import { uploadImage } from '@/lib/uploads-client';
 
 type Props = {
   /** Hidden-field name for plain form posts. Pass '' when using onChange
@@ -27,6 +29,27 @@ export default function RichEditor({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkValue, setLinkValue] = useState('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Shared by handlePaste/handleDrop below: uploads each file then inserts an
+  // image node right after the previous one. `view`/`event` come fresh from
+  // ProseMirror on every call, so this never sees a stale editor reference.
+  const insertUploadedImages = useCallback((view: EditorView, files: File[], pos: number) => {
+    setUploadError(null);
+    (async () => {
+      let insertPos = pos;
+      for (const file of files) {
+        try {
+          const src = await uploadImage(file);
+          const node = view.state.schema.nodes.image.create({ src });
+          view.dispatch(view.state.tr.insert(insertPos, node));
+          insertPos += node.nodeSize;
+        } catch (e) {
+          setUploadError((e as Error).message);
+        }
+      }
+    })();
+  }, []);
 
   const editor = useEditor({
     // Tiptap renders differently on the server than after hydration; letting it
@@ -55,6 +78,24 @@ export default function RichEditor({
         'aria-multiline': 'true',
         // Give the multiline edit region an accessible name.
         'aria-label': label || 'Trình soạn thảo nội dung',
+      },
+      handlePaste: (view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? [])
+          .filter((f) => f.type.startsWith('image/'));
+        if (files.length === 0) return false; // let normal text/HTML paste through
+        event.preventDefault();
+        insertUploadedImages(view, files, view.state.selection.to);
+        return true;
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false; // internal drag (reordering existing content)
+        const files = Array.from(event.dataTransfer?.files ?? [])
+          .filter((f) => f.type.startsWith('image/'));
+        if (files.length === 0) return false;
+        event.preventDefault();
+        const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+        insertUploadedImages(view, files, coords?.pos ?? view.state.selection.to);
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
@@ -219,11 +260,18 @@ export default function RichEditor({
           </div>
         )}
 
+        {uploadError && (
+          <p role="alert" className="text-sm text-red-600 px-3 py-2 bg-red-50 border-b border-red-100">
+            {uploadError}
+          </p>
+        )}
+
         <EditorContent editor={editor} />
       </div>
 
       <p className="text-xs text-green-900/50">
         Mẹo: dán nội dung từ Word/Google Docs được giữ định dạng. Nếu chữ bị lỗi font, bôi đen rồi bấm <b>⌫ᴀ</b> để xóa định dạng thừa.
+        Bạn cũng có thể dán (Ctrl+V) hoặc kéo-thả ảnh trực tiếp vào khung soạn thảo.
       </p>
 
       <MediaPicker

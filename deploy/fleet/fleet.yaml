@@ -53,6 +53,12 @@ helm:
     ingress:
       enabled: true
       className: ""              # e.g. nginx / traefik
+      # Uploads allow images up to MAX_UPLOAD_BYTES (4MB, see lib/upload-limits.ts).
+      # nginx ingress defaults client_max_body_size to 1MB, which 413s anything
+      # bigger before it reaches the app — raise it past the app's own limit.
+      # Adjust the annotation key if the cluster's ingress controller isn't nginx.
+      annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: "8m"
       hosts:
         - host: vacu.com.vn
           paths:
