@@ -1,0 +1,1 @@
+ALTER TABLE "catalogs" ADD COLUMN "visible" boolean DEFAULT true NOT NULL;

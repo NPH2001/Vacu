@@ -2,7 +2,10 @@ import 'server-only';
 import { escapeLike } from './sql-like';
 import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
-import { media, products, posts, categories, farmers, type MediaRow } from '@/db/schema';
+import {
+  media, products, posts, categories, farmers, certificates, catalogs, catalogImages,
+  type MediaRow,
+} from '@/db/schema';
 
 export type MediaListParams = {
   q?: string;
@@ -54,7 +57,7 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
   // Escaped for the same reason as the search: an underscore in a path would
   // otherwise match any character and over-report usage.
   const like = `%${escapeLike(url)}%`;
-  const [prodImg, prodBody, postCover, postBody, cats, farmerImgs] = await Promise.all([
+  const [prodImg, prodBody, postCover, postBody, cats, farmerImgs, certs, catalogPages] = await Promise.all([
     db.select({ id: products.id, name: products.name }).from(products).where(eq(products.image, url)),
     db.select({ id: products.id, name: products.name }).from(products).where(ilike(products.body, like)),
     db.select({ id: posts.id, title: posts.title }).from(posts).where(eq(posts.coverImage, url)),
@@ -63,6 +66,13 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
       .where(or(eq(categories.coverImage, url), eq(categories.icon, url))),
     db.select({ id: farmers.id, name: farmers.name }).from(farmers)
       .where(or(eq(farmers.avatar, url), eq(farmers.cover, url))),
+    db.select({ id: certificates.id, name: certificates.name }).from(certificates)
+      .where(eq(certificates.image, url)),
+    // Ảnh trang catalog: xoá mất một trang giữa bộ thì catalog vẫn "hiện", chỉ
+    // là thiếu trang — kiểu hỏng khó phát hiện nhất, nên phải cảnh báo.
+    db.select({ id: catalogs.id, name: catalogs.name }).from(catalogImages)
+      .innerJoin(catalogs, eq(catalogs.id, catalogImages.catalogId))
+      .where(eq(catalogImages.url, url)),
   ]);
 
   const usage: MediaUsage[] = [];
@@ -80,6 +90,8 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
   for (const r of postBody) push('Bài viết', r.title, `/admin/posts/${r.id}`);
   for (const r of cats) push('Danh mục', r.name, `/admin/categories/${r.id}`);
   for (const r of farmerImgs) push('Nông dân', r.name, `/admin/farmers/${r.id}`);
+  for (const r of certs) push('Chứng nhận', r.name, `/admin/certificates/${r.id}`);
+  for (const r of catalogPages) push('Catalog', r.name, `/admin/catalogs/${r.id}`);
   return usage;
 }
 

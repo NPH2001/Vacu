@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import type { MenuItemRow } from '@/db/schema';
+import type { MenuNode } from '@/lib/menu';
+import { NavBranch, NestedLinkList, navLinkProps } from './NavDropdown';
 
 const GAP = 28; // matches gap-x-7 (1.75rem)
 
@@ -15,7 +16,7 @@ const GAP = 28; // matches gap-x-7 (1.75rem)
  * changes. `overflow-hidden` on the visible row means even before this JS runs
  * (SSR / slow hydration) the bar clips rather than overflows.
  */
-export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
+export default function PriorityNav({ items }: { items: MenuNode[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLUListElement>(null);
   const moreRef = useRef<HTMLSpanElement>(null);
@@ -75,11 +76,7 @@ export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
   const visible = items.slice(0, visibleCount);
   const overflow = items.slice(visibleCount);
 
-  const linkProps = (l: MenuItemRow) => ({
-    href: l.href,
-    target: l.openInNewTab ? '_blank' : undefined,
-    rel: l.openInNewTab ? 'noopener noreferrer' : undefined,
-  });
+  const linkProps = navLinkProps;
 
   return (
     <div ref={containerRef} className="hidden lg:block flex-1 min-w-0 relative">
@@ -93,7 +90,11 @@ export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
             nothing — each <li> must lay out at its natural label width for the
             measurement to be meaningful. */}
         <ul ref={measureRef} className="flex w-max gap-x-7 whitespace-nowrap text-sm font-medium">
-          {items.map((l) => <li key={l.id} className="max-w-56 shrink-0 truncate">{l.label}</li>)}
+          {items.map((l) => (
+            <li key={l.id} className="max-w-56 shrink-0 truncate">
+              {l.label}{l.children.length > 0 ? ' \u25be' : ''}
+            </li>
+          ))}
         </ul>
         <span ref={moreRef} className="inline-block w-max text-sm font-medium">Thêm ▾</span>
       </div>
@@ -103,11 +104,15 @@ export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
           fits, and dropping the clip lets the "Thêm" dropdown escape the row. */}
       <ul className={`flex items-center justify-center gap-x-7 whitespace-nowrap text-sm font-medium text-green-900/80 ${measured ? '' : 'overflow-hidden'}`}>
         {visible.map((l) => (
-          <li key={l.id}>
-            <Link {...linkProps(l)} title={l.label} className="block max-w-56 truncate hover:text-green-700 transition">
-              {l.label}
-            </Link>
-          </li>
+          l.children.length > 0 ? (
+            <NavBranch key={l.id} node={l} />
+          ) : (
+            <li key={l.id}>
+              <Link {...linkProps(l)} title={l.label} className="block max-w-56 truncate hover:text-green-700 transition">
+                {l.label}
+              </Link>
+            </li>
+          )
         ))}
 
         {overflow.length > 0 && (
@@ -127,16 +132,9 @@ export default function PriorityNav({ items }: { items: MenuItemRow[] }) {
             </button>
 
             {openMenu && (
-              <div role="menu"
-                className="absolute right-0 top-full mt-3 min-w-52 max-w-72 bg-white rounded-2xl border border-green-100 shadow-xl py-2 z-50">
-                {overflow.map((l) => (
-                  <Link key={l.id} {...linkProps(l)} role="menuitem"
-                    onClick={() => setOpenMenu(false)}
-                    className="block px-4 py-2.5 text-green-900 hover:bg-green-50 truncate">
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
+              <ul className="absolute right-0 top-full mt-3 min-w-52 max-w-72 bg-white rounded-2xl border border-green-100 shadow-xl py-2 z-50">
+                <NestedLinkList nodes={overflow} onNavigate={() => setOpenMenu(false)} />
+              </ul>
             )}
           </li>
         )}

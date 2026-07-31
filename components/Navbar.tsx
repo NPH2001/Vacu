@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { MenuItemRow } from "@/db/schema";
+import type { MenuNode } from "@/lib/menu";
+import { NestedLinkList } from "./NavDropdown";
 import { useCart } from "./CartProvider";
 import PriorityNav from "./PriorityNav";
 
@@ -12,7 +13,7 @@ import PriorityNav from "./PriorityNav";
 // anyone who views source. Only the fields actually rendered are accepted.
 type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string };
 
-export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuItemRow[] }) {
+export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuNode[] }) {
   const [open, setOpen] = useState(false);
   const { count, setOpen: setCartOpen } = useCart();
 
@@ -105,20 +106,10 @@ export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuI
 
       {open && items.length > 0 && (
         <div id="mobile-nav" className="lg:hidden border-t border-green-100 bg-white">
-          <ul className="px-4 py-4 space-y-1">
-            {items.map((l) => (
-              <li key={l.id}>
-                <Link
-                  href={l.href}
-                  target={l.openInNewTab ? "_blank" : undefined}
-                  rel={l.openInNewTab ? "noopener noreferrer" : undefined}
-                  onClick={() => setOpen(false)}
-                  className="block px-3 py-3 rounded-lg text-green-900 hover:bg-green-50 font-medium"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
+          {/* Xổ hết mọi cấp, thụt lề theo cấp: trong ngăn kéo hẹp trên điện
+              thoại, bắt bấm từng cấp để mở tiếp là thêm một rào cản không cần thiết. */}
+          <ul className="px-1 py-3">
+            <NestedLinkList nodes={items} onNavigate={() => setOpen(false)} />
           </ul>
         </div>
       )}

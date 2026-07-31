@@ -289,6 +289,23 @@ export const heroSlideSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
 });
 
+export const catalogSchema = z.object({
+  name: z.string().trim().min(1, 'Vui lòng nhập tên catalog').max(200),
+  description: z.string().trim().max(600).default(''),
+  // Catalog không có trang nào thì chẳng có gì để xem — chặn ngay ở đây.
+  pages: z.array(url).min(1, 'Cần ít nhất một ảnh trang cho catalog').max(60),
+  visible: z.coerce.boolean().default(true),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
+export const certificateSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  issuer: z.string().trim().max(160).default(''),
+  image: url,
+  description: z.string().trim().max(600).default(''),
+  sortOrder: z.coerce.number().int().default(0),
+});
+
 export const valuePropSchema = z.object({
   icon: z.string().min(1).max(20),
   title: z.string().min(1).max(120),
@@ -339,6 +356,12 @@ export const emailTemplateSchema = z.object({
 
 export const menuItemSchema = z.object({
   location: z.enum(['header', 'footer']),
+  // Ô select gửi chuỗi rỗng khi chọn "— Không có —"; quy về null để phân biệt
+  // rõ "mục gốc" với "không đụng tới".
+  parentId: z.preprocess(
+    (v) => (v === '' || v == null ? null : v),
+    z.coerce.number().int().positive().nullable(),
+  ).default(null),
   label: z.string().trim().min(1).max(120),
   href: z.string().trim().min(1).max(500).refine(isSafeHref, 'Đường dẫn không hợp lệ.'),
   openInNewTab: z.coerce.boolean().default(false),

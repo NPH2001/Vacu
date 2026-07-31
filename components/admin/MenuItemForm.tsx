@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from 'react';
 import type { MenuItemFormState } from '@/app/admin/actions/menu';
 import type { CategoryRow, MenuItemRow } from '@/db/schema';
 import { buildCategoryTree, type CategoryNode } from '@/lib/categories';
+import { MAX_MENU_DEPTH, buildMenuTree, canBeParent, flattenMenuTree } from '@/lib/menu';
 
 const STATIC_PAGES = [
   { href: '/', label: 'Trang chủ' },
@@ -36,17 +37,23 @@ function flattenForSelect(tree: CategoryNode[]): { id: string; name: string; lev
 }
 
 export default function MenuItemForm({
-  action, defaults, editing, categories,
+  action, defaults, editing, categories, menuItems = [],
 }: {
   action: (prev: MenuItemFormState, fd: FormData) => Promise<MenuItemFormState>;
   defaults?: Partial<MenuItemRow>;
   editing: boolean;
   categories: Pick<CategoryRow, 'id' | 'name' | 'parentId' | 'sortOrder'>[];
+  /** Toàn bộ mục menu hiện có — để dựng danh sách chọn mục cha. */
+  menuItems?: MenuItemRow[];
 }) {
   const [state, formAction, pending] = useActionState<MenuItemFormState, FormData>(action, null);
   const d = defaults ?? {};
-  const loc = d.location ?? 'header';
   const initialHref = d.href ?? '';
+
+  // Vị trí phải là state: danh sách mục cha chỉ được chứa mục cùng vị trí, nên
+  // đổi radio là phải lọc lại ngay.
+  const [loc, setLoc] = useState<'header' | 'footer'>(d.location ?? 'header');
+  const [parentId, setParentId] = useState<string>(d.parentId != null ? String(d.parentId) : '');
 
   const [linkType, setLinkType] = useState<LinkType>(inferType(initialHref));
   const [categorySlug, setCategorySlug] = useState(
@@ -79,19 +86,59 @@ export default function MenuItemForm({
     linkType === 'page' ? pageHref :
     customHref;
 
+  // Chỉ liệt kê những mục thực sự làm cha được: cùng vị trí, không phải chính
+  // nó hay con cháu nó, và nhận thêm nhánh này vào vẫn không quá số cấp cho
+  // phép. Lọc ngay ở đây để admin không chọn được thứ rồi bị server từ chối.
+  const parentOptions = useMemo(() => {
+    const self = d.id ?? null;
+    // Xét theo vị trí ĐANG chọn, để chuyển cả nhánh sang Footer không bị vị trí
+    // cũ của chính nó chặn.
+    const view = self != null
+      ? menuItems.map((r) => (r.id === self ? { ...r, location: loc } : r))
+      : menuItems;
+    const sameLocation = view.filter((r) => r.location === loc);
+    return flattenMenuTree(buildMenuTree(sameLocation))
+      .filter(({ node }) => canBeParent(self, node.id, view))
+      .map(({ node, depth }) => ({ id: node.id, label: node.label, depth }));
+  }, [menuItems, loc, d.id]);
+
+  // Mục cha đã chọn có thể biến mất khỏi danh sách khi đổi vị trí — bỏ chọn
+  // thay vì gửi lên một id không còn hợp lệ.
+  const parentStillValid = parentId === '' || parentOptions.some((o) => String(o.id) === parentId);
+  const effectiveParent = parentStillValid ? parentId : '';
+
   return (
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
       <L label="Vị trí" required>
         <div className="flex gap-4 text-sm">
           <label className="inline-flex items-center gap-2">
-            <input type="radio" name="location" value="header" defaultChecked={loc === 'header'} required />
+            <input type="radio" name="location" value="header" required
+              checked={loc === 'header'} onChange={() => setLoc('header')} />
             <span>Header (menu trên cùng)</span>
           </label>
           <label className="inline-flex items-center gap-2">
-            <input type="radio" name="location" value="footer" defaultChecked={loc === 'footer'} />
+            <input type="radio" name="location" value="footer"
+              checked={loc === 'footer'} onChange={() => setLoc('footer')} />
             <span>Footer (Liên kết nhanh)</span>
           </label>
         </div>
+      </L>
+
+      <L label="Mục cha">
+        <select name="parentId" value={effectiveParent} onChange={(e) => setParentId(e.target.value)}
+          className="w-full admin-input bg-white">
+          <option value="">— Không có (mục cấp 1) —</option>
+          {parentOptions.map((o) => (
+            <option key={o.id} value={o.id}>
+              {'  '.repeat(o.depth)}{o.depth > 0 ? '└ ' : ''}{o.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-green-900/60 mt-1">
+          Chọn mục cha để biến mục này thành submenu. Tối đa {MAX_MENU_DEPTH} cấp — mục đã ở cấp{' '}
+          {MAX_MENU_DEPTH} không hiện trong danh sách.
+          {editing && ' Đổi vị trí Header/Footer sẽ chuyển theo cả các mục con bên dưới.'}
+        </p>
       </L>
 
       <L label="Nhãn hiển thị" required>
@@ -171,6 +218,9 @@ export default function MenuItemForm({
       <L label="Thứ tự">
         <input name="sortOrder" type="number" defaultValue={d.sortOrder ?? 0}
           className="w-32 admin-input" />
+        <p className="text-xs text-green-900/60 mt-1">
+          Số nhỏ hiện trước, và chỉ so với các mục cùng cha.
+        </p>
       </L>
       {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
       <div className="flex justify-end gap-3">

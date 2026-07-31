@@ -30,6 +30,14 @@ export const FLASH: Record<string, { kind: 'error' | 'ok'; text: string }> = {
     kind: 'error',
     text: 'Không xóa được: đây là quản trị viên (admin) duy nhất còn lại. Hãy tạo hoặc nâng quyền một admin khác trước.',
   },
+  'menu-con-con': {
+    kind: 'error',
+    text: 'Không xóa được mục này vì nó còn mục con bên trong. Hãy xóa hoặc chuyển các mục con ra ngoài trước — hoặc tick chọn cả cha lẫn con rồi xóa một lượt.',
+  },
+  'menu-con-con-nhieu': {
+    kind: 'error',
+    text: 'Không xóa được: trong số các mục bạn chọn có mục còn mục con nằm ngoài danh sách đã chọn. Chưa có mục nào bị xóa.',
+  },
   'khong-xoa-trang-chu': {
     kind: 'error',
     text: 'Không xóa được Trang chủ — đây là trang gốc của website. Bạn có thể ẩn/sắp xếp lại các khối bên trong thay vì xóa cả trang.',

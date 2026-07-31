@@ -196,9 +196,15 @@ function summary(b: Block): string {
     case 'subBox': return 'Hộp rau tuần (Cài đặt → Trang chủ)';
     case 'farmers': return `${b.title || 'Nông dân'} · ${b.limit} người`;
     case 'testimonials': return b.title || 'Cảm nhận khách hàng';
+    case 'certificates': return `${b.title || 'Chứng nhận'} · ${LAYOUT_LABELS[b.layout]}`;
+    case 'catalogs': return `${b.title || 'Catalog'} · ${LAYOUT_LABELS[b.layout]}`;
     case 'faq': return b.title || 'Câu hỏi thường gặp';
   }
 }
+
+const LAYOUT_LABELS: Record<'slider' | 'grid', string> = {
+  slider: 'slider có nút', grid: 'lưới hiện hết',
+};
 
 const PRODUCT_SOURCE_LABELS: Record<'featured' | 'category' | 'manual' | 'latest' | 'sale', string> = {
   featured: 'Nổi bật', category: 'Theo danh mục', manual: 'Chọn tay', latest: 'Mới nhất', sale: 'Đang giảm giá',
@@ -407,6 +413,52 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
           <NumberField label="Hiện bao nhiêu nông dân (0 = tất cả)" min={0} max={24} value={block.limit}
             onChange={(n) => onChange({ ...block, limit: n })} />
           <p className="text-[11.5px] text-stone-500">Nội dung sửa ở mục <b>Nông dân</b>.</p>
+        </div>
+      );
+
+    case 'certificates':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <NumberField label="Giới hạn số lượng (0 = hiện tất cả)" min={0} max={24} value={block.limit}
+            onChange={(n) => onChange({ ...block, limit: n })} />
+          <label className="block">
+            <span className="text-[12.5px] font-medium text-stone-900">Cách bày</span>
+            <select value={block.layout} onChange={(e) => onChange({ ...block, layout: e.target.value as 'slider' | 'grid' })}
+              className="mt-1 w-full admin-input text-sm bg-white">
+              <option value="slider">Slider — có nút trái/phải, hợp trang chủ</option>
+              <option value="grid">Lưới — hiện hết, hợp trang riêng về chứng nhận</option>
+            </select>
+          </label>
+          <p className="text-[11.5px] text-stone-500">
+            Mỗi thẻ hiện ảnh, tên chứng nhận và nơi cấp; bấm vào xem ảnh lớn. Nội dung sửa ở mục <b>Chứng nhận</b>.
+          </p>
+        </div>
+      );
+
+    case 'catalogs':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <NumberField label="Giới hạn số lượng (0 = hiện tất cả)" min={0} max={24} value={block.limit}
+            onChange={(n) => onChange({ ...block, limit: n })} />
+          <label className="block">
+            <span className="text-[12.5px] font-medium text-stone-900">Cách bày</span>
+            <select value={block.layout} onChange={(e) => onChange({ ...block, layout: e.target.value as 'slider' | 'grid' })}
+              className="mt-1 w-full admin-input text-sm bg-white">
+              <option value="slider">Slider — có nút trái/phải, hợp trang chủ</option>
+              <option value="grid">Lưới — hiện hết, hợp trang riêng về catalog</option>
+            </select>
+          </label>
+          <p className="text-[11.5px] text-stone-500">
+            Thẻ hiện bìa, tên và số trang; bấm vào lật xem từng trang. Nội dung sửa ở mục <b>Catalog</b>.
+          </p>
         </div>
       );
 

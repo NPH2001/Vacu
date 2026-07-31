@@ -387,6 +387,45 @@ export const heroSlides = pgTable('hero_slides', {
   sortOrder: integer('sort_order').default(0).notNull(),
 });
 
+/**
+ * Catalog sản phẩm: mỗi catalog là một tập ẢNH các trang (ảnh đầu làm bìa), chứ
+ * không phải một file PDF. Ảnh đi qua đúng đường tải ảnh sẵn có nên không phải
+ * mở thêm định dạng nào ở cổng upload, và khách xem được ngay trên web thay vì
+ * phải tải file về mới mở được.
+ */
+export const catalogs = pgTable('catalogs', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  // Tắt để tạm giấu một catalog cũ mà không phải xoá nó đi — bảng giá quý
+  // trước vẫn còn đó để đối chiếu, chỉ là khách không thấy.
+  visible: boolean('visible').notNull().default(true),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Các trang của một catalog, theo thứ tự. Trang đầu tiên là ảnh bìa. */
+export const catalogImages = pgTable('catalog_images', {
+  id: serial('id').primaryKey(),
+  catalogId: integer('catalog_id').notNull().references(() => catalogs.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+}, (t) => [index('catalog_images_catalog_idx').on(t.catalogId, t.sortOrder)]);
+
+/**
+ * Giấy chứng nhận / chứng chỉ (OCOP, VietGAP, ISO…). Ảnh là bắt buộc — khối
+ * hiển thị là một dải ảnh, một hàng không ảnh sẽ là một ô trống trôi ngang.
+ */
+export const certificates = pgTable('certificates', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  issuer: text('issuer').notNull().default(''),
+  image: text('image').notNull(),
+  description: text('description').notNull().default(''),
+  sortOrder: integer('sort_order').default(0).notNull(),
+});
+
 export const valueProps = pgTable('value_props', {
   id: serial('id').primaryKey(),
   icon: text('icon').notNull(),
@@ -436,12 +475,18 @@ export const emailTemplates = pgTable('email_templates', {
 
 export const menuItems = pgTable('menu_items', {
   id: serial('id').primaryKey(),
+  // Xóa mục cha bị chặn (restrict) chứ không cuốn theo mục con: menu là thứ
+  // khách nhìn thấy đầu tiên, mất im lặng cả một nhánh là tai nạn khó phát hiện.
+  parentId: integer('parent_id').references((): AnyPgColumn => menuItems.id, { onDelete: 'restrict' }),
   location: text('location', { enum: ['header', 'footer'] }).notNull(),
   label: text('label').notNull(),
   href: text('href').notNull(),
   openInNewTab: boolean('open_in_new_tab').notNull().default(false),
   sortOrder: integer('sort_order').default(0).notNull(),
-});
+}, (t) => [
+  // Một mục không thể là cha của chính nó. (Vòng lặp sâu hơn do app chặn.)
+  check('menu_items_no_self_parent', sql`${t.parentId} IS NULL OR ${t.parentId} <> ${t.id}`),
+]);
 
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   tokenHash: text('token_hash').primaryKey(),
@@ -548,6 +593,9 @@ export type ThemeRow = typeof theme.$inferSelect;
 export type PostRow = typeof posts.$inferSelect;
 export type PostCategoryRow = typeof postCategories.$inferSelect;
 export type ValuePropRow = typeof valueProps.$inferSelect;
+export type CertificateRow = typeof certificates.$inferSelect;
+export type CatalogRow = typeof catalogs.$inferSelect;
+export type CatalogImageRow = typeof catalogImages.$inferSelect;
 export type HeroSlideRow = typeof heroSlides.$inferSelect;
 export type DeliverySlotRow = typeof deliverySlots.$inferSelect;
 export type PaymentMethodRow = typeof paymentMethods.$inferSelect;

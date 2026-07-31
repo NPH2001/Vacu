@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Block } from '@/lib/blocks';
 import {
   getProductsForBlock, getCategoriesForBlock, getActiveHeroSlides, getAllValueProps,
-  getAllFarmers, getAllTestimonials, getAllFaqItems, getSiteInfo,
+  getAllFarmers, getAllTestimonials, getAllCertificates, getAllCatalogs, getAllFaqItems, getSiteInfo,
 } from '@/lib/data';
 import ProductCard from '@/components/ProductCard';
 import CategoryIcon from '@/components/CategoryIcon';
@@ -12,6 +12,8 @@ import FAQ from '@/components/FAQ';
 import HScroll from '@/components/HScroll';
 import SectionHeader from '@/components/SectionHeader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
+import CertificateShowcase from '@/components/CertificateShowcase';
+import CatalogShowcase from '@/components/CatalogShowcase';
 
 /** Full-bleed section band. `muted` paints the soft green separator background. */
 function Band({
@@ -320,6 +322,36 @@ export default async function BlockRenderer({
           <HScroll itemClass="w-[82vw] max-w-[320px]" gridClass="md:grid-cols-3">
             {items.map((f) => <FarmerCard key={f.id} f={f} />)}
           </HScroll>
+        </Band>
+      );
+    }
+
+    case 'certificates': {
+      const all = await getAllCertificates();
+      const items = block.limit > 0 ? all.slice(0, block.limit) : all;
+      if (items.length === 0) return null;
+      return (
+        <Band tone={block.tone}>
+          <AnimateOnScroll>
+            <SectionHeader eyebrow={block.eyebrow} title={block.title}
+              href={block.linkHref || undefined} linkLabel={block.linkLabel} />
+          </AnimateOnScroll>
+          <CertificateShowcase items={items} layout={block.layout} />
+        </Band>
+      );
+    }
+
+    case 'catalogs': {
+      const all = await getAllCatalogs();
+      const items = block.limit > 0 ? all.slice(0, block.limit) : all;
+      if (items.length === 0) return null;
+      return (
+        <Band tone={block.tone}>
+          <AnimateOnScroll>
+            <SectionHeader eyebrow={block.eyebrow} title={block.title}
+              href={block.linkHref || undefined} linkLabel={block.linkLabel} />
+          </AnimateOnScroll>
+          <CatalogShowcase items={items} layout={block.layout} />
         </Band>
       );
     }

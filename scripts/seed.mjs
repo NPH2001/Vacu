@@ -8,6 +8,8 @@ import path from 'node:path';
 import pg from 'pg';
 import { ensureAboutPage } from './ensure-about-page.mjs';
 import { ensureHomePage } from './ensure-home-page.mjs';
+import { ensureCertificatesPage } from './ensure-certificates-page.mjs';
+import { ensureCatalogsPage } from './ensure-catalogs-page.mjs';
 
 const url = process.env.DATABASE_URL;
 if (!url) { console.error('DATABASE_URL is required'); process.exit(1); }
@@ -178,6 +180,8 @@ try {
   // the page already exists.
   await ensureAboutPage(client);
   await ensureHomePage(client);
+  await ensureCertificatesPage(client);
+  await ensureCatalogsPage(client);
 
   console.log('Done.');
 } catch (err) {

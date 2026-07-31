@@ -4,7 +4,7 @@ import { eq, asc, desc, inArray, and, isNull, isNotNull, gt } from 'drizzle-orm'
 import { db } from '@/db/client';
 import {
   products, productImages, categories, farmers, testimonials, faqItems, siteInfo,
-  valueProps, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
+  valueProps, certificates, catalogs, catalogImages, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
   heroSlides, theme,
   type ProductRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
@@ -13,6 +13,7 @@ import {
   type OrderStatusRow,
 } from '@/db/schema';
 import { DEFAULT_THEME, type ThemeConfig } from './theme';
+import { buildMenuTree, type MenuNode } from '@/lib/menu';
 
 export type Product = ProductRow;
 export type Category = CategoryRow;
@@ -110,12 +111,17 @@ export async function getCategoriesForBlock(opts: {
     .orderBy(asc(categories.sortOrder), asc(categories.name));
   return opts.limit > 0 ? rows.slice(0, opts.limit) : rows;
 }
-export async function getMenu(location: 'header' | 'footer') {
-  return db
+/**
+ * Trả về cây, không phải danh sách phẳng: menu nhiều cấp, và dựng cây ngay tại
+ * đây để mọi nơi hiển thị menu đều thấy cùng một cấu trúc, cùng một thứ tự.
+ */
+export async function getMenu(location: 'header' | 'footer'): Promise<MenuNode[]> {
+  const rows = await db
     .select()
     .from(menuItems)
     .where(eq(menuItems.location, location))
     .orderBy(asc(menuItems.sortOrder), asc(menuItems.id));
+  return buildMenuTree(rows);
 }
 export const getCategory = cache(async (id: string) => {
   const rows = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
@@ -144,6 +150,33 @@ export async function getProductsByFarmer(farmerId: string) {
 }
 export const getAllTestimonials = cache(async () =>
   db.select().from(testimonials).orderBy(asc(testimonials.sortOrder), asc(testimonials.id)));
+// Cached per request: trang chủ và trang Chứng nhận có thể cùng đặt hai khối.
+export const getAllCertificates = cache(async () =>
+  db.select().from(certificates).orderBy(asc(certificates.sortOrder), asc(certificates.id)));
+/**
+ * Catalog kèm danh sách trang, gộp trong hai truy vấn thay vì một truy vấn mỗi
+ * catalog. Catalog chưa có trang nào bị bỏ qua: thẻ lấy ảnh đầu làm bìa, không
+ * có trang thì thẻ sẽ là một ô ảnh vỡ.
+ */
+export const getAllCatalogs = cache(async () => {
+  const [rows, pages] = await Promise.all([
+    db.select().from(catalogs).where(eq(catalogs.visible, true))
+      .orderBy(asc(catalogs.sortOrder), asc(catalogs.id)),
+    db.select({ catalogId: catalogImages.catalogId, url: catalogImages.url })
+      .from(catalogImages)
+      .orderBy(asc(catalogImages.catalogId), asc(catalogImages.sortOrder), asc(catalogImages.id)),
+  ]);
+  const byCatalog = new Map<number, string[]>();
+  for (const p of pages) {
+    const arr = byCatalog.get(p.catalogId) ?? [];
+    arr.push(p.url);
+    byCatalog.set(p.catalogId, arr);
+  }
+  return rows
+    .map((r) => ({ id: r.id, name: r.name, description: r.description, pages: byCatalog.get(r.id) ?? [] }))
+    .filter((c) => c.pages.length > 0);
+});
+
 export const getAllFaqItems = cache(async () =>
   db.select().from(faqItems).orderBy(asc(faqItems.sortOrder), asc(faqItems.id)));
 

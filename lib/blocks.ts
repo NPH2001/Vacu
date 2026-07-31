@@ -68,6 +68,35 @@ const sectionHeader = {
 // homepage uses to separate sections; `default` leaves it on the page white.
 const tone = { tone: z.enum(['default', 'muted']).default('default') };
 
+/**
+ * Chứng nhận. Nội dung lấy từ bảng `certificates`, khối chỉ quyết định phần
+ * khung: tiêu đề, nền, số lượng và cách bày.
+ *
+ * `slider` mặc định vì đa số nơi đặt khối là một mục trong trang dài (trang
+ * chủ); trang chuyên về chứng nhận thì chọn `grid` để hiện hết.
+ */
+export const certificatesBlock = z.object({
+  type: z.literal('certificates'),
+  title: z.string().max(200).default(''),
+  ...sectionHeader,
+  ...tone,
+  limit: z.coerce.number().int().min(0).max(24).default(0),
+  layout: z.enum(['slider', 'grid']).default('slider'),
+});
+
+/**
+ * Catalog sản phẩm. Nội dung lấy từ bảng `catalogs`; khối chỉ quyết định phần
+ * khung, giống khối chứng nhận.
+ */
+export const catalogsBlock = z.object({
+  type: z.literal('catalogs'),
+  title: z.string().max(200).default(''),
+  ...sectionHeader,
+  ...tone,
+  limit: z.coerce.number().int().min(0).max(24).default(0),
+  layout: z.enum(['slider', 'grid']).default('slider'),
+});
+
 export const productsBlock = z.object({
   type: z.literal('products'),
   title: z.string().max(200).default(''),
@@ -136,7 +165,8 @@ export const faqBlock = z.object({
 });
 
 export const blockSchema = z.discriminatedUnion('type', [
-  heroBlock, richtextBlock, cardsBlock, statsBlock, ctaBlock, galleryBlock, productsBlock, categoriesBlock,
+  heroBlock, richtextBlock, cardsBlock, statsBlock, ctaBlock, galleryBlock, certificatesBlock,
+  catalogsBlock, productsBlock, categoriesBlock,
   heroSliderBlock, valuePropsBlock, subBoxBlock, farmersBlock, testimonialsBlock, faqBlock,
 ]);
 
@@ -165,6 +195,8 @@ export const BLOCK_LABELS: Record<BlockType, { name: string; hint: string; icon:
   subBox: { name: 'Hộp rau tuần', hint: 'Ô quảng cáo lớn có ảnh. Nội dung sửa ở Cài đặt → Trang chủ.', icon: '▧' },
   farmers: { name: 'Lưới nông dân', hint: 'Thẻ nông dân. Nội dung sửa ở mục Nông dân.', icon: '❀' },
   testimonials: { name: 'Cảm nhận khách hàng', hint: 'Lời chứng thực. Nội dung sửa ở mục Cảm nhận.', icon: '❝' },
+  certificates: { name: 'Chứng nhận', hint: 'Bày chứng nhận dạng slider có nút bấm, hoặc lưới hiện hết. Bấm vào thẻ để xem ảnh lớn. Nội dung sửa ở mục Chứng nhận.', icon: '✓' },
+  catalogs: { name: 'Catalog', hint: 'Thẻ bìa catalog, bấm vào lật xem từng trang. Bày dạng slider có nút hoặc lưới. Nội dung sửa ở mục Catalog.', icon: '▤' },
   faq: { name: 'Câu hỏi thường gặp', hint: 'Danh sách hỏi–đáp. Nội dung sửa ở mục Câu hỏi.', icon: '?' },
 };
 
@@ -184,6 +216,8 @@ export function emptyBlock(type: BlockType): Block {
     case 'subBox': return { type };
     case 'farmers': return { type, title: 'Nông dân', eyebrow: '', linkLabel: '', linkHref: '', tone: 'default', limit: 3 };
     case 'testimonials': return { type, title: 'Cảm nhận khách hàng', tone: 'default', limit: 0 };
+    case 'certificates': return { type, title: 'Chứng nhận & Chứng chỉ', eyebrow: '', linkLabel: '', linkHref: '', tone: 'muted', limit: 0, layout: 'slider' };
+    case 'catalogs': return { type, title: 'Catalog sản phẩm', eyebrow: '', linkLabel: '', linkHref: '', tone: 'default', limit: 0, layout: 'slider' };
     case 'faq': return { type, title: 'Câu hỏi thường gặp', subtitle: '', tone: 'default' };
   }
 }

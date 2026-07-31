@@ -9,6 +9,8 @@ const LABELS: Record<string, string> = {
   categories: 'Danh mục',
   farmers: 'Nông dân',
   testimonials: 'Cảm nhận',
+  certificates: 'Chứng nhận',
+  catalogs: 'Catalog',
   faq: 'Câu hỏi',
   'value-props': 'Điểm giá trị',
   orders: 'Đơn hàng',
@@ -20,6 +22,7 @@ const LABELS: Record<string, string> = {
   'contact-topics': 'Chủ đề liên hệ',
   'email-templates': 'Mẫu email',
   account: 'Tài khoản của tôi',
+  'huong-dan': 'Hướng dẫn sử dụng',
   new: 'Thêm mới',
 };
 

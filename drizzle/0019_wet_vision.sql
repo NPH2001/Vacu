@@ -1,0 +1,3 @@
+ALTER TABLE "menu_items" ADD COLUMN "parent_id" integer;--> statement-breakpoint
+ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_parent_id_menu_items_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."menu_items"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_no_self_parent" CHECK ("menu_items"."parent_id" IS NULL OR "menu_items"."parent_id" <> "menu_items"."id");

@@ -5,12 +5,16 @@ import { db, pool } from './client';
 // same way — see the note in that file for why it lives outside the migrations.
 import { ensureAboutPage } from '../scripts/ensure-about-page.mjs';
 import { ensureHomePage } from '../scripts/ensure-home-page.mjs';
+import { ensureCertificatesPage } from '../scripts/ensure-certificates-page.mjs';
+import { ensureCatalogsPage } from '../scripts/ensure-catalogs-page.mjs';
 
 async function main() {
   console.log('Running migrations...');
   await migrate(db, { migrationsFolder: './drizzle' });
   await ensureAboutPage(pool);
   await ensureHomePage(pool);
+  await ensureCertificatesPage(pool);
+  await ensureCatalogsPage(pool);
   console.log('Done.');
   await pool.end();
 }

@@ -395,6 +395,265 @@ describe('payment-methods actions', () => {
   });
 });
 
+// ---------------- catalogs ----------------
+describe('catalog actions', () => {
+  it('blocks unauthenticated create', async () => {
+    authed = false;
+    const { createCatalog } = await import('@/app/admin/actions/catalogs');
+    const fd = new FormData();
+    fd.set('name', 'Catalog 2026');
+    fd.append('pages', '/uploads/p1.webp');
+    await expect(createCatalog(null, fd)).rejects.toThrow();
+  });
+
+  it('từ chối catalog không có trang nào', async () => {
+    const { createCatalog } = await import('@/app/admin/actions/catalogs');
+    const fd = new FormData();
+    fd.set('name', 'Catalog rỗng');
+    const res = await createCatalog(null, fd);
+    expect(res?.error).toMatch(/ít nhất một ảnh/i);
+  });
+
+  it('lưu các trang đúng thứ tự đã gửi lên', async () => {
+    const { createCatalog } = await import('@/app/admin/actions/catalogs');
+    const { db } = await import('@/db/client');
+    const { catalogs, catalogImages } = await import('@/db/schema');
+    const { eq, asc } = await import('drizzle-orm');
+
+    const fd = new FormData();
+    fd.set('name', 'Catalog nông sản 2026');
+    fd.set('description', 'Trọn bộ sản phẩm');
+    fd.set('sortOrder', '10');
+    for (const u of ['/uploads/b.webp', '/uploads/a.webp', '/uploads/c.webp']) fd.append('pages', u);
+    await expect(createCatalog(null, fd)).rejects.toThrow(); // redirect khi thành công
+
+    const [row] = await db.select().from(catalogs).where(eq(catalogs.name, 'Catalog nông sản 2026'));
+    expect(row.sortOrder).toBe(10);
+    const pages = await db.select().from(catalogImages)
+      .where(eq(catalogImages.catalogId, row.id)).orderBy(asc(catalogImages.sortOrder));
+    // Thứ tự do form quyết định, KHÔNG phải thứ tự chữ cái.
+    expect(pages.map((p) => p.url)).toEqual(['/uploads/b.webp', '/uploads/a.webp', '/uploads/c.webp']);
+
+    await db.delete(catalogs).where(eq(catalogs.id, row.id));
+  });
+
+  it('cập nhật thay cả bộ trang, không cộng dồn', async () => {
+    const { updateCatalog } = await import('@/app/admin/actions/catalogs');
+    const { db } = await import('@/db/client');
+    const { catalogs, catalogImages } = await import('@/db/schema');
+    const { eq, asc } = await import('drizzle-orm');
+
+    const [row] = await db.insert(catalogs).values({ name: 'Bản cũ' }).returning();
+    await db.insert(catalogImages).values([
+      { catalogId: row.id, url: '/uploads/old1.webp', sortOrder: 0 },
+      { catalogId: row.id, url: '/uploads/old2.webp', sortOrder: 10 },
+    ]);
+
+    const fd = new FormData();
+    fd.set('name', 'Bản mới');
+    fd.append('pages', '/uploads/new1.webp');
+    await expect(updateCatalog(row.id, null, fd)).rejects.toThrow();
+
+    const pages = await db.select().from(catalogImages)
+      .where(eq(catalogImages.catalogId, row.id)).orderBy(asc(catalogImages.sortOrder));
+    expect(pages.map((p) => p.url)).toEqual(['/uploads/new1.webp']);
+
+    await db.delete(catalogs).where(eq(catalogs.id, row.id));
+  });
+
+  it('xóa catalog thì các trang tự xóa theo', async () => {
+    const { deleteCatalog } = await import('@/app/admin/actions/catalogs');
+    const { db } = await import('@/db/client');
+    const { catalogs, catalogImages } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const [row] = await db.insert(catalogs).values({ name: 'Sắp xóa' }).returning();
+    await db.insert(catalogImages).values({ catalogId: row.id, url: '/uploads/x.webp' });
+
+    await expect(deleteCatalog(row.id)).rejects.toThrow();
+    expect(await db.select().from(catalogs).where(eq(catalogs.id, row.id))).toHaveLength(0);
+    expect(await db.select().from(catalogImages).where(eq(catalogImages.catalogId, row.id))).toHaveLength(0);
+  });
+
+  it('bỏ qua catalog chưa có trang khi hiện ra web', async () => {
+    const { db } = await import('@/db/client');
+    const { catalogs, catalogImages } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+    const { getAllCatalogs } = await import('@/lib/data');
+
+    const rows = await db.insert(catalogs).values([
+      { name: 'Có trang', sortOrder: 10 },
+      { name: 'Chưa có trang', sortOrder: 20 },
+    ]).returning();
+    await db.insert(catalogImages).values({ catalogId: rows[0].id, url: '/uploads/only.webp' });
+
+    const all = await getAllCatalogs();
+    expect(all.map((c) => c.name)).toContain('Có trang');
+    expect(all.map((c) => c.name)).not.toContain('Chưa có trang');
+
+    await db.delete(catalogs).where(inArray(catalogs.id, rows.map((r) => r.id)));
+  });
+
+  it('catalog bị ẩn thì không hiện ra web, nhưng vẫn còn trong admin', async () => {
+    const { createCatalog, updateCatalog } = await import('@/app/admin/actions/catalogs');
+    const { db } = await import('@/db/client');
+    const { catalogs } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { getAllCatalogs } = await import('@/lib/data');
+
+    const fd = new FormData();
+    fd.set('name', 'Bảng giá quý cũ');
+    fd.append('pages', '/uploads/old.webp');
+    fd.set('visible', 'on');
+    await expect(createCatalog(null, fd)).rejects.toThrow();
+    const [row] = await db.select().from(catalogs).where(eq(catalogs.name, 'Bảng giá quý cũ'));
+    expect(row.visible).toBe(true);
+    expect((await getAllCatalogs()).map((c) => c.name)).toContain('Bảng giá quý cũ');
+
+    // Bỏ tick: ô checkbox không gửi gì lên, đúng như trình duyệt làm.
+    const hide = new FormData();
+    hide.set('name', 'Bảng giá quý cũ');
+    hide.append('pages', '/uploads/old.webp');
+    await expect(updateCatalog(row.id, null, hide)).rejects.toThrow();
+
+    const [after] = await db.select().from(catalogs).where(eq(catalogs.id, row.id));
+    expect(after.visible).toBe(false);
+    // Vẫn còn nguyên trong admin để bật lại, chỉ là khách không thấy.
+    expect((await getAllCatalogs()).map((c) => c.name)).not.toContain('Bảng giá quý cũ');
+
+    await db.delete(catalogs).where(eq(catalogs.id, row.id));
+  });
+
+  it('cảnh báo khi xóa ảnh đang là một trang catalog', async () => {
+    const { db } = await import('@/db/client');
+    const { catalogs, catalogImages } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { findMediaUsage } = await import('@/lib/media');
+
+    const [row] = await db.insert(catalogs).values({ name: 'Đang dùng ảnh' }).returning();
+    await db.insert(catalogImages).values({ catalogId: row.id, url: '/uploads/in-use.webp' });
+
+    const usage = await findMediaUsage('/uploads/in-use.webp');
+    expect(usage.some((u) => u.kind === 'Catalog' && u.label === 'Đang dùng ảnh')).toBe(true);
+
+    await db.delete(catalogs).where(eq(catalogs.id, row.id));
+  });
+
+  it('bulk-deletes; empty short-circuits', async () => {
+    const { bulkDeleteCatalogs } = await import('@/app/admin/actions/catalogs');
+    const { db } = await import('@/db/client');
+    const { catalogs } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+
+    const rows = await db.insert(catalogs).values([{ name: 'C1' }, { name: 'C2' }]).returning();
+    const ids = rows.map((r) => r.id);
+
+    await expect(bulkDeleteCatalogs(new FormData())).rejects.toThrow();
+    expect(await db.select().from(catalogs).where(inArray(catalogs.id, ids))).toHaveLength(2);
+
+    const fd = new FormData();
+    ids.forEach((id) => fd.append('ids', String(id)));
+    await expect(bulkDeleteCatalogs(fd)).rejects.toThrow();
+    expect(await db.select().from(catalogs).where(inArray(catalogs.id, ids))).toHaveLength(0);
+  });
+});
+
+// ---------------- certificates ----------------
+describe('certificate actions', () => {
+  it('blocks unauthenticated create', async () => {
+    authed = false;
+    const { createCertificate } = await import('@/app/admin/actions/certificates');
+    const fd = new FormData();
+    fd.set('name', 'OCOP 4 sao');
+    fd.set('image', '/uploads/c.webp');
+    await expect(createCertificate(null, fd)).rejects.toThrow();
+  });
+
+  it('rejects a certificate with no image', async () => {
+    const { createCertificate } = await import('@/app/admin/actions/certificates');
+    const fd = new FormData();
+    fd.set('name', 'Thiếu ảnh');
+    fd.set('image', '');
+    const res = await createCertificate(null, fd);
+    expect(res?.error).toBeTruthy();
+  });
+
+  it('creates, updates, deletes', async () => {
+    const { createCertificate, updateCertificate, deleteCertificate } =
+      await import('@/app/admin/actions/certificates');
+    const { db } = await import('@/db/client');
+    const { certificates } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const fd = new FormData();
+    fd.set('name', 'OCOP 4 sao');
+    fd.set('issuer', 'UBND tỉnh Lâm Đồng');
+    fd.set('image', '/uploads/ocop.webp');
+    fd.set('description', 'Cấp năm 2024');
+    fd.set('sortOrder', '5');
+    await expect(createCertificate(null, fd)).rejects.toThrow();
+    const [row] = await db.select().from(certificates).where(eq(certificates.name, 'OCOP 4 sao'));
+    expect(row.image).toBe('/uploads/ocop.webp');
+    expect(row.issuer).toBe('UBND tỉnh Lâm Đồng');
+    expect(row.sortOrder).toBe(5);
+
+    const u = new FormData();
+    u.set('name', 'OCOP 5 sao');
+    u.set('issuer', '');
+    u.set('image', '/uploads/ocop5.webp');
+    u.set('description', '');
+    u.set('sortOrder', '1');
+    await expect(updateCertificate(row.id, null, u)).rejects.toThrow();
+    const [after] = await db.select().from(certificates).where(eq(certificates.id, row.id));
+    expect(after.name).toBe('OCOP 5 sao');
+    // Xóa trống nơi cấp phải lưu thành chuỗi rỗng, không phải giữ giá trị cũ.
+    expect(after.issuer).toBe('');
+    expect(after.sortOrder).toBe(1);
+
+    await expect(deleteCertificate(row.id)).rejects.toThrow();
+    expect(await db.select().from(certificates).where(eq(certificates.id, row.id))).toHaveLength(0);
+  });
+
+  it('bulk-deletes; empty short-circuits', async () => {
+    const { bulkDeleteCertificates } = await import('@/app/admin/actions/certificates');
+    const { db } = await import('@/db/client');
+    const { certificates } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+
+    const rows = await db.insert(certificates).values([
+      { name: 'C1', image: '/uploads/1.webp' },
+      { name: 'C2', image: '/uploads/2.webp' },
+    ]).returning();
+    const ids = rows.map((r) => r.id);
+
+    await expect(bulkDeleteCertificates(new FormData())).rejects.toThrow();
+    expect(await db.select().from(certificates).where(inArray(certificates.id, ids))).toHaveLength(2);
+
+    const fd = new FormData();
+    ids.forEach((id) => fd.append('ids', String(id)));
+    await expect(bulkDeleteCertificates(fd)).rejects.toThrow();
+    expect(await db.select().from(certificates).where(inArray(certificates.id, ids))).toHaveLength(0);
+  });
+
+  it('sắp theo thứ tự rồi tới id — đúng thứ tự dải ảnh hiển thị', async () => {
+    const { db } = await import('@/db/client');
+    const { certificates } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+    const { getAllCertificates } = await import('@/lib/data');
+
+    const rows = await db.insert(certificates).values([
+      { name: 'Ba', image: '/uploads/3.webp', sortOrder: 30 },
+      { name: 'Mot', image: '/uploads/1.webp', sortOrder: 10 },
+      { name: 'Hai', image: '/uploads/2.webp', sortOrder: 20 },
+    ]).returning();
+
+    const all = await getAllCertificates();
+    expect(all.map((c) => c.name)).toEqual(['Mot', 'Hai', 'Ba']);
+
+    await db.delete(certificates).where(inArray(certificates.id, rows.map((r) => r.id)));
+  });
+});
+
 // ---------------- value-props ----------------
 describe('value-props actions', () => {
   it('blocks unauthenticated create', async () => {
@@ -1781,6 +2040,136 @@ describe('menu actions', () => {
     const remaining = await db.select().from(menuItems).where(inArray(menuItems.id, ids));
     expect(remaining).toHaveLength(0);
   });
+
+  // ---- menu nhiều cấp ----
+
+  it('gắn được mục con và chặn vòng lặp cha–con', async () => {
+    const { createMenuItem, updateMenuItem } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { eq, inArray } = await import('drizzle-orm');
+
+    const [parent] = await db.insert(menuItems)
+      .values({ location: 'header', label: 'Nông sản', href: '/products' }).returning();
+
+    const child = new FormData();
+    child.set('location', 'header');
+    child.set('label', 'Rau ăn lá');
+    child.set('href', '/danh-muc/rau');
+    child.set('parentId', String(parent.id));
+    await expect(createMenuItem(null, child)).rejects.toThrow(); // redirect khi thành công
+    const [saved] = await db.select().from(menuItems).where(eq(menuItems.label, 'Rau ăn lá'));
+    expect(saved.parentId).toBe(parent.id);
+
+    // Cha nhận con của chính nó làm cha → vòng lặp, phải bị từ chối.
+    const cycle = new FormData();
+    cycle.set('location', 'header');
+    cycle.set('label', 'Nông sản');
+    cycle.set('href', '/products');
+    cycle.set('parentId', String(saved.id));
+    const res = await updateMenuItem(parent.id, null, cycle);
+    expect(res?.error).toMatch(/nằm bên trong/i);
+
+    await db.delete(menuItems).where(inArray(menuItems.id, [saved.id, parent.id]));
+  });
+
+  it(`từ chối mục vượt quá số cấp cho phép`, async () => {
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+    const { MAX_MENU_DEPTH } = await import('@/lib/menu');
+
+    const [a] = await db.insert(menuItems).values({ location: 'header', label: 'A', href: '/a' }).returning();
+    const [b] = await db.insert(menuItems).values({ location: 'header', label: 'B', href: '/b', parentId: a.id }).returning();
+    const [c] = await db.insert(menuItems).values({ location: 'header', label: 'C', href: '/c', parentId: b.id }).returning();
+
+    const tooDeep = new FormData();
+    tooDeep.set('location', 'header');
+    tooDeep.set('label', 'D');
+    tooDeep.set('href', '/d');
+    tooDeep.set('parentId', String(c.id));
+    const res = await createMenuItem(null, tooDeep);
+    expect(res?.error).toContain(String(MAX_MENU_DEPTH));
+
+    await db.delete(menuItems).where(inArray(menuItems.id, [c.id, b.id, a.id]));
+  });
+
+  it('không cho ghép mục Header vào mục cha bên Footer', async () => {
+    const { createMenuItem } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const [footerParent] = await db.insert(menuItems)
+      .values({ location: 'footer', label: 'Chính sách', href: '/chinh-sach' }).returning();
+
+    const fd = new FormData();
+    fd.set('location', 'header');
+    fd.set('label', 'Lạc chỗ');
+    fd.set('href', '/x');
+    fd.set('parentId', String(footerParent.id));
+    const res = await createMenuItem(null, fd);
+    expect(res?.error).toMatch(/cùng vị trí/i);
+
+    await db.delete(menuItems).where(eq(menuItems.id, footerParent.id));
+  });
+
+  it('đổi vị trí thì kéo theo cả nhánh con', async () => {
+    const { updateMenuItem } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { eq, inArray } = await import('drizzle-orm');
+
+    const [root] = await db.insert(menuItems).values({ location: 'header', label: 'R', href: '/r' }).returning();
+    const [kid] = await db.insert(menuItems).values({ location: 'header', label: 'K', href: '/k', parentId: root.id }).returning();
+    const [grandKid] = await db.insert(menuItems).values({ location: 'header', label: 'G', href: '/g', parentId: kid.id }).returning();
+
+    const fd = new FormData();
+    fd.set('location', 'footer');
+    fd.set('label', 'R');
+    fd.set('href', '/r');
+    await expect(updateMenuItem(root.id, null, fd)).rejects.toThrow(); // redirect khi thành công
+
+    const rows = await db.select().from(menuItems).where(inArray(menuItems.id, [root.id, kid.id, grandKid.id]));
+    expect(rows.every((r) => r.location === 'footer')).toBe(true);
+
+    await db.delete(menuItems).where(inArray(menuItems.id, [grandKid.id, kid.id, root.id]));
+    expect(await db.select().from(menuItems).where(eq(menuItems.id, root.id))).toHaveLength(0);
+  });
+
+  it('xóa mục còn con thì giải thích thay vì xóa mất cả nhánh', async () => {
+    const { deleteMenuItem, bulkDeleteMenuItems } = await import('@/app/admin/actions/menu');
+    const { db } = await import('@/db/client');
+    const { menuItems } = await import('@/db/schema');
+    const { inArray } = await import('drizzle-orm');
+    const { flashOf } = await import('@/lib/admin/flash');
+
+    const [parent] = await db.insert(menuItems).values({ location: 'header', label: 'P', href: '/p' }).returning();
+    const [kid] = await db.insert(menuItems).values({ location: 'header', label: 'Kid', href: '/kid', parentId: parent.id }).returning();
+
+    await expect(deleteMenuItem(parent.id)).rejects.toMatchObject({
+      digest: expect.stringContaining('/admin/menu?loi=menu-con-con'),
+    });
+    const onlyParent = new FormData();
+    onlyParent.append('ids', String(parent.id));
+    await expect(bulkDeleteMenuItems(onlyParent)).rejects.toMatchObject({
+      digest: expect.stringContaining('/admin/menu?loi=menu-con-con-nhieu'),
+    });
+    expect(flashOf('menu-con-con')?.text).toMatch(/mục con/i);
+    expect(flashOf('menu-con-con-nhieu')?.text).toMatch(/mục con/i);
+
+    // Cả nhánh vẫn còn nguyên sau hai lần xóa hụt.
+    expect(await db.select().from(menuItems).where(inArray(menuItems.id, [parent.id, kid.id]))).toHaveLength(2);
+
+    // Tick chọn cả cha lẫn con thì xóa được trong một câu lệnh.
+    const both = new FormData();
+    both.append('ids', String(parent.id));
+    both.append('ids', String(kid.id));
+    await expect(bulkDeleteMenuItems(both)).rejects.toThrow();
+    expect(await db.select().from(menuItems).where(inArray(menuItems.id, [parent.id, kid.id]))).toHaveLength(0);
+  });
+
 });
 
 // =====================================================================

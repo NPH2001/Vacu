@@ -3,6 +3,8 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import pg from 'pg';
 import { ensureAboutPage } from './ensure-about-page.mjs';
 import { ensureHomePage } from './ensure-home-page.mjs';
+import { ensureCertificatesPage } from './ensure-certificates-page.mjs';
+import { ensureCatalogsPage } from './ensure-catalogs-page.mjs';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -21,6 +23,8 @@ await migrate(db, { migrationsFolder: './drizzle' });
 await ensureAboutPage(pool);
 // The homepage is likewise a pages row (id `home`), served at `/`.
 await ensureHomePage(pool);
+await ensureCertificatesPage(pool);
+await ensureCatalogsPage(pool);
 
 console.log('Done.');
 await pool.end();

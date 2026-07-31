@@ -9,7 +9,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const num = Number(id);
   if (!Number.isFinite(num)) notFound();
-  const [rows, cats] = await Promise.all([
+  const [rows, cats, menu] = await Promise.all([
     db.select().from(menuItems).where(eq(menuItems.id, num)).limit(1),
     db
       .select({
@@ -18,6 +18,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
       })
       .from(categories)
       .orderBy(asc(categories.sortOrder), asc(categories.name)),
+    db.select().from(menuItems),
   ]);
   const row = rows[0];
   if (!row) notFound();
@@ -25,7 +26,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-5">
       <h1 className="admin-title text-[28px]">Sửa mục menu</h1>
-      <MenuItemForm action={bound} defaults={row} editing categories={cats} />
+      <MenuItemForm action={bound} defaults={row} editing categories={cats} menuItems={menu} />
     </div>
   );
 }

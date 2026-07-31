@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { SiteInfoRow, CategoryRow, MenuItemRow } from "@/db/schema";
+import type { SiteInfoRow, CategoryRow } from "@/db/schema";
+import type { MenuNode } from "@/lib/menu";
 import CategoryIcon from "@/components/CategoryIcon";
 
 type Social = { key: string; label: string; url: string | null };
@@ -9,7 +10,7 @@ export default function Footer({
 }: {
   info: SiteInfoRow;
   categories: CategoryRow[];
-  quickLinks: MenuItemRow[];
+  quickLinks: MenuNode[];
 }) {
   const socials: Social[] = [
     { key: "FB", label: "Facebook", url: info.socialFacebook },
@@ -68,18 +69,7 @@ export default function Footer({
           <div>
             <h4 className="font-semibold mb-3 text-white font-display">Liên kết nhanh</h4>
             <ul className="text-sm space-y-2 text-green-200/80">
-              {quickLinks.map((l) => (
-                <li key={l.id}>
-                  <Link
-                    href={l.href}
-                    target={l.openInNewTab ? "_blank" : undefined}
-                    rel={l.openInNewTab ? "noopener noreferrer" : undefined}
-                    className="hover:text-white"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              <FooterLinks nodes={quickLinks} />
             </ul>
           </div>
         )}
@@ -120,5 +110,31 @@ export default function Footer({
         )}
       </div>
     </footer>
+  );
+}
+
+/** Footer không có dropdown: mục con hiện luôn, chỉ thụt vào cho thấy quan hệ. */
+function FooterLinks({ nodes, depth = 0 }: { nodes: MenuNode[]; depth?: number }) {
+  return (
+    <>
+      {nodes.map((l) => (
+        <li key={l.id} style={depth > 0 ? { paddingLeft: depth * 12 } : undefined}>
+          <Link
+            href={l.href}
+            target={l.openInNewTab ? "_blank" : undefined}
+            rel={l.openInNewTab ? "noopener noreferrer" : undefined}
+            className={depth > 0 ? "hover:text-white text-green-200/60" : "hover:text-white"}
+          >
+            {depth > 0 && <span className="mr-1 text-green-200/40" aria-hidden>└</span>}
+            {l.label}
+          </Link>
+          {l.children.length > 0 && (
+            <ul className="mt-2 space-y-2">
+              <FooterLinks nodes={l.children} depth={depth + 1} />
+            </ul>
+          )}
+        </li>
+      ))}
+    </>
   );
 }

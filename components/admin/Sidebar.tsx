@@ -35,6 +35,8 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { href: '/admin/media', label: 'Thư viện ảnh', icon: '▣' },
       { href: '/admin/farmers', label: 'Nông dân', icon: '❀' },
       { href: '/admin/testimonials', label: 'Cảm nhận', icon: '❝' },
+      { href: '/admin/certificates', label: 'Chứng nhận', icon: '✓' },
+      { href: '/admin/catalogs', label: 'Catalog', icon: '▦' },
       { href: '/admin/faq', label: 'Câu hỏi', icon: '?' },
       { href: '/admin/value-props', label: 'Điểm giá trị', icon: '★' },
       { href: '/admin/menu', label: 'Menu', icon: '☰' },
@@ -57,6 +59,11 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { href: '/admin/users', label: 'Tài khoản', icon: '◉', adminOnly: true },
       { href: '/admin/settings', label: 'Cài đặt', icon: '⚙', adminOnly: true },
     ],
+  },
+  {
+    // Nhóm riêng ở cuối, không adminOnly: nhân viên là người cần hướng dẫn nhất.
+    title: 'Trợ giúp',
+    items: [{ href: '/admin/huong-dan', label: 'Hướng dẫn sử dụng', icon: '?' }],
   },
 ];
 
