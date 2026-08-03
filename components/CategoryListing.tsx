@@ -80,11 +80,18 @@ export default function CategoryListing({
         <div className={`relative max-w-7xl mx-auto px-4 w-full ${cover ? 'pb-3 lg:pb-16 pt-6 lg:pt-24' : ''}`}>
           {activeCategory ? (
             <div className="flex items-end gap-5">
-              {!cover && (
-                <div className="hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden">
-                  <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
-                </div>
-              )}
+              {/* Over a cover photo the frame needs a dark, opaque backing —
+                  the white/15 glass used on the gradient hero disappears into
+                  a bright image. */}
+              <div
+                className={`hidden sm:flex shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl backdrop-blur-md border items-center justify-center text-5xl md:text-6xl shadow-xl overflow-hidden ${
+                  cover
+                    ? 'bg-green-950/55 border-white/40 ring-1 ring-green-950/30'
+                    : 'bg-white/15 border-white/25'
+                }`}
+              >
+                <CategoryIcon value={activeCategory.icon} alt={activeCategory.name} className="w-full h-full" />
+              </div>
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 bg-amber-300 text-green-950 text-[10px] lg:text-[11px] font-extrabold tracking-widest uppercase px-2.5 py-1 rounded-full shadow-md mb-2.5 lg:mb-3">
                   {badge}
