@@ -45,7 +45,7 @@ export default function HeroSlider({
 
   return (
     <section
-      className="relative overflow-hidden flex flex-col md:min-h-[600px]"
+      className="relative flex min-h-[620px] flex-col overflow-hidden md:min-h-[680px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -66,7 +66,8 @@ export default function HeroSlider({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={s.image} alt="" loading={i === 0 ? 'eager' : 'lazy'}
             fetchPriority={i === 0 ? 'high' : undefined} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-br from-green-950/80 via-green-900/60 to-amber-900/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-green-950/95 via-green-950/72 to-green-900/20" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(5,46,22,0.42),transparent_55%)]" />
         </div>
       ))}
 
@@ -75,7 +76,7 @@ export default function HeroSlider({
           overlap the stats on a phone, no empty band when a slide is short.
           flex-1 + items-center keeps it vertically centred on desktop. */}
       <div className="relative z-10 flex-1 flex items-center">
-        <div className="grid max-w-7xl mx-auto px-4 w-full py-12 md:py-20">
+        <div className="mx-auto grid w-full max-w-7xl px-4 py-14 md:py-24">
           {slides.map((s, i) => (
             <div
               key={s.id}
@@ -85,33 +86,38 @@ export default function HeroSlider({
                 i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             >
-              <div className="max-w-2xl text-white">
+              <div className="max-w-3xl text-white">
                 {s.badge && (
-                  <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium mb-5 md:mb-6 border border-white/20">
-                    <span className="w-2 h-2 rounded-full bg-amber-300" />
+                  <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] backdrop-blur md:mb-6">
+                    <span className="h-2 w-2 rounded-full bg-lime-300" />
                     {s.badge}
                   </div>
                 )}
-                <HeroHeading className="text-4xl md:text-6xl font-bold font-display mb-4 md:mb-6 leading-[1.1] wrap-anywhere">
+                <HeroHeading className="mb-5 max-w-3xl wrap-anywhere font-display text-4xl font-semibold leading-[1.04] tracking-[-0.035em] text-balance md:text-6xl lg:text-7xl">
                   {s.title}
                 </HeroHeading>
                 {s.subtitle && (
-                  <p className="text-lg md:text-xl text-green-50/90 mb-6 md:mb-10 max-w-xl wrap-anywhere">{s.subtitle}</p>
+                  <p className="mb-8 max-w-2xl wrap-anywhere text-base leading-relaxed text-green-50/88 md:text-xl">{s.subtitle}</p>
                 )}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   {s.ctaPrimaryLabel && s.ctaPrimaryHref && (
                     <Link href={s.ctaPrimaryHref}
-                      className="bg-amber-400 hover:bg-amber-500 text-green-950 font-bold px-7 py-4 rounded-full transition">
-                      {s.ctaPrimaryLabel}
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-400 px-7 py-3.5 font-bold text-green-950 transition hover:bg-amber-300">
+                      {s.ctaPrimaryLabel}<span aria-hidden>→</span>
                     </Link>
                   )}
                   {s.ctaSecondaryLabel && s.ctaSecondaryHref && (
                     <Link href={s.ctaSecondaryHref}
-                      className="bg-white/10 hover:bg-white/20 backdrop-blur text-white font-bold px-7 py-4 rounded-full border border-white/30 transition">
+                      className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-7 py-3.5 font-bold text-white backdrop-blur transition hover:bg-white/20">
                       {s.ctaSecondaryLabel}
                     </Link>
                   )}
                 </div>
+                <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-green-50/80" aria-label="Cam kết mua hàng">
+                  <li className="inline-flex items-center gap-1.5"><span className="text-lime-300" aria-hidden>✓</span> Nguồn gốc minh bạch</li>
+                  <li className="inline-flex items-center gap-1.5"><span className="text-lime-300" aria-hidden>✓</span> Chọn lọc mỗi ngày</li>
+                  <li className="inline-flex items-center gap-1.5"><span className="text-lime-300" aria-hidden>✓</span> Hỗ trợ đổi trả</li>
+                </ul>
               </div>
             </div>
           ))}
@@ -121,12 +127,12 @@ export default function HeroSlider({
       {/* Persistent stats + controls — in normal flow at the bottom. */}
       <div className="relative z-10 w-full">
         {stats.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 pb-6">
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-6 border-t border-white/20 text-white">
+          <div className="mx-auto max-w-7xl px-4 pb-5">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/15 bg-white/10 text-white backdrop-blur-md md:grid-cols-4">
               {stats.map((s, i) => (
-                <div key={i}>
-                  <div className="text-2xl md:text-3xl font-bold font-display">{s.value}</div>
-                  <div className="text-xs text-green-100/70 uppercase tracking-wider">{s.label}</div>
+                <div key={i} className="bg-green-950/30 px-4 py-4 md:px-6">
+                  <div className="font-display text-2xl font-semibold md:text-3xl">{s.value}</div>
+                  <div className="mt-0.5 text-[11px] uppercase tracking-wider text-green-100/70">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -134,7 +140,7 @@ export default function HeroSlider({
         )}
 
         {count > 1 && (
-          <div className="max-w-7xl mx-auto px-4 pb-6 flex items-center gap-3">
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-6">
             <div className="flex gap-2">
               {slides.map((s, i) => (
                 <button

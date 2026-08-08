@@ -43,9 +43,14 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
   const relatedFarmersById = await getFarmersByIds(related.map((r) => r.farmerId));
   const discount =
     p.oldPrice && p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+  const sourceFacts = [
+    farmer ? `${farmer.farm} · ${farmer.location}` : null,
+    category ? `Danh mục: ${category.name}` : null,
+    p.inStock ? 'Còn hàng, có thể đặt ngay' : 'Tạm hết hàng',
+  ].filter(Boolean);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 py-10 pb-28 lg:pb-10">
       <JsonLd data={productLd(info, p, farmer, category)} />
       <JsonLd data={breadcrumbLd(info, [
         { name: "Trang chủ", path: "/" },
@@ -53,7 +58,7 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
         ...(category ? [{ name: category.name, path: `/danh-muc/${category.id}` }] : []),
         { name: p.name, path: `/products/${p.id}` },
       ])} />
-      <nav className="text-sm text-green-900/60 mb-6 wrap-anywhere">
+      <nav aria-label="Breadcrumb" className="text-sm text-green-900/60 mb-6 wrap-anywhere">
         <Link href="/" className="hover:underline">Trang chủ</Link> /{" "}
         <Link href="/products" className="hover:underline">Nông sản</Link>
         {category && (
@@ -66,32 +71,62 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
 
       {/* min-w-0 on both columns: a grid item defaults to min-width:auto, so a
           long unbreakable word inside would widen the column past the grid. */}
-      <div className="grid md:grid-cols-2 gap-10">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(19rem,0.95fr)] lg:items-start">
         <div className="min-w-0">
           <ProductGallery primary={p.image} extra={gallery} alt={p.name} discount={discount} />
         </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap gap-2 mb-3">
+        <div className="min-w-0 lg:sticky lg:top-24 space-y-5">
+          <div className="flex flex-wrap gap-2">
             {p.tags.map((t) => (
               <span key={t} className="bg-green-50 text-green-800 text-xs font-semibold px-3 py-1 rounded-full border border-green-200 max-w-full wrap-anywhere">
                 ✓ {t}
               </span>
             ))}
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold font-display text-green-950 mb-3 wrap-anywhere">{p.name}</h1>
-          <p className="text-green-900/80 leading-relaxed mb-6 wrap-anywhere">{p.description}</p>
-
-          <div className="bg-white rounded-2xl p-5 border border-green-100 mb-5">
-            {/* flex-wrap: a large price plus a strikethrough original is wider
-                than a phone can fit on one line. */}
-            <div className="flex items-end gap-3 mb-1 flex-wrap">
-              <span className="text-3xl font-bold text-green-800 wrap-anywhere">{formatPrice(p.price)}</span>
-              {p.oldPrice && (
-                <span className="text-lg line-through text-stone-400 pb-1">{formatPrice(p.oldPrice)}</span>
-              )}
+          <section className="rounded-[1.75rem] border border-green-100 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold font-display text-green-950 wrap-anywhere">{p.name}</h1>
+                <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-green-900/70">
+                  {sourceFacts.map((fact) => (
+                    <li key={fact} className="inline-flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-green-600" aria-hidden />
+                      <span className="wrap-anywhere">{fact}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl bg-green-50 px-4 py-3 min-w-[12rem]">
+                {/* flex-wrap: a large price plus a strikethrough original is wider
+                    than a phone can fit on one line. */}
+                <div className="flex items-end gap-3 mb-1 flex-wrap">
+                  <span className="text-3xl font-bold text-green-800 wrap-anywhere">{formatPrice(p.price)}</span>
+                  {p.oldPrice && (
+                    <span className="text-lg line-through text-stone-400 pb-1">{formatPrice(p.oldPrice)}</span>
+                  )}
+                </div>
+                <div className="text-sm text-green-900/60 wrap-anywhere">Đơn vị: {p.unit}</div>
+              </div>
             </div>
-            <div className="text-sm text-green-900/60 wrap-anywhere">Đơn vị: {p.unit}</div>
-          </div>
+            <p className="mt-4 text-green-900/80 leading-relaxed wrap-anywhere">{p.description}</p>
+
+            <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-green-100 bg-emerald-50/70 px-4 py-3">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-green-800/70">Nguồn gốc</dt>
+                <dd className="mt-1 text-sm text-green-950 wrap-anywhere">
+                  {farmer ? `${farmer.name} · ${farmer.location}` : "Tuyển chọn bởi Vacu từ hợp tác xã đối tác"}
+                </dd>
+              </div>
+              <div className="rounded-2xl border border-green-100 bg-emerald-50/70 px-4 py-3">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-green-800/70">Giao dự kiến</dt>
+                <dd className="mt-1 text-sm text-green-950">Chọn khung giờ ở bước thanh toán; cửa hàng xác nhận trước khi giao.</dd>
+              </div>
+              <div className="rounded-2xl border border-green-100 bg-emerald-50/70 px-4 py-3">
+                <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-green-800/70">Cam kết</dt>
+                <dd className="mt-1 text-sm text-green-950">Thông tin nông hộ, vùng trồng và tiêu chuẩn hiển thị minh bạch trước khi mua.</dd>
+              </div>
+            </dl>
+          </section>
 
           <ProductBuyBox p={p} />
 

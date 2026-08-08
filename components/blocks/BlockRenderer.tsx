@@ -21,7 +21,7 @@ function Band({
   tone, narrow = false, children,
 }: { tone: 'default' | 'muted'; narrow?: boolean; children: React.ReactNode }) {
   return (
-    <section className={`${tone === 'muted' ? 'bg-green-50/60 texture-paper ' : ''}py-12 md:py-20`}>
+    <section className={`${tone === 'muted' ? 'border-y border-green-100/70 bg-green-50/60 texture-paper ' : ''}py-6 md:py-10`}>
       <div className={`${narrow ? 'max-w-3xl' : 'max-w-7xl'} mx-auto px-4`}>{children}</div>
     </section>
   );
@@ -197,10 +197,11 @@ export default async function BlockRenderer({
           <HScroll itemClass="w-[42vw] max-w-[190px]" gridClass="md:grid-cols-3 lg:grid-cols-6">
             {items.map((c) => (
               <Link key={c.id} href={`/danh-muc/${c.id}`}
-                className="flex flex-col h-full bg-white rounded-2xl border border-green-100 p-5 text-center hover:shadow-lg hover:-translate-y-1 transition">
-                <CategoryIcon value={c.icon} alt={c.name} className="w-14 h-14 mx-auto mb-2 text-4xl rounded-xl" />
-                <div className="font-bold text-green-950 wrap-anywhere">{c.name}</div>
-                <div className="text-xs text-green-800/60 mt-1 line-clamp-2">{c.description}</div>
+                className="group flex h-full flex-col rounded-2xl border border-green-100 bg-white p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-[0_18px_36px_-24px_rgba(20,83,45,0.5)]">
+                <CategoryIcon value={c.icon} alt={c.name} className="mb-4 h-16 w-16 rounded-2xl bg-green-50 text-4xl transition group-hover:bg-green-100" />
+                <div className="wrap-anywhere font-bold text-green-950">{c.name}</div>
+                <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-green-900/60">{c.description}</div>
+                <div className="mt-3 text-xs font-bold text-green-700">Khám phá <span aria-hidden>→</span></div>
               </Link>
             ))}
           </HScroll>
@@ -269,10 +270,10 @@ export default async function BlockRenderer({
             gridClass={items.length >= 4 ? 'md:grid-cols-4' : items.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}
           >
             {items.map((v) => (
-              <div key={v.id} className="bg-white p-6 rounded-3xl border border-green-100">
-                <div className="text-4xl mb-3">{v.icon}</div>
-                <h3 className="font-bold text-green-950 font-display text-lg mb-1.5 wrap-anywhere">{v.title}</h3>
-                <p className="text-green-900/70 text-sm wrap-anywhere">{v.description}</p>
+              <div key={v.id} className="h-full rounded-2xl border border-green-100 bg-white p-6 shadow-[0_12px_30px_-28px_rgba(20,83,45,0.7)]">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-2xl" aria-hidden>{v.icon}</div>
+                <h3 className="mb-2 wrap-anywhere font-display text-lg font-semibold text-green-950">{v.title}</h3>
+                <p className="wrap-anywhere text-sm leading-relaxed text-green-900/70">{v.description}</p>
               </div>
             ))}
           </HScroll>
@@ -287,19 +288,19 @@ export default async function BlockRenderer({
       const hasImage = Boolean(info.subBoxImage);
       return (
         <section className="max-w-7xl mx-auto px-4 py-12 md:py-20">
-          <div className={`bg-gradient-to-br from-green-800 to-green-950 rounded-[2.5rem] overflow-hidden grid ${hasImage ? 'md:grid-cols-2' : ''}`}>
-            <div className="p-10 md:p-14 text-white flex flex-col justify-center">
-              <div className="inline-block bg-amber-400 text-green-950 text-xs font-bold px-3 py-1 rounded-full w-fit mb-4">
+          <div className={`grid overflow-hidden rounded-[2rem] bg-gradient-to-br from-green-800 to-green-950 shadow-[0_30px_60px_-36px_rgba(5,46,22,0.8)] ${hasImage ? 'md:grid-cols-2' : ''}`}>
+            <div className="flex flex-col justify-center p-8 text-white md:p-14">
+              <div className="mb-4 inline-block w-fit rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-green-950">
                 {info.subBoxBadge}
               </div>
-              <h2 className="text-3xl md:text-5xl font-bold font-display leading-tight mb-4">{info.subBoxTitle}</h2>
-              <p className="text-green-100/80 mb-6 max-w-md">{info.subBoxDescription}</p>
-              <ul className="space-y-2 mb-8 text-green-100/90">
-                {(Array.isArray(info.subBoxFeatures) ? info.subBoxFeatures : []).map((f, i) => <li key={i}>✓ {f}</li>)}
+              <h2 className="mb-4 font-display text-3xl font-semibold leading-tight text-balance md:text-5xl">{info.subBoxTitle}</h2>
+              <p className="mb-6 max-w-md leading-relaxed text-green-100/80">{info.subBoxDescription}</p>
+              <ul className="mb-8 space-y-2 text-sm text-green-100/90">
+                {(Array.isArray(info.subBoxFeatures) ? info.subBoxFeatures : []).map((f, i) => <li key={i} className="flex gap-2"><span className="text-lime-300" aria-hidden>✓</span>{f}</li>)}
               </ul>
               <Link href={info.subBoxLink}
-                className="bg-amber-400 hover:bg-amber-500 text-green-950 font-bold px-7 py-3.5 rounded-full transition w-fit">
-                {info.subBoxCta}
+                className="w-fit rounded-xl bg-amber-400 px-7 py-3.5 font-bold text-green-950 transition hover:bg-amber-300">
+                {info.subBoxCta} <span aria-hidden>→</span>
               </Link>
             </div>
             {hasImage && (
@@ -373,13 +374,13 @@ export default async function BlockRenderer({
           )}
           <HScroll itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
             {items.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-green-100 shadow-[0_1px_3px_rgba(20,60,30,0.05)] p-5 h-full flex flex-col">
+              <article key={i} className="flex h-full flex-col rounded-2xl border border-green-100 bg-white p-6 shadow-[0_16px_36px_-30px_rgba(20,83,45,0.6)]">
                 {(() => { const r = Math.max(0, Math.min(5, t.rating)); return (
                   <div className="text-amber-500 text-sm mb-2" aria-label={`${r}/5 sao`}>
                     {'★'.repeat(r)}<span className="text-stone-300">{'★'.repeat(5 - r)}</span>
                   </div>
                 ); })()}
-                <p className="text-green-900/80 flex-1 italic leading-relaxed wrap-anywhere">&ldquo;{t.content}&rdquo;</p>
+                <p className="flex-1 wrap-anywhere leading-relaxed text-green-900/80">&ldquo;{t.content}&rdquo;</p>
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-green-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
@@ -388,7 +389,7 @@ export default async function BlockRenderer({
                     <div className="text-xs text-green-900/60 truncate">{t.role}</div>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </HScroll>
         </Band>

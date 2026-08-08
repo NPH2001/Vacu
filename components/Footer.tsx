@@ -22,8 +22,23 @@ export default function Footer({
   const showQuickLinks = quickLinks.length > 0;
 
   return (
-    <footer className="bg-green-950 text-green-100 mt-24">
-      <div className="max-w-7xl mx-auto px-4 py-14 grid md:grid-cols-4 gap-10">
+    <footer className="mt-20 bg-green-950 text-green-100">
+      <div className="border-b border-white/10 bg-green-900/70">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-5 text-sm md:grid-cols-4">
+          {[
+            ['Nguồn gốc minh bạch', 'Thông tin nông hộ và vùng sản xuất'],
+            ['Chọn lọc mỗi ngày', 'Ưu tiên độ tươi và đúng mùa'],
+            ['Giao hàng cẩn thận', 'Đóng gói phù hợp từng sản phẩm'],
+            ['Hỗ trợ tận tâm', info.hours],
+          ].map(([title, text]) => (
+            <div key={title} className="px-3 py-2 md:px-5">
+              <div className="font-bold text-white">{title}</div>
+              <div className="mt-1 text-xs leading-relaxed text-green-100/65">{text}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4">
         <div className={showQuickLinks ? "md:col-span-1" : "md:col-span-2"}>
           <h3 className="text-2xl font-bold text-green-300 mb-3 font-display flex items-center gap-2">
             {info.logoUrl ? (
@@ -34,7 +49,7 @@ export default function Footer({
             )}
             {info.name}
           </h3>
-          <p className="text-green-200/80 max-w-md">{info.description}</p>
+          <p className="max-w-md text-sm leading-relaxed text-green-200/80">{info.description}</p>
           {activeSocials.length > 0 && (
             <div className="flex gap-3 mt-5">
               {activeSocials.map((s) => (
@@ -54,7 +69,7 @@ export default function Footer({
         </div>
         <div>
           <h4 className="font-semibold mb-3 text-white font-display">Danh mục</h4>
-          <ul className="text-sm space-y-2 text-green-200/80">
+          <ul className="space-y-2.5 text-sm text-green-200/80">
             {categories.filter((c) => !c.parentId).slice(0, 5).map((c) => (
               <li key={c.id}>
                 <Link href={`/danh-muc/${c.id}`} className="hover:text-white inline-flex items-center gap-1.5">
@@ -68,18 +83,18 @@ export default function Footer({
         {showQuickLinks && (
           <div>
             <h4 className="font-semibold mb-3 text-white font-display">Liên kết nhanh</h4>
-            <ul className="text-sm space-y-2 text-green-200/80">
+            <ul className="space-y-2.5 text-sm text-green-200/80">
               <FooterLinks nodes={quickLinks} />
             </ul>
           </div>
         )}
         <div>
           <h4 className="font-semibold mb-3 text-white font-display">Liên hệ</h4>
-          <ul className="text-sm space-y-2 text-green-200/80">
-            <li>📍 {info.address}</li>
-            <li>📞 {info.phone}</li>
-            <li>✉️ {info.email}</li>
-            <li>🕒 {info.hours}</li>
+          <ul className="space-y-3 text-sm text-green-200/80">
+            <li><span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-green-300/60">Địa chỉ</span>{info.address}</li>
+            <li><span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-green-300/60">Hotline</span><a href={`tel:${info.phone.replace(/\D/g, '')}`} className="hover:text-white">{info.phone}</a></li>
+            <li><span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-green-300/60">Email</span><a href={`mailto:${info.email}`} className="hover:text-white">{info.email}</a></li>
+            <li><span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wider text-green-300/60">Giờ hỗ trợ</span>{info.hours}</li>
           </ul>
         </div>
       </div>

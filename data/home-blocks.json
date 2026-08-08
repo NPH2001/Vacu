@@ -4,8 +4,8 @@
     "visible": true,
     "data": {
       "type": "products",
-      "title": "Mùa nào thức nấy",
-      "eyebrow": "Nổi bật tuần này",
+      "title": "Thực phẩm tươi được chọn nhiều hôm nay",
+      "eyebrow": "Tươi ngon mỗi ngày",
       "linkLabel": "Xem tất cả",
       "linkHref": "/products",
       "tone": "muted",
@@ -20,9 +20,9 @@
     "visible": true,
     "data": {
       "type": "categories",
-      "title": "Thứ gì bạn đang cần?",
-      "eyebrow": "Danh mục",
-      "linkLabel": "Tất cả",
+      "title": "Đi chợ theo nhu cầu của gia đình",
+      "eyebrow": "Danh mục thực phẩm",
+      "linkLabel": "Xem tất cả",
       "linkHref": "/products",
       "source": "all",
       "categoryIds": [],
@@ -34,9 +34,9 @@
     "visible": true,
     "data": {
       "type": "farmers",
-      "title": "Người trồng rau cho bạn",
-      "eyebrow": "Gặp bà con",
-      "linkLabel": "Toàn bộ",
+      "title": "Biết rõ người làm ra thực phẩm",
+      "eyebrow": "Từ nông trại đến bàn ăn",
+      "linkLabel": "Gặp các nhà nông",
       "linkHref": "/farmers",
       "limit": 3
     }

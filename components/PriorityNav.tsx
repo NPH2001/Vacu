@@ -89,20 +89,20 @@ export default function PriorityNav({ items }: { items: MenuNode[] }) {
         {/* w-max so the 0-width wrapper doesn't shrink the flex children to
             nothing — each <li> must lay out at its natural label width for the
             measurement to be meaningful. */}
-        <ul ref={measureRef} className="flex w-max gap-x-7 whitespace-nowrap text-sm font-medium">
+        <ul ref={measureRef} className="flex w-max gap-x-7 whitespace-nowrap text-base font-medium">
           {items.map((l) => (
             <li key={l.id} className="max-w-56 shrink-0 truncate">
               {l.label}{l.children.length > 0 ? ' \u25be' : ''}
             </li>
           ))}
         </ul>
-        <span ref={moreRef} className="inline-block w-max text-sm font-medium">Thêm ▾</span>
+        <span ref={moreRef} className="inline-block w-max text-base font-medium">Thêm ▾</span>
       </div>
 
       {/* Clip only until the first measurement: before JS runs the row may hold
           all items and overflow, so hide it; afterwards the computed row always
           fits, and dropping the clip lets the "Thêm" dropdown escape the row. */}
-      <ul className={`flex items-center justify-center gap-x-7 whitespace-nowrap text-sm font-medium text-green-900/80 ${measured ? '' : 'overflow-hidden'}`}>
+      <ul className={`flex items-center justify-center gap-x-7 whitespace-nowrap text-base font-medium text-green-900/80 ${measured ? '' : 'overflow-hidden'}`}>
         {visible.map((l) => (
           l.children.length > 0 ? (
             <NavBranch key={l.id} node={l} />
