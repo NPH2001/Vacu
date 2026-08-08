@@ -96,14 +96,16 @@ function Slider({ items, onOpen }: { items: CatalogView[]; onOpen: (c: CatalogVi
         <>
           <NavButton side="left" disabled={atStart} onClick={() => scrollByPage(-1)} />
           <NavButton side="right" disabled={atEnd} onClick={() => scrollByPage(1)} />
-          <div className="flex justify-center gap-2 mt-5">
+          <div className="flex justify-center gap-1 mt-5">
             {Array.from({ length: pages }, (_, i) => (
               <button key={i} type="button" onClick={() => goToPage(i)}
                 aria-label={`Tới nhóm ${i + 1} trên ${pages}`}
                 aria-current={i === page || undefined}
-                className={`h-2 rounded-full transition-all ${
-                  i === page ? 'w-6 bg-green-700' : 'w-2 bg-green-700/25 hover:bg-green-700/50'
+                className="group inline-flex h-11 min-w-11 items-center justify-center rounded-full">
+                <span aria-hidden className={`h-2 rounded-full transition-all ${
+                  i === page ? 'w-6 bg-green-700' : 'w-2 bg-green-700/25 group-hover:bg-green-700/50'
                 }`} />
+              </button>
             ))}
           </div>
         </>

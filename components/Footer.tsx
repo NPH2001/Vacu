@@ -114,7 +114,7 @@ export default function Footer({
                 href={info.footerBuiltByUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-green-200 hover:text-white underline-offset-2 hover:underline"
+                className="text-green-200 underline underline-offset-2 hover:text-white"
               >
                 {info.footerBuiltByLabel}
               </a>

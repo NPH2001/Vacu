@@ -157,20 +157,20 @@ export async function placeOrder(formData: FormData): Promise<PlaceOrderResult> 
   }
 
   // Fire-and-notify emails (don't block success if SMTP fails)
-  void sendOrderEmails({ orderId, total, meta: { ...meta.data, paymentMethod } })
+  void sendOrderEmails({ orderId, total, meta: { ...meta.data, paymentMethod }, info })
     .catch((e) => console.error('[placeOrder] email error:', e));
 
   return { ok: true, orderId };
 }
 
 async function sendOrderEmails({
-  orderId, total, meta,
+  orderId, total, meta, info,
 }: {
   orderId: string;
   total: number;
   meta: z.infer<typeof placeOrderSchema>;
+  info: typeof siteInfo.$inferSelect | undefined;
 }) {
-  const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
   if (!info || !info.smtpEnabled) return;
 
   const origin = siteOrigin(info.siteUrl);

@@ -17,6 +17,9 @@ const schema = z.object({
 
 export type ContactSubmitResult = { ok: true } | { ok: false; error: string };
 
+const CONTACT_UNAVAILABLE = 'Kênh gửi tin nhắn đang tạm gián đoạn. Vui lòng liên hệ qua email hoặc điện thoại bên cạnh.';
+const CONTACT_SEND_FAILED = 'Tin nhắn chưa gửi được. Vui lòng thử lại hoặc liên hệ qua email hay điện thoại bên cạnh.';
+
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c),
@@ -40,8 +43,9 @@ export async function submitContact(fd: FormData): Promise<ContactSubmitResult> 
   }
 
   const [info] = await db.select().from(siteInfo).where(eq(siteInfo.id, 1)).limit(1);
-  if (!info) return { ok: false, error: 'Site chưa khởi tạo.' };
-  if (!info.smtpEnabled) return { ok: false, error: 'Chưa cấu hình gửi mail. Admin vui lòng kiểm tra.' };
+  if (!info || !info.smtpEnabled || !info.smtpHost || !info.smtpFrom) {
+    return { ok: false, error: CONTACT_UNAVAILABLE };
+  }
 
   const { name, phone, email, topic, message } = parsed.data;
   const html = `
@@ -65,6 +69,9 @@ export async function submitContact(fd: FormData): Promise<ContactSubmitResult> 
     text: `Chủ đề: ${topic}\nHọ tên: ${name}\nEmail: ${email}\nĐiện thoại: ${phone}\n\n${message}`,
   });
 
-  if (!res.ok) return { ok: false, error: res.error };
+  if (!res.ok) {
+    console.error('[submitContact] send error:', res.error);
+    return { ok: false, error: CONTACT_SEND_FAILED };
+  }
   return { ok: true };
 }

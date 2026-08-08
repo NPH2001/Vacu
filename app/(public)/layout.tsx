@@ -31,31 +31,33 @@ export default async function PublicLayout({ children }: { children: React.React
   const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <CartProvider>
-      <JsonLd data={organizationLd(info)} />
-      <a href="#main" className="skip-link">Bỏ qua tới nội dung</a>
-      {/* Navbar is a Client Component: pass only the fields it renders, never the
-          whole row, or secrets in `info` (smtpPass, …) end up in the RSC payload
-          embedded in the public HTML. */}
-      <Navbar
-        info={{
-          logoUrl: info.logoUrl,
-          name: info.name,
-          navbarCta: info.navbarCta,
-          phone: info.phone,
-          hours: info.hours,
-        }}
-        items={headerMenu}
-      />
-      <main id="main" className="flex-1">{children}</main>
-      <Footer info={info} categories={categories} quickLinks={footerMenu} />
-      <CartDrawer
-        emptyTitle={info.cartEmptyTitle}
-        emptyText={info.cartEmptyText}
-        shippingLabel={info.shippingLabel}
-      />
-      <FloatingContact phone={info.phone} />
-      <ScrollToTop />
-      <Analytics measurementId={info.gaMeasurementId} nonce={nonce} />
+      <div className="storefront flex min-h-full flex-1 flex-col">
+        <JsonLd data={organizationLd(info)} />
+        <a href="#main" className="skip-link">Bỏ qua tới nội dung</a>
+        {/* Navbar is a Client Component: pass only the fields it renders, never the
+            whole row, or secrets in `info` (smtpPass, …) end up in the RSC payload
+            embedded in the public HTML. */}
+        <Navbar
+          info={{
+            logoUrl: info.logoUrl,
+            name: info.name,
+            navbarCta: info.navbarCta,
+            phone: info.phone,
+            hours: info.hours,
+          }}
+          items={headerMenu}
+        />
+        <main id="main" className="flex-1">{children}</main>
+        <Footer info={info} categories={categories} quickLinks={footerMenu} />
+        <CartDrawer
+          emptyTitle={info.cartEmptyTitle}
+          emptyText={info.cartEmptyText}
+          shippingLabel={info.shippingLabel}
+        />
+        <FloatingContact phone={info.phone} />
+        <ScrollToTop />
+        <Analytics measurementId={info.gaMeasurementId} nonce={nonce} />
+      </div>
     </CartProvider>
   );
 }

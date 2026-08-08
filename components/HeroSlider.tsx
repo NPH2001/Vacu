@@ -141,7 +141,7 @@ export default function HeroSlider({
 
         {count > 1 && (
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-6">
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {slides.map((s, i) => (
                 <button
                   key={s.id}
@@ -149,10 +149,12 @@ export default function HeroSlider({
                   onClick={() => go(i)}
                   aria-label={`Slide ${i + 1}`}
                   aria-current={i === current}
-                  className={`h-2 rounded-full transition-all ${
-                    i === current ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
-                  }`}
-                />
+                  className="group inline-flex h-11 min-w-11 items-center justify-center rounded-full"
+                >
+                  <span aria-hidden className={`h-2 rounded-full transition-all ${
+                    i === current ? 'w-6 bg-white' : 'w-2 bg-white/40 group-hover:bg-white/70'
+                  }`} />
+                </button>
               ))}
             </div>
             <div className="ml-auto flex gap-2">

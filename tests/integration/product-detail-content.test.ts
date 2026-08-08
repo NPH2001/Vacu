@@ -52,5 +52,7 @@ describe('ProductDetailPage detail content', () => {
     expect(html).toContain('Đánh giá khách hàng');
     expect(html.indexOf('Khách sau')).toBeLessThan(html.indexOf('Khách trước'));
     expect(html).toContain('4 trên 5 sao');
+    expect(html).toContain('<span class="sr-only">4 trên 5 sao</span>');
+    expect(html).not.toMatch(/<p[^>]+aria-label="[45] trên 5 sao"/);
   });
 });

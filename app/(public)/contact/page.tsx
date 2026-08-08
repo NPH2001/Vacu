@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ContactPage() {
   const [info, topics] = await Promise.all([getSiteInfo(), getAllContactTopics()]);
+  const contactFormAvailable = Boolean(info.smtpEnabled && info.smtpHost && info.smtpFrom);
   return (
     <div className="max-w-6xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
@@ -40,7 +41,24 @@ export default async function ContactPage() {
           </div>
         </div>
 
-        <ContactForm topics={topics} />
+        {contactFormAvailable ? (
+          <ContactForm topics={topics} />
+        ) : (
+          <div role="status" className="md:col-span-3 rounded-3xl border border-amber-200 bg-amber-50 p-7">
+            <h2 className="text-2xl font-bold font-display text-green-950">Gửi tin nhắn đang tạm dừng</h2>
+            <p className="mt-3 text-store-muted">
+              Kênh gửi trực tuyến chưa sẵn sàng. Bạn vẫn có thể liên hệ trực tiếp qua email hoặc điện thoại.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <a href={`mailto:${info.email}`} className="inline-flex min-h-11 items-center justify-center rounded-full bg-green-800 px-5 py-3 font-bold text-white hover:bg-green-900">
+                Gửi email
+              </a>
+              <a href={`tel:${info.phone.replace(/\D/g, '')}`} className="inline-flex min-h-11 items-center justify-center rounded-full border border-green-300 bg-white px-5 py-3 font-bold text-green-900 hover:bg-green-50">
+                Gọi {info.phone}
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

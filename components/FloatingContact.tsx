@@ -1,4 +1,7 @@
+'use client';
+
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 function digitsOnly(s: string) {
   return s.replace(/\D/g, "");
@@ -39,8 +42,9 @@ function ContactButton({
  * /contact form to ask a question before buying.
  */
 export default function FloatingContact({ phone }: { phone: string }) {
+  const pathname = usePathname();
   const phoneDigits = digitsOnly(phone);
-  if (!phoneDigits) return null;
+  if (!phoneDigits || pathname === '/contact') return null;
 
   return (
     // bottom-24 on mobile clears the product page's sticky "add to cart" bar

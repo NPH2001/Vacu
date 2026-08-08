@@ -176,7 +176,7 @@ export default async function BlockRenderer({
             <SectionHeader eyebrow={block.eyebrow} title={block.title}
               href={block.linkHref || undefined} linkLabel={block.linkLabel} />
           </AnimateOnScroll>
-          <HScroll gridClass="md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <HScroll ariaLabel="Sản phẩm nổi bật" gridClass="md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((p) => (
               <ProductCard key={p.id} p={p} farmer={p.farmerId ? farmersById.get(p.farmerId) : null} />
             ))}
@@ -194,7 +194,7 @@ export default async function BlockRenderer({
             <SectionHeader eyebrow={block.eyebrow} title={block.title}
               href={block.linkHref || undefined} linkLabel={block.linkLabel} />
           </AnimateOnScroll>
-          <HScroll itemClass="w-[42vw] max-w-[190px]" gridClass="md:grid-cols-3 lg:grid-cols-6">
+          <HScroll ariaLabel="Danh mục sản phẩm" itemClass="w-[42vw] max-w-[190px]" gridClass="md:grid-cols-3 lg:grid-cols-6">
             {items.map((c) => (
               <Link key={c.id} href={`/danh-muc/${c.id}`}
                 className="group flex h-full flex-col rounded-2xl border border-green-100 bg-white p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-[0_18px_36px_-24px_rgba(20,83,45,0.5)]">
@@ -266,6 +266,7 @@ export default async function BlockRenderer({
             <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display text-center mb-8 wrap-anywhere">{block.title}</h2>
           )}
           <HScroll
+            ariaLabel="Lợi ích mua sắm"
             itemClass="w-[72vw] max-w-[280px]"
             gridClass={items.length >= 4 ? 'md:grid-cols-4' : items.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}
           >
@@ -324,7 +325,7 @@ export default async function BlockRenderer({
             <SectionHeader eyebrow={block.eyebrow} title={block.title}
               href={block.linkHref || undefined} linkLabel={block.linkLabel} />
           </AnimateOnScroll>
-          <HScroll itemClass="w-[82vw] max-w-[320px]" gridClass="md:grid-cols-3">
+          <HScroll ariaLabel="Nông hộ đối tác" itemClass="w-[82vw] max-w-[320px]" gridClass="md:grid-cols-3">
             {items.map((f) => <FarmerCard key={f.id} f={f} />)}
           </HScroll>
         </Band>
@@ -372,12 +373,13 @@ export default async function BlockRenderer({
               <h2 className="text-3xl md:text-4xl font-bold text-green-950 font-display text-center mb-12 wrap-anywhere">{block.title}</h2>
             </AnimateOnScroll>
           )}
-          <HScroll itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
+          <HScroll ariaLabel="Đánh giá khách hàng" itemClass="w-[82vw] max-w-[330px]" gridClass="md:grid-cols-2 lg:grid-cols-3">
             {items.map((t, i) => (
               <article key={i} className="flex h-full flex-col rounded-2xl border border-green-100 bg-white p-6 shadow-[0_16px_36px_-30px_rgba(20,83,45,0.6)]">
                 {(() => { const r = Math.max(0, Math.min(5, t.rating)); return (
-                  <div className="text-amber-500 text-sm mb-2" aria-label={`${r}/5 sao`}>
-                    {'★'.repeat(r)}<span className="text-stone-300">{'★'.repeat(5 - r)}</span>
+                  <div className="text-amber-500 text-sm mb-2">
+                    <span className="sr-only">{r}/5 sao</span>
+                    <span aria-hidden>{'★'.repeat(r)}<span className="text-stone-300">{'★'.repeat(5 - r)}</span></span>
                   </div>
                 ); })()}
                 <p className="flex-1 wrap-anywhere leading-relaxed text-green-900/80">&ldquo;{t.content}&rdquo;</p>

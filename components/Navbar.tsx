@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MenuNode } from "@/lib/menu";
 import { NestedLinkList } from "./NavDropdown";
 import { useCart } from "./CartProvider";
@@ -15,12 +15,17 @@ type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string; pho
 
 export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuNode[] }) {
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { count, setOpen: setCartOpen } = useCart();
 
   // Let keyboard users dismiss the open mobile menu with Escape.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
@@ -59,10 +64,10 @@ export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuN
 
           <form action="/products" method="get" role="search" className="relative hidden min-w-0 flex-1 md:block">
             <label htmlFor="site-search" className="sr-only">Tìm kiếm thực phẩm</label>
-            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-green-800/45">
+            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-store-muted">
               <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" />
             </svg>
-            <input id="site-search" name="q" type="search" placeholder="Tìm rau củ, trái cây, thịt cá, đặc sản OCOP…" className="h-12 w-full rounded-full border border-green-200 bg-green-50/60 pl-12 pr-28 text-base text-green-950 placeholder:text-green-900/45 focus:border-green-600 focus:bg-white focus:ring-4 focus:ring-green-600/10" />
+            <input id="site-search" name="q" type="search" placeholder="Tìm rau củ, trái cây, thịt cá, đặc sản OCOP…" className="h-12 w-full rounded-full border border-green-200 bg-green-50/60 pl-12 pr-28 text-base text-green-950 placeholder:text-store-muted focus:border-green-600 focus:bg-white focus:ring-4 focus:ring-green-600/10" />
             <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-green-800 px-5 py-2 text-base font-bold text-white transition hover:bg-green-900">Tìm kiếm</button>
           </form>
 
@@ -97,6 +102,7 @@ export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuN
 
           {items.length > 0 && (
             <button
+              ref={menuButtonRef}
               aria-label={open ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={open}
               aria-controls="mobile-nav"

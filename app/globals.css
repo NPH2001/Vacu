@@ -3,6 +3,7 @@
 @theme inline {
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-display: var(--font-display), Georgia, serif;
+  --color-store-muted: var(--store-muted);
 }
 
 :root {
@@ -39,6 +40,29 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Storefront secondary copy previously mixed theme greens with opacity. That
+   made contrast depend on both the selected theme and the surface underneath.
+   Route all low-emphasis dark text through one fixed semantic token instead. */
+.storefront [class~="text-green-700/70"],
+.storefront [class~="text-green-800/60"],
+.storefront [class~="text-green-800/70"],
+.storefront [class~="text-green-900/40"],
+.storefront [class~="text-green-900/45"],
+.storefront [class~="text-green-900/50"],
+.storefront [class~="text-green-900/55"],
+.storefront [class~="text-green-900/60"],
+.storefront [class~="text-green-900/65"],
+.storefront [class~="text-green-900/70"],
+.storefront [class~="text-green-900/72"] {
+  color: var(--store-muted);
+}
+
+/* Keep horizontally scrollable card tracks from contributing their off-screen
+   children to the document's intrinsic width at 320px. */
+.h-scroll-region {
+  contain: layout inline-size;
 }
 
 html {

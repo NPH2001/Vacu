@@ -173,7 +173,8 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
                   />
                   <div className="min-w-0">
                     <h3 className="font-semibold text-green-950 wrap-anywhere">{review.name}</h3>
-                    <p className="text-amber-500 text-sm tracking-wide" aria-label={`${review.rating} trên 5 sao`}>
+                    <p className="text-amber-500 text-sm tracking-wide">
+                      <span className="sr-only">{review.rating} trên 5 sao</span>
                       <span aria-hidden>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
                     </p>
                   </div>

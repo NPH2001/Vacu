@@ -11,3 +11,9 @@ tsconfig.tsbuildinfo
 .claude/
 .codex/
 openspec/
+
+# Local oh-my-codex runtime data
+/.omx/audits/
+/.omx/logs/
+/.omx/state/
+/.omx/ultragoal/
