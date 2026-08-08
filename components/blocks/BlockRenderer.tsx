@@ -3,6 +3,7 @@ import type { Block } from '@/lib/blocks';
 import {
   getProductsForBlock, getCategoriesForBlock, getActiveHeroSlides, getAllValueProps,
   getAllFarmers, getAllTestimonials, getAllCertificates, getAllCatalogs, getAllFaqItems, getSiteInfo,
+  getFarmersByIds,
 } from '@/lib/data';
 import ProductCard from '@/components/ProductCard';
 import CategoryIcon from '@/components/CategoryIcon';
@@ -168,6 +169,7 @@ export default async function BlockRenderer({
     case 'products': {
       const items = await getProductsForBlock(block);
       if (items.length === 0) return null;
+      const farmersById = await getFarmersByIds(items.map((p) => p.farmerId));
       return (
         <Band tone={block.tone}>
           <AnimateOnScroll>
@@ -175,7 +177,9 @@ export default async function BlockRenderer({
               href={block.linkHref || undefined} linkLabel={block.linkLabel} />
           </AnimateOnScroll>
           <HScroll gridClass="md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {items.map((p) => <ProductCard key={p.id} p={p} />)}
+            {items.map((p) => (
+              <ProductCard key={p.id} p={p} farmer={p.farmerId ? farmersById.get(p.farmerId) : null} />
+            ))}
           </HScroll>
         </Band>
       );

@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "description_title" text DEFAULT 'Mô tả sản phẩm' NOT NULL;

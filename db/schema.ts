@@ -80,6 +80,8 @@ export const products = pgTable('products', {
   image: text('image').notNull(),
   farmerId: text('farmer_id').references(() => farmers.id, { onDelete: 'set null' }),
   description: text('description').notNull(),
+  // Title of the single long-form article displayed on this product's detail page.
+  descriptionTitle: text('description_title').notNull().default('Mô tả sản phẩm'),
   body: text('body').notNull().default(''),
   tags: jsonb('tags').$type<string[]>().notNull().default([]),
   featured: boolean('featured').notNull().default(false),
@@ -107,6 +109,22 @@ export const productImages = pgTable('product_images', {
   alt: text('alt').notNull().default(''),
   sortOrder: integer('sort_order').default(0).notNull(),
 }, (t) => [index('product_images_product_idx').on(t.productId, t.sortOrder)]);
+
+/** Admin-curated customer reviews shown only on their associated product page. */
+export const productReviews = pgTable('product_reviews', {
+  id: serial('id').primaryKey(),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  avatar: text('avatar'),
+  content: text('content').notNull(),
+  rating: integer('rating').notNull().default(5),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => [
+  index('product_reviews_product_idx').on(t.productId, t.sortOrder),
+  check('product_reviews_rating_rng', sql`${t.rating} BETWEEN 1 AND 5`),
+]);
 
 export const postCategories = pgTable('post_categories', {
   id: text('id').primaryKey(),
@@ -414,14 +432,16 @@ export const catalogImages = pgTable('catalog_images', {
 }, (t) => [index('catalog_images_catalog_idx').on(t.catalogId, t.sortOrder)]);
 
 /**
- * Giấy chứng nhận / chứng chỉ (OCOP, VietGAP, ISO…). Ảnh là bắt buộc — khối
- * hiển thị là một dải ảnh, một hàng không ảnh sẽ là một ô trống trôi ngang.
+ * Giấy chứng nhận / chứng chỉ (OCOP, VietGAP, ISO…). Ít nhất một ảnh là bắt
+ * buộc — khối hiển thị là một dải ảnh, một hàng không ảnh sẽ là một ô trống
+ * trôi ngang. Nhiều ảnh cho một chứng nhận (ví dụ mặt trước/sau, nhiều trang)
+ * đều hiện đủ ở trang xem lớn.
  */
 export const certificates = pgTable('certificates', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   issuer: text('issuer').notNull().default(''),
-  image: text('image').notNull(),
+  images: jsonb('images').$type<string[]>().notNull().default([]),
   description: text('description').notNull().default(''),
   sortOrder: integer('sort_order').default(0).notNull(),
 });
@@ -549,9 +569,13 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, { fields: [products.categoryId], references: [categories.id] }),
   farmer: one(farmers, { fields: [products.farmerId], references: [farmers.id] }),
   images: many(productImages),
+  reviews: many(productReviews),
 }));
 export const productImagesRelations = relations(productImages, ({ one }) => ({
   product: one(products, { fields: [productImages.productId], references: [products.id] }),
+}));
+export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+  product: one(products, { fields: [productReviews.productId], references: [products.id] }),
 }));
 
 export const postsRelations = relations(posts, ({ one }) => ({
@@ -571,6 +595,7 @@ export const pageBlocksRelations = relations(pageBlocks, ({ one }) => ({
 
 export type MediaRow = typeof media.$inferSelect;
 export type ProductImageRow = typeof productImages.$inferSelect;
+export type ProductReviewRow = typeof productReviews.$inferSelect;
 export type PageRow = typeof pages.$inferSelect;
 export type PageBlockRow = typeof pageBlocks.$inferSelect;
 export type HomeSectionRow = typeof homeSections.$inferSelect;

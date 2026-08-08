@@ -17,3 +17,19 @@ if (!parsed.success) {
   console.error('[home-blocks] data/home-blocks.json does not match blockListSchema:', parsed.error.issues[0]);
 }
 export const DEFAULT_HOME_BLOCKS: BlockEntry[] = parsed.success ? parsed.data : [];
+
+/**
+ * Keeps the product showcase at the top of the public homepage, immediately
+ * below the hero slider. The CMS can still store any block order; this is the
+ * presentation rule for the homepage only.
+ */
+export function orderHomeBlocks<T extends { data: { type: string } }>(blocks: T[]): T[] {
+  const productIndex = blocks.findIndex((block) => block.data.type === 'products');
+  if (productIndex === -1) return blocks;
+
+  const ordered = [...blocks];
+  const products = ordered.splice(productIndex, 1)[0]!;
+  const sliderIndex = ordered.findIndex((block) => block.data.type === 'heroSlider');
+  ordered.splice(sliderIndex === -1 ? 0 : sliderIndex + 1, 0, products);
+  return ordered;
+}

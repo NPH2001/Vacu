@@ -5,14 +5,15 @@ import ImageUpload from '@/components/admin/ImageUpload';
 import SlugInput from '@/components/admin/SlugInput';
 import RichEditor from '@/components/admin/RichEditor';
 import GalleryField from '@/components/admin/GalleryField';
+import ProductReviewManager from '@/components/admin/ProductReviewManager';
 import { formatPrice } from '@/lib/format';
 import type { ProductFormState } from '@/app/admin/actions/products';
-import type { ProductRow, CategoryRow, FarmerRow } from '@/db/schema';
+import type { ProductRow, ProductReviewRow, CategoryRow, FarmerRow } from '@/db/schema';
 
 type Defaults = Partial<ProductRow> & { id?: string };
 
 export default function ProductForm({
-  action, defaults, categories, farmers, editing, gallery = [],
+  action, defaults, categories, farmers, editing, gallery = [], reviews = [],
 }: {
   action: (prev: ProductFormState, fd: FormData) => Promise<ProductFormState>;
   defaults?: Defaults;
@@ -20,6 +21,7 @@ export default function ProductForm({
   farmers: FarmerRow[];
   editing: boolean;
   gallery?: string[];
+  reviews?: ProductReviewRow[];
 }) {
   const [state, formAction, pending] = useActionState<ProductFormState, FormData>(action, null);
   const [tab, setTab] = useState<'info' | 'detail'>('info');
@@ -48,7 +50,8 @@ export default function ProductForm({
   };
 
   return (
-    <form action={formAction} onChange={() => setDirty(true)} onInvalidCapture={revealInvalid}
+    <>
+      <form action={formAction} onChange={() => setDirty(true)} onInvalidCapture={revealInvalid}
       className="grid lg:grid-cols-[1fr_320px] gap-5 items-start">
       <div className="space-y-4 min-w-0">
         <div className="admin-panel-flush">
@@ -108,11 +111,16 @@ export default function ProductForm({
           </div>
 
           <div className="p-5" hidden={tab !== 'detail'}>
+            <Field label="Tiêu đề bài mô tả" hint="Hiện phía trên bài mô tả ở trang sản phẩm.">
+              <input name="descriptionTitle" defaultValue={d.descriptionTitle ?? 'Mô tả sản phẩm'} maxLength={120}
+                placeholder="Ví dụ: Đặc điểm và cách bảo quản"
+                className="w-full admin-input" />
+            </Field>
             <RichEditor
               name="body"
               defaultValue={d.body ?? ''}
               label="Mô tả chi tiết"
-              hint="Hiện ở mục 'Chi tiết sản phẩm' bên dưới khu vực mua hàng. Gõ như Word, có thể dán từ Word."
+              hint="Bài mô tả duy nhất hiện bên dưới khu vực mua hàng. Gõ như Word, có thể dán từ Word."
               placeholder="Ví dụ: đặc điểm, cách bảo quản, gợi ý chế biến…"
               minHeight={360}
               // The editor writes its hidden input programmatically (no bubbling
@@ -172,7 +180,10 @@ export default function ProductForm({
           <Link href="/admin/products" className="admin-btn-ghost text-[12.5px]">← Quay lại danh sách</Link>
         </div>
       </div>
-    </form>
+
+      </form>
+      {editing && d.id && <ProductReviewManager productId={d.id} reviews={reviews} />}
+    </>
   );
 }
 

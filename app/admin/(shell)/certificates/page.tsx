@@ -80,7 +80,12 @@ export default async function CertificatesAdminPage({
                 <li key={r.id} className="p-5 flex gap-4 items-start">
                   <input type="checkbox" name="ids" aria-label="Chọn để xóa" value={r.id} className="mt-1" />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={r.image} alt="" className="w-14 h-14 rounded-lg object-cover border border-stone-200 shrink-0" />
+                  <img src={r.images[0]} alt="" className="w-14 h-14 rounded-lg object-cover border border-stone-200 shrink-0" />
+                  {r.images.length > 1 && (
+                    <span className="text-[10px] text-stone-500 -ml-2 mt-9 bg-white border border-stone-200 rounded-full px-1.5">
+                      +{r.images.length - 1}
+                    </span>
+                  )}
                   <div className="flex-1 min-w-0">
                     <Link href={`/admin/certificates/${r.id}`} className="font-semibold text-green-950 hover:underline">
                       {r.name}

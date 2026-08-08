@@ -19,6 +19,8 @@ vi.mock('@/lib/session', () => ({
   getSession: async () => null,
 }));
 
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+
 const uploadCalls: Array<{ fn: string; args: unknown[] }> = [];
 vi.mock('@/lib/uploads', async (importOriginal) => {
   const orig = await importOriginal<typeof import('@/lib/uploads')>();
@@ -57,6 +59,12 @@ function pForm(v: Partial<Record<
   'farmerId' | 'description' | 'body' | 'tags' | 'featured' | 'inStock',
   string
 >>) {
+  const fd = new FormData();
+  for (const [k, val] of Object.entries(v)) fd.set(k, val as string);
+  return fd;
+}
+
+function reviewForm(v: Partial<Record<'name' | 'avatar' | 'content' | 'rating' | 'sortOrder', string>>) {
   const fd = new FormData();
   for (const [k, val] of Object.entries(v)) fd.set(k, val as string);
   return fd;
@@ -247,6 +255,77 @@ describe('product gallery', () => {
     // ON DELETE CASCADE — otherwise the FK would block the delete outright.
     await expect(deleteProduct('p-gallery-del')).rejects.toThrow();
     expect(await getProductGallery('p-gallery-del')).toEqual([]);
+  });
+});
+
+describe('product reviews', () => {
+  async function insertProduct(id: string) {
+    const { db } = await import('@/db/client');
+    const { products } = await import('@/db/schema');
+    await db.insert(products).values({
+      id, name: id, categoryId: 'leafy', unit: 'kg', price: 1000,
+      image: '/uploads/review.webp', description: 'd',
+    });
+  }
+
+  it('creates, updates, orders, and isolates reviews by product', async () => {
+    await insertProduct('review-product-a');
+    await insertProduct('review-product-b');
+    const { createProductReview, updateProductReview, deleteProductReview } = await import('@/app/admin/actions/product-reviews');
+    const { getProductReviews } = await import('@/lib/data');
+
+    expect(await createProductReview('review-product-a', null, reviewForm({
+      name: 'Khách sau', content: 'Đánh giá sau', rating: '4', sortOrder: '20',
+    }))).toBeNull();
+    expect(await createProductReview('review-product-a', null, reviewForm({
+      name: 'Khách trước', content: 'Đánh giá trước', rating: '5', sortOrder: '10',
+    }))).toBeNull();
+    expect(await createProductReview('review-product-b', null, reviewForm({
+      name: 'Khách khác', content: 'Chỉ thuộc sản phẩm B', rating: '5', sortOrder: '0',
+    }))).toBeNull();
+
+    const aReviews = await getProductReviews('review-product-a');
+    expect(aReviews.map((review) => review.name)).toEqual(['Khách trước', 'Khách sau']);
+    expect(await getProductReviews('review-product-b')).toHaveLength(1);
+
+    expect(await updateProductReview('review-product-a', aReviews[1].id, null, reviewForm({
+      name: 'Khách đã sửa', content: 'Đã cập nhật', rating: '3', sortOrder: '5', avatar: '',
+    }))).toBeNull();
+    expect((await getProductReviews('review-product-a')).map((review) => review.name))
+      .toEqual(['Khách đã sửa', 'Khách trước']);
+
+    await deleteProductReview('review-product-a', aReviews[0].id);
+    expect((await getProductReviews('review-product-a')).map((review) => review.name))
+      .toEqual(['Khách đã sửa']);
+  });
+
+  it('rejects invalid data and unauthenticated review writes', async () => {
+    await insertProduct('review-validation');
+    const { createProductReview } = await import('@/app/admin/actions/product-reviews');
+
+    const invalid = await createProductReview('review-validation', null, reviewForm({
+      name: '', content: 'Nội dung', rating: '6', sortOrder: '0',
+    }));
+    expect(invalid?.error).toBeTruthy();
+
+    authed = false;
+    await expect(createProductReview('review-validation', null, reviewForm({
+      name: 'Khách', content: 'Nội dung', rating: '5', sortOrder: '0',
+    }))).rejects.toThrow();
+  });
+
+  it('cascades product reviews when their product is deleted', async () => {
+    await insertProduct('review-cascade');
+    const { createProductReview } = await import('@/app/admin/actions/product-reviews');
+    const { deleteProduct } = await import('@/app/admin/actions/products');
+    const { getProductReviews } = await import('@/lib/data');
+
+    await createProductReview('review-cascade', null, reviewForm({
+      name: 'Khách', content: 'Đánh giá bị xóa cùng sản phẩm', rating: '5', sortOrder: '0',
+    }));
+    expect(await getProductReviews('review-cascade')).toHaveLength(1);
+    await expect(deleteProduct('review-cascade')).rejects.toThrow();
+    expect(await getProductReviews('review-cascade')).toEqual([]);
   });
 });
 

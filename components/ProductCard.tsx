@@ -1,11 +1,9 @@
 import Link from "next/link";
 import type { Product } from "@/lib/data";
-import { formatPrice, getFarmer } from "@/lib/data";
-import AddToCartButton from "./AddToCartButton";
+import type { FarmerRow } from "@/db/schema";
 import SmartImage from "./SmartImage";
 
-export default async function ProductCard({ p }: { p: Product }) {
-  const farmer = await getFarmer(p.farmerId);
+export default function ProductCard({ p, farmer = null }: { p: Product; farmer?: FarmerRow | null }) {
   const discount =
     p.oldPrice && p.oldPrice > p.price
       ? Math.round((1 - p.price / p.oldPrice) * 100)
@@ -52,15 +50,15 @@ export default async function ProductCard({ p }: { p: Product }) {
         <div className="flex-1" />
         <div className="flex items-end justify-between pt-2 border-t border-green-100/70 gap-2">
           <div>
-            <div className="text-lg font-bold text-green-800">{formatPrice(p.price)}</div>
-            {/* Only strike through when it's a real discount — an oldPrice <= price
-                would otherwise imply a markdown that isn't one. */}
-            {discount > 0 && (
-              <div className="text-xs line-through text-stone-400">{formatPrice(p.oldPrice!)}</div>
-            )}
+            <div className="text-sm font-bold text-green-700">Liên hệ để biết giá</div>
             <div className="text-[11px] text-stone-500">/ {p.unit}</div>
           </div>
-          <AddToCartButton item={p} compact disabled={!p.inStock} />
+          <Link
+            href={`/products/${p.id}`}
+            className="shrink-0 bg-green-700 hover:bg-green-800 text-white text-xs font-bold px-4 py-2.5 rounded-full transition whitespace-nowrap"
+          >
+            Xem giá →
+          </Link>
         </div>
       </div>
     </div>

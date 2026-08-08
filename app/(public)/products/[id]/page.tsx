@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'; // Nonce-based CSP (proxy.ts) requires d
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, getFarmer, formatPrice, getAllProducts, getCategory, getProductGallery, getSiteInfo } from "@/lib/data";
+import { getProduct, getFarmer, getFarmersByIds, formatPrice, getAllProducts, getCategory, getProductGallery, getProductReviews, getSiteInfo } from "@/lib/data";
 import { seoMeta } from "@/lib/seo";
 import { productLd, breadcrumbLd } from "@/lib/jsonld";
 import JsonLd from "@/components/JsonLd";
@@ -31,14 +31,16 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
   const p = await getProduct(id);
   if (!p) notFound();
 
-  const [farmer, category, allProducts, gallery, info] = await Promise.all([
+  const [farmer, category, allProducts, gallery, reviews, info] = await Promise.all([
     getFarmer(p.farmerId),
     getCategory(p.categoryId),
     getAllProducts(),
     getProductGallery(p.id),
+    getProductReviews(p.id),
     getSiteInfo(),
   ]);
   const related = allProducts.filter((x) => x.categoryId === p.categoryId && x.id !== p.id).slice(0, 4);
+  const relatedFarmersById = await getFarmersByIds(related.map((r) => r.farmerId));
   const discount =
     p.oldPrice && p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
 
@@ -112,9 +114,39 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
 
       {p.body?.trim() && (
         <section className="mt-14 max-w-3xl">
-          <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-5 wrap-anywhere">{info.productDetailHeading}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-5 wrap-anywhere">{p.descriptionTitle || info.productDetailHeading}</h2>
           {/* Sanitized on write in actions/products.ts via sanitizeRichText. */}
           <div className="product-prose" dangerouslySetInnerHTML={{ __html: p.body }} />
+        </section>
+      )}
+
+      {reviews.length > 0 && (
+        <section className="mt-14 max-w-3xl" aria-labelledby="product-reviews-heading">
+          <h2 id="product-reviews-heading" className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-5">
+            Đánh giá khách hàng
+          </h2>
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <article key={review.id} className="rounded-2xl border border-green-100 bg-white p-5">
+                <div className="flex items-center gap-3">
+                  <SmartImage
+                    src={review.avatar}
+                    alt={`Ảnh đại diện của ${review.name}`}
+                    fallback="👤"
+                    sizes="40px"
+                    className="w-10 h-10 shrink-0 rounded-full object-cover"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-green-950 wrap-anywhere">{review.name}</h3>
+                    <p className="text-amber-500 text-sm tracking-wide" aria-label={`${review.rating} trên 5 sao`}>
+                      <span aria-hidden>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-green-900/80 leading-relaxed wrap-anywhere">{review.content}</p>
+              </article>
+            ))}
+          </div>
         </section>
       )}
 
@@ -123,7 +155,7 @@ export default async function ProductDetailPage({ params }: { params: Params }) 
           <h2 className="text-2xl md:text-3xl font-bold text-green-950 font-display mb-6 wrap-anywhere">{info.relatedProductsHeading}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {related.map((r) => (
-              <ProductCard key={r.id} p={r} />
+              <ProductCard key={r.id} p={r} farmer={r.farmerId ? relatedFarmersById.get(r.farmerId) : null} />
             ))}
           </div>
         </section>

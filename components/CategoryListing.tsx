@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { CategoryRow, ProductRow } from '@/db/schema';
+import type { CategoryRow, FarmerRow, ProductRow } from '@/db/schema';
 import { getDescendantIds } from '@/lib/categories';
 import ProductCard from '@/components/ProductCard';
 import CategoryDrawer from '@/components/CategoryDrawer';
@@ -8,7 +8,7 @@ import CategoryIcon from '@/components/CategoryIcon';
 const MAX_INLINE_PILLS = 6;
 
 export default function CategoryListing({
-  topLevel, ancestors, filtered, allProducts, activeCategory, allCategories,
+  topLevel, ancestors, filtered, allProducts, activeCategory, allCategories, farmersById,
   rootTitle = 'Toàn bộ nông sản',
   rootSubtitle = 'Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.',
   badge = 'Chợ nông trại',
@@ -21,6 +21,7 @@ export default function CategoryListing({
   allProducts: ProductRow[];
   activeCategory: CategoryRow | null;
   allCategories: CategoryRow[];
+  farmersById: Map<string, FarmerRow>;
   // Only shown on the root /products view; category pages use the category's
   // own name/description.
   rootTitle?: string;
@@ -175,7 +176,9 @@ export default function CategoryListing({
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((p) => <ProductCard key={p.id} p={p} />)}
+            {filtered.map((p) => (
+              <ProductCard key={p.id} p={p} farmer={p.farmerId ? farmersById.get(p.farmerId) : null} />
+            ))}
           </div>
         )}
       </div>

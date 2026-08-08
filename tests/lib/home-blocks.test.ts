@@ -1,11 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_HOME_BLOCKS } from '@/lib/home-blocks';
+import { DEFAULT_HOME_BLOCKS, orderHomeBlocks } from '@/lib/home-blocks';
 import { blockSchema, emptyBlock, BLOCK_LABELS, type BlockType } from '@/lib/blocks';
 
 describe('default homepage layout (data/home-blocks.json)', () => {
   it('parses and lists the sections in the expected order', () => {
     expect(DEFAULT_HOME_BLOCKS.map((b) => b.data.type)).toEqual([
-      'heroSlider', 'valueProps', 'categories', 'products', 'subBox', 'farmers', 'testimonials', 'faq',
+      'heroSlider', 'products', 'valueProps', 'categories', 'subBox', 'farmers', 'testimonials', 'faq',
+    ]);
+  });
+
+  it('places products immediately below the hero slider for saved CMS layouts', () => {
+    const blocks = [
+      { data: { type: 'heroSlider' } },
+      { data: { type: 'valueProps' } },
+      { data: { type: 'products' } },
+      { data: { type: 'faq' } },
+    ];
+
+    expect(orderHomeBlocks(blocks).map((block) => block.data.type)).toEqual([
+      'heroSlider', 'products', 'valueProps', 'faq',
     ]);
   });
 

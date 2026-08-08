@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import {
-  getAllCategories, getAllProducts, getProductsByCategoryDeep, getCategory, getSiteInfo,
+  getAllCategories, getAllProducts, getProductsByCategoryDeep, getCategory, getFarmersByIds, getSiteInfo,
 } from '@/lib/data';
 import { getDescendantIds, getAncestors } from '@/lib/categories';
 import CategoryListing from '@/components/CategoryListing';
@@ -49,6 +49,7 @@ export default async function CategoryPage({
   // Apply the same search/sort/in-stock filter the root /products page uses, so
   // a shopper can narrow a large category instead of scrolling all of it.
   const filtered = filterAndSortProducts(inCategory, { q, sort, inStockOnly: con === '1' });
+  const farmersById = await getFarmersByIds(filtered.map((p) => p.farmerId));
 
   return (
     <CategoryListing
@@ -58,6 +59,7 @@ export default async function CategoryPage({
       allProducts={allProducts}
       activeCategory={activeCategory}
       allCategories={allCategories}
+      farmersById={farmersById}
       filters={<ProductFilters resultCount={filtered.length} />}
       emptyText={q || con ? 'Không tìm thấy sản phẩm nào khớp bộ lọc trong danh mục này.' : 'Chưa có sản phẩm trong danh mục này.'}
       badge={info.listingBadge}

@@ -69,7 +69,7 @@ export default async function FarmerDetailPage({ params }: { params: Params }) {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map((p) => (
-              <ProductCard key={p.id} p={p} />
+              <ProductCard key={p.id} p={p} farmer={f} />
             ))}
           </div>
         </section>

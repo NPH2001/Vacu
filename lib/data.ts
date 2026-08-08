@@ -3,10 +3,10 @@ import { cache } from 'react';
 import { eq, asc, desc, inArray, and, isNull, isNotNull, gt } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
-  products, productImages, categories, farmers, testimonials, faqItems, siteInfo,
+  products, productImages, productReviews, categories, farmers, testimonials, faqItems, siteInfo,
   valueProps, certificates, catalogs, catalogImages, deliverySlots, paymentMethods, contactTopics, orderStatuses, menuItems,
   heroSlides, theme,
-  type ProductRow, type CategoryRow, type FarmerRow,
+  type ProductRow, type ProductReviewRow, type CategoryRow, type FarmerRow,
   type TestimonialRow, type FaqRow, type SiteInfoRow,
   type ValuePropRow, type DeliverySlotRow, type PaymentMethodRow, type ContactTopicRow,
   type HeroSlideRow,
@@ -16,6 +16,7 @@ import { DEFAULT_THEME, type ThemeConfig } from './theme';
 import { buildMenuTree, type MenuNode } from '@/lib/menu';
 
 export type Product = ProductRow;
+export type ProductReview = ProductReviewRow;
 export type Category = CategoryRow;
 export type Farmer = FarmerRow;
 export type Testimonial = TestimonialRow;
@@ -37,6 +38,12 @@ export async function getProductGallery(productId: string): Promise<string[]> {
     .where(eq(productImages.productId, productId))
     .orderBy(asc(productImages.sortOrder), asc(productImages.id));
   return rows.map((r) => r.url);
+}
+/** Customer reviews are private to one product and use admin-configured order. */
+export async function getProductReviews(productId: string): Promise<ProductReview[]> {
+  return db.select().from(productReviews)
+    .where(eq(productReviews.productId, productId))
+    .orderBy(asc(productReviews.sortOrder), asc(productReviews.id));
 }
 export async function getProductsByCategory(categoryId: string) {
   return db.select().from(products).where(eq(products.categoryId, categoryId)).orderBy(asc(products.name));
@@ -145,6 +152,17 @@ export const getFarmer = cache(async (id: string | null) => {
   const rows = await db.select().from(farmers).where(eq(farmers.id, id)).limit(1);
   return rows[0] ?? null;
 });
+/**
+ * Batch lookup for a grid of ProductCards: one `IN` query for every distinct
+ * farmer instead of a query per card (the caller passes each product's
+ * farmerId and looks the result up by id when rendering).
+ */
+export async function getFarmersByIds(ids: (string | null)[]): Promise<Map<string, FarmerRow>> {
+  const uniqueIds = [...new Set(ids.filter((id): id is string => id !== null))];
+  if (uniqueIds.length === 0) return new Map();
+  const rows = await db.select().from(farmers).where(inArray(farmers.id, uniqueIds));
+  return new Map(rows.map((f) => [f.id, f]));
+}
 export async function getProductsByFarmer(farmerId: string) {
   return db.select().from(products).where(eq(products.farmerId, farmerId)).orderBy(asc(products.name));
 }

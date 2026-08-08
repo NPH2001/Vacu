@@ -64,20 +64,25 @@ describe('các khối seed cho trang /chung-nhan', () => {
 });
 
 describe('certificateSchema', () => {
-  const valid = { name: 'OCOP 4 sao', image: '/uploads/a.webp', issuer: 'UBND tỉnh', description: 'mô tả', sortOrder: '10' };
+  const valid = { name: 'OCOP 4 sao', images: ['/uploads/a.webp'], issuer: 'UBND tỉnh', description: 'mô tả', sortOrder: '10' };
 
   it('nhận dữ liệu hợp lệ và ép thứ tự về số', () => {
     const r = certificateSchema.parse(valid);
     expect(r.sortOrder).toBe(10);
   });
 
-  it('bắt buộc có tên và ảnh', () => {
+  it('bắt buộc có tên và ít nhất một ảnh', () => {
     expect(certificateSchema.safeParse({ ...valid, name: '' }).success).toBe(false);
-    expect(certificateSchema.safeParse({ ...valid, image: '' }).success).toBe(false);
+    expect(certificateSchema.safeParse({ ...valid, images: [] }).success).toBe(false);
+  });
+
+  it('nhận nhiều ảnh', () => {
+    const r = certificateSchema.parse({ ...valid, images: ['/uploads/a.webp', '/uploads/b.webp'] });
+    expect(r.images).toEqual(['/uploads/a.webp', '/uploads/b.webp']);
   });
 
   it('nơi cấp và mô tả được phép bỏ trống', () => {
-    const r = certificateSchema.parse({ name: 'A', image: '/uploads/a.webp' });
+    const r = certificateSchema.parse({ name: 'A', images: ['/uploads/a.webp'] });
     expect(r.issuer).toBe('');
     expect(r.description).toBe('');
   });

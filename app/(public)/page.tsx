@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/session';
 import { getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
 import { HOME_PAGE_ID } from '@/lib/blocks';
-import { DEFAULT_HOME_BLOCKS } from '@/lib/home-blocks';
+import { DEFAULT_HOME_BLOCKS, orderHomeBlocks } from '@/lib/home-blocks';
 import BlockRenderer from '@/components/blocks/BlockRenderer';
 
 type Props = {
@@ -41,7 +41,8 @@ export default async function HomePage({ searchParams }: Props) {
 
   // page?.blocks already has hidden blocks stripped; an empty result means the
   // homepage would render blank, so use the default layout instead.
-  const blocks: LoadedBlock[] = page && page.blocks.length > 0 ? page.blocks : fallback;
+  const savedBlocks: LoadedBlock[] = page && page.blocks.length > 0 ? page.blocks : fallback;
+  const blocks = orderHomeBlocks(savedBlocks);
   const primary = primaryHeroIndex(blocks);
   const info = primary === -1 ? await getSiteInfo() : null;
 

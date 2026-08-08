@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { CartProvider } from '@/components/CartProvider';
 import CartDrawer from '@/components/CartDrawer';
+import FloatingContact from '@/components/FloatingContact';
 import ScrollToTop from '@/components/ScrollToTop';
 import Analytics from '@/components/Analytics';
 import JsonLd from '@/components/JsonLd';
@@ -43,6 +44,7 @@ export default async function PublicLayout({ children }: { children: React.React
         emptyText={info.cartEmptyText}
         shippingLabel={info.shippingLabel}
       />
+      <FloatingContact phone={info.phone} />
       <ScrollToTop />
       <Analytics measurementId={info.gaMeasurementId} nonce={nonce} />
     </CartProvider>

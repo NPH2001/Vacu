@@ -77,7 +77,7 @@ export default function ProductBuyBox({ p }: { p: ProductRow }) {
 
   return (
     <>
-      <div ref={inlineRef} className="flex items-center gap-3 mb-6">
+      <div ref={inlineRef} className="flex items-center gap-3 mb-4">
         <Stepper qty={qty} setQty={setQty} inStock={p.inStock} />
         <button
           onClick={handleAdd}
@@ -87,6 +87,14 @@ export default function ProductBuyBox({ p }: { p: ProductRow }) {
           {p.inStock ? "Thêm vào giỏ hàng" : "Hết hàng"}
         </button>
       </div>
+
+      {/* Trust signals right next to the buy button — the moment a shopper is
+          deciding whether to commit, not buried in the footer. */}
+      <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-green-900/70 mb-6">
+        <li className="inline-flex items-center gap-1">🚚 Giao nhanh, tận nơi</li>
+        <li className="inline-flex items-center gap-1">💵 Thanh toán khi nhận hàng (COD)</li>
+        <li className="inline-flex items-center gap-1">🌱 Nguồn gốc rõ ràng từ nông dân</li>
+      </ul>
 
       {/* Mobile sticky buy bar — slides up once the inline box leaves the viewport,
           hides again near the footer. pointer-events on the wrapper are off so

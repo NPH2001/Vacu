@@ -1,19 +1,5 @@
 [
   { "visible": true, "data": { "type": "heroSlider" } },
-  { "visible": true, "data": { "type": "valueProps", "title": "", "limit": 0 } },
-  {
-    "visible": true,
-    "data": {
-      "type": "categories",
-      "title": "Thứ gì bạn đang cần?",
-      "eyebrow": "Danh mục",
-      "linkLabel": "Tất cả",
-      "linkHref": "/products",
-      "source": "all",
-      "categoryIds": [],
-      "limit": 0
-    }
-  },
   {
     "visible": true,
     "data": {
@@ -27,6 +13,20 @@
       "categoryId": "",
       "productIds": [],
       "limit": 8
+    }
+  },
+  { "visible": true, "data": { "type": "valueProps", "title": "", "limit": 0 } },
+  {
+    "visible": true,
+    "data": {
+      "type": "categories",
+      "title": "Thứ gì bạn đang cần?",
+      "eyebrow": "Danh mục",
+      "linkLabel": "Tất cả",
+      "linkHref": "/products",
+      "source": "all",
+      "categoryIds": [],
+      "limit": 0
     }
   },
   { "visible": true, "data": { "type": "subBox" } },
