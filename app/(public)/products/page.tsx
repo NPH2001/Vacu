@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
-import { getAllCategories, getAllProducts, getSiteInfo } from '@/lib/data';
+import { getAllCategories, getAllProducts, getFarmersByIds, getSiteInfo } from '@/lib/data';
 import { seoMeta } from '@/lib/seo';
 import CategoryListing from '@/components/CategoryListing';
 import ProductFilters from '@/components/ProductFilters';
@@ -30,6 +30,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   ]);
   const topLevel = allCategories.filter((cat) => !cat.parentId);
   const filtered = filterAndSortProducts(allProducts, { q, sort, inStockOnly: con === '1' });
+  const farmersById = await getFarmersByIds(filtered.map((p) => p.farmerId));
   return (
     <CategoryListing
       topLevel={topLevel}
@@ -38,6 +39,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       allProducts={allProducts}
       activeCategory={null}
       allCategories={allCategories}
+      farmersById={farmersById}
       filters={<ProductFilters resultCount={filtered.length} />}
       emptyText={q || con ? 'Không tìm thấy sản phẩm nào khớp bộ lọc.' : 'Chưa có sản phẩm nào.'}
       rootTitle={info.productsPageTitle}

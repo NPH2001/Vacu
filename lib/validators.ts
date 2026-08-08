@@ -62,6 +62,7 @@ export const productSchema = z.object({
   image: z.string().min(1, 'Vui lòng chọn ảnh đại diện cho sản phẩm').max(500),
   farmerId: slug.optional().nullable(),
   description: z.string().min(1, 'Vui lòng nhập mô tả ngắn').max(2000),
+  descriptionTitle: z.string().trim().max(120).default('Mô tả sản phẩm'),
   // Rich-text HTML from the editor (sanitized server-side before storage).
   // Roomier than the old Markdown cap since HTML carries its own markup.
   body: z.string().max(200000).default(''),
@@ -120,6 +121,14 @@ export const testimonialSchema = z.object({
   content: z.string().min(1).max(1000),
   rating: z.coerce.number().int().min(1).max(5).default(5),
   sortOrder: z.coerce.number().int().default(0),
+});
+
+export const productReviewSchema = z.object({
+  name: z.string().trim().min(1, 'Vui lòng nhập tên khách hàng').max(120),
+  avatar: optUrl,
+  content: z.string().trim().min(1, 'Vui lòng nhập nội dung đánh giá').max(1000),
+  rating: z.coerce.number().int().min(1, 'Đánh giá phải từ 1 đến 5 sao').max(5, 'Đánh giá phải từ 1 đến 5 sao'),
+  sortOrder: z.coerce.number().int().min(0).default(0),
 });
 
 export const faqSchema = z.object({
@@ -301,7 +310,8 @@ export const catalogSchema = z.object({
 export const certificateSchema = z.object({
   name: z.string().trim().min(1).max(160),
   issuer: z.string().trim().max(160).default(''),
-  image: url,
+  // Cần ít nhất một ảnh — khối hiển thị không có gì để hiện nếu rỗng.
+  images: z.array(url).min(1, 'Cần ít nhất một ảnh chứng nhận').max(12),
   description: z.string().trim().max(600).default(''),
   sortOrder: z.coerce.number().int().default(0),
 });

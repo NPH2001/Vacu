@@ -7,6 +7,15 @@ import { useModalA11y } from "./useModalA11y";
 import { MAX_LINE_QTY } from "@/lib/cart-limits";
 import SmartImage from "./SmartImage";
 
+function getShippingState(shippingLabel: string) {
+  const normalized = shippingLabel.trim().toLowerCase();
+  const isFree = normalized.includes("miễn phí") || normalized === "free";
+  return {
+    isFree,
+    summary: isFree ? "Đơn này đang được miễn phí giao hàng." : "Chính sách giao hàng được hiển thị trong phần tóm tắt.",
+  };
+}
+
 export default function CartDrawer({
   emptyTitle, emptyText, shippingLabel,
 }: {
@@ -16,6 +25,8 @@ export default function CartDrawer({
 }) {
   const { items, total, open, setOpen, setQty, remove } = useCart();
   const panelRef = useModalA11y<HTMLElement>(open, () => setOpen(false));
+  const itemCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const shipping = getShippingState(shippingLabel);
 
   return (
     <>
@@ -38,7 +49,7 @@ export default function CartDrawer({
         <div className="flex items-center justify-between p-5 border-b border-green-100">
           <div>
             <h2 className="text-xl font-bold text-green-950 font-display">Giỏ của bạn</h2>
-            <p className="text-xs text-green-900/60">{items.length} món · {items.reduce((s, i) => s + i.qty, 0)} sản phẩm</p>
+            <p className="text-xs text-green-900/60">{items.length} món · {itemCount} sản phẩm</p>
           </div>
           <button
             onClick={() => setOpen(false)}
@@ -64,82 +75,126 @@ export default function CartDrawer({
               </Link>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {items.map((it) => (
-                <li
-                  key={it.id}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-green-100 bg-green-50/40"
-                >
-                  <SmartImage
-                    src={it.image}
-                    sizes="80px"
-                    alt={it.name}
-                    className="w-16 h-16 rounded-xl object-cover shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-green-950 line-clamp-1">{it.name}</div>
-                    <div className="text-xs text-green-900/60">/ {it.unit}</div>
-                    <div className="text-green-800 font-bold mt-0.5">
-                      {formatPrice(it.price)}
-                    </div>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-950">Kiểm tra nhanh trước khi thanh toán</p>
+                    <p className="mt-1 text-xs leading-5 text-emerald-900/80">
+                      {shipping.summary} Sản phẩm không đạt chất lượng sẽ được hỗ trợ theo chính sách đổi trả.
+                    </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <div className="flex items-center gap-1">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">
+                    {shipping.isFree ? "Free ship" : "Minh bạch phí"}
+                  </span>
+                </div>
+              </div>
+
+              <ul className="space-y-3">
+                {items.map((it) => (
+                  <li
+                    key={it.id}
+                    className="rounded-2xl border border-green-100 bg-green-50/40 p-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <SmartImage
+                        src={it.image}
+                        sizes="80px"
+                        alt={it.name}
+                        className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-green-950 line-clamp-2">{it.name}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-green-900/65">
+                          <span>Quy cách: {it.unit}</span>
+                          <span aria-hidden>•</span>
+                          <span>{formatPrice(it.price)} / đơn vị</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-green-800">
+                          Thành tiền: {formatPrice(it.price * it.qty)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 border-t border-green-100 pt-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          aria-label={`Giảm số lượng ${it.name}`}
+                          onClick={() => setQty(it.id, Math.max(1, it.qty - 1))}
+                          disabled={it.qty <= 1}
+                          className="h-10 w-10 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-bold text-green-950 tabular-nums">{it.qty}</span>
+                        <button
+                          type="button"
+                          aria-label={`Tăng số lượng ${it.name}`}
+                          onClick={() => setQty(it.id, it.qty + 1)}
+                          disabled={it.qty >= MAX_LINE_QTY}
+                          className="h-10 w-10 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
+                        >
+                          +
+                        </button>
+                      </div>
                       <button
                         type="button"
-                        aria-label="Giảm số lượng"
-                        onClick={() => setQty(it.id, Math.max(1, it.qty - 1))}
-                        disabled={it.qty <= 1}
-                        className="w-9 h-9 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
+                        onClick={() => remove(it.id)}
+                        className="px-2 py-1 text-xs font-medium text-stone-500 hover:text-red-600"
                       >
-                        −
-                      </button>
-                      <span className="w-6 text-center font-bold text-green-950 tabular-nums">{it.qty}</span>
-                      <button
-                        type="button"
-                        aria-label="Tăng số lượng"
-                        onClick={() => setQty(it.id, it.qty + 1)}
-                        disabled={it.qty >= MAX_LINE_QTY}
-                        className="w-9 h-9 rounded-full bg-white border border-green-200 hover:border-green-500 text-green-800 disabled:opacity-40 disabled:hover:border-green-200"
-                      >
-                        +
+                        Xóa khỏi giỏ
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => remove(it.id)}
-                      className="text-xs text-stone-500 hover:text-red-600 px-2 py-1 -mr-1"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
         {items.length > 0 && (
-          <div className="border-t border-green-100 p-5 space-y-3 bg-green-50/50">
-            <div className="flex justify-between text-sm text-green-900/70">
-              <span>Tạm tính</span>
-              <span>{formatPrice(total)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-green-900/70">
-              <span>Phí giao nội thành</span>
-              <span className="text-green-700 font-semibold wrap-anywhere">{shippingLabel}</span>
-            </div>
-            <div className="flex justify-between text-lg pt-3 border-t border-green-200">
-              <span className="text-green-950 font-semibold">Tổng cộng</span>
-              <span className="font-bold text-green-800 text-xl">{formatPrice(total)}</span>
+          <div className="border-t border-green-100 bg-white p-5">
+            <div className="rounded-3xl border border-green-200 bg-green-50/70 p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-700">Tạm tính đơn hàng</p>
+                  <p className="mt-1 text-2xl font-bold text-green-950 tabular-nums">{formatPrice(total)}</p>
+                  <p className="mt-1 text-xs text-green-900/65">
+                    {itemCount} sản phẩm, chưa bao gồm phí giao nếu khu vực của bạn áp dụng.
+                  </p>
+                </div>
+                {shipping.isFree && (
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 shadow-sm">
+                    Miễn phí giao
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-3 border-t border-green-200 pt-4">
+                <div className="flex justify-between text-sm text-green-900/70">
+                  <span>Tạm tính hàng hóa</span>
+                  <span>{formatPrice(total)}</span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm text-green-900/70">
+                  <span>Giao hàng</span>
+                  <span className="text-right font-semibold text-green-700 wrap-anywhere">{shippingLabel}</span>
+                </div>
+                <div className="flex justify-between border-t border-green-200 pt-3 text-lg">
+                  <span className="font-semibold text-green-950">Tạm tính hàng hóa</span>
+                  <span className="text-xl font-bold text-green-800">{formatPrice(total)}</span>
+                </div>
+              </div>
             </div>
             <Link
               href="/checkout"
               onClick={() => setOpen(false)}
-              className="block text-center bg-green-700 hover:bg-green-800 text-white font-bold py-3.5 rounded-full transition"
+              className="mt-4 block text-center bg-green-700 py-3.5 font-bold text-white transition hover:bg-green-800 rounded-full"
             >
               Thanh toán →
             </Link>
+            <p className="mt-3 text-center text-xs text-green-900/65">
+              Bạn sẽ chọn khung giờ giao và kiểm tra lại thông tin ở bước tiếp theo.
+            </p>
           </div>
         )}
       </aside>

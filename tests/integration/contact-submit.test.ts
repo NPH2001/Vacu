@@ -103,7 +103,10 @@ describe('submitContact site_info gating', () => {
     await setSiteInfo({ exists: false, smtpEnabled: false });
     const { submitContact } = await import('@/app/(public)/contact/actions');
     const res = await submitContact(goodForm());
-    expect(res).toEqual({ ok: false, error: 'Site chưa khởi tạo.' });
+    expect(res).toEqual({
+      ok: false,
+      error: 'Kênh gửi tin nhắn đang tạm gián đoạn. Vui lòng liên hệ qua email hoặc điện thoại bên cạnh.',
+    });
     expect(sendMailCalls).toHaveLength(0);
   });
 
@@ -111,7 +114,10 @@ describe('submitContact site_info gating', () => {
     await setSiteInfo({ exists: true, smtpEnabled: false });
     const { submitContact } = await import('@/app/(public)/contact/actions');
     const res = await submitContact(goodForm());
-    expect(res).toEqual({ ok: false, error: 'Chưa cấu hình gửi mail. Admin vui lòng kiểm tra.' });
+    expect(res).toEqual({
+      ok: false,
+      error: 'Kênh gửi tin nhắn đang tạm gián đoạn. Vui lòng liên hệ qua email hoặc điện thoại bên cạnh.',
+    });
     expect(sendMailCalls).toHaveLength(0);
   });
 });
@@ -155,7 +161,10 @@ describe('submitContact happy path and HTML escape', () => {
     sendMailResult = { ok: false, error: 'SMTP down' };
     const { submitContact } = await import('@/app/(public)/contact/actions');
     const res = await submitContact(goodForm());
-    expect(res).toEqual({ ok: false, error: 'SMTP down' });
+    expect(res).toEqual({
+      ok: false,
+      error: 'Tin nhắn chưa gửi được. Vui lòng thử lại hoặc liên hệ qua email hay điện thoại bên cạnh.',
+    });
   });
 
   it('max-length fields pass at exact boundaries', async () => {

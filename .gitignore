@@ -8,3 +8,12 @@ backups/
 .DS_Store
 tsconfig.tsbuildinfo
 /undefined
+.claude/
+.codex/
+openspec/
+
+# Local oh-my-codex runtime data
+/.omx/audits/
+/.omx/logs/
+/.omx/state/
+/.omx/ultragoal/

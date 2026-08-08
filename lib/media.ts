@@ -66,8 +66,10 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
       .where(or(eq(categories.coverImage, url), eq(categories.icon, url))),
     db.select({ id: farmers.id, name: farmers.name }).from(farmers)
       .where(or(eq(farmers.avatar, url), eq(farmers.cover, url))),
+    // jsonb `?` — kiểm tra url có là một phần tử của mảng images, đã tham số
+    // hoá qua bind của Drizzle nên không có rủi ro injection.
     db.select({ id: certificates.id, name: certificates.name }).from(certificates)
-      .where(eq(certificates.image, url)),
+      .where(sql`${certificates.images} ? ${url}`),
     // Ảnh trang catalog: xoá mất một trang giữa bộ thì catalog vẫn "hiện", chỉ
     // là thiếu trang — kiểu hỏng khó phát hiện nhất, nên phải cảnh báo.
     db.select({ id: catalogs.id, name: catalogs.name }).from(catalogImages)

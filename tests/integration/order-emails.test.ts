@@ -11,11 +11,13 @@ vi.mock('next/headers', () => ({
 }));
 
 const sendMailCalls: Array<{ to: string; subject: string; html?: string; text?: string; replyTo?: string }> = [];
+let sendMailError: Error | null = null;
 vi.mock('nodemailer', () => ({
   default: {
     createTransport: () => ({
       sendMail: async (opts: { to: string; subject: string; html?: string; text?: string; replyTo?: string }) => {
         sendMailCalls.push(opts);
+        if (sendMailError) throw sendMailError;
         return { messageId: 'mock' };
       },
       verify: async () => true,
@@ -77,7 +79,11 @@ beforeAll(async () => {
   validSlot = active[0]?.label ?? 'Sáng mai';
 }, 120_000);
 afterAll(async () => { await stopPg(ctx); });
-beforeEach(async () => { sendMailCalls.length = 0; await resetTables(); });
+beforeEach(async () => {
+  sendMailCalls.length = 0;
+  sendMailError = null;
+  await resetTables();
+});
 
 function fdForOrder(opts: { email?: string; payment?: 'cod' | 'bank' }) {
   const fd = new FormData();
@@ -98,10 +104,7 @@ describe('placeOrder → email side-effects', () => {
     const res = await placeOrder(fdForOrder({ email: 'kh@ex.com' }));
     expect(res.ok).toBe(true);
 
-    // emails fire-and-forget; give microtask queue a chance
-    await new Promise((r) => setTimeout(r, 50));
-
-    expect(sendMailCalls.length).toBe(2);
+    await vi.waitFor(() => expect(sendMailCalls).toHaveLength(2));
     const tos = sendMailCalls.map((m) => m.to).sort();
     expect(tos).toContain('kh@ex.com');
     expect(tos).toContain('admin@vacu.com.vn');
@@ -112,9 +115,7 @@ describe('placeOrder → email side-effects', () => {
     const { placeOrder } = await import('@/app/(public)/checkout/actions');
     const res = await placeOrder(fdForOrder({}));
     expect(res.ok).toBe(true);
-    await new Promise((r) => setTimeout(r, 50));
-
-    expect(sendMailCalls.length).toBe(1);
+    await vi.waitFor(() => expect(sendMailCalls).toHaveLength(1));
     expect(sendMailCalls[0].to).toBe('admin@vacu.com.vn');
   });
 
@@ -123,7 +124,6 @@ describe('placeOrder → email side-effects', () => {
     const { placeOrder } = await import('@/app/(public)/checkout/actions');
     const res = await placeOrder(fdForOrder({ email: 'kh@ex.com' }));
     expect(res.ok).toBe(true);
-    await new Promise((r) => setTimeout(r, 50));
     expect(sendMailCalls.length).toBe(0);
   });
 
@@ -132,8 +132,7 @@ describe('placeOrder → email side-effects', () => {
     const { placeOrder } = await import('@/app/(public)/checkout/actions');
     const res = await placeOrder(fdForOrder({ email: 'kh@ex.com', payment: 'bank' }));
     expect(res.ok).toBe(true);
-    await new Promise((r) => setTimeout(r, 50));
-
+    await vi.waitFor(() => expect(sendMailCalls).toHaveLength(2));
     const customerMail = sendMailCalls.find((m) => m.to === 'kh@ex.com');
     expect(customerMail?.html).toContain('img.vietqr.io');
     expect(customerMail?.html).toContain('0123456789'); // account number
@@ -143,18 +142,18 @@ describe('placeOrder → email side-effects', () => {
     await seedBaseData({ smtpEnabled: true });
     const { placeOrder } = await import('@/app/(public)/checkout/actions');
     await placeOrder(fdForOrder({ email: 'kh@ex.com' }));
-    await new Promise((r) => setTimeout(r, 50));
-
+    await vi.waitFor(() => expect(sendMailCalls).toHaveLength(2));
     const adminMail = sendMailCalls.find((m) => m.to === 'admin@vacu.com.vn');
     expect(adminMail?.replyTo).toBe('kh@ex.com');
   });
 
-  it('order persists even when sendMail throws (fire-and-forget)', async () => {
+  it('order persists when the SMTP transport rejects (fire-and-forget)', async () => {
     await seedBaseData({ smtpEnabled: true });
-    // Monkey-patch push to throw once on this test only
+    sendMailError = new Error('SMTP unavailable');
     const { placeOrder } = await import('@/app/(public)/checkout/actions');
     const res = await placeOrder(fdForOrder({ email: 'kh@ex.com' }));
     expect(res.ok).toBe(true);
+    await vi.waitFor(() => expect(sendMailCalls).toHaveLength(2));
 
     const { db } = await import('@/db/client');
     const { orders } = await import('@/db/schema');

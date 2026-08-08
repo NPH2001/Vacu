@@ -565,7 +565,7 @@ describe('certificate actions', () => {
     const { createCertificate } = await import('@/app/admin/actions/certificates');
     const fd = new FormData();
     fd.set('name', 'OCOP 4 sao');
-    fd.set('image', '/uploads/c.webp');
+    fd.append('images', '/uploads/c.webp');
     await expect(createCertificate(null, fd)).rejects.toThrow();
   });
 
@@ -573,7 +573,6 @@ describe('certificate actions', () => {
     const { createCertificate } = await import('@/app/admin/actions/certificates');
     const fd = new FormData();
     fd.set('name', 'Thiếu ảnh');
-    fd.set('image', '');
     const res = await createCertificate(null, fd);
     expect(res?.error).toBeTruthy();
   });
@@ -588,19 +587,20 @@ describe('certificate actions', () => {
     const fd = new FormData();
     fd.set('name', 'OCOP 4 sao');
     fd.set('issuer', 'UBND tỉnh Lâm Đồng');
-    fd.set('image', '/uploads/ocop.webp');
+    fd.append('images', '/uploads/ocop.webp');
+    fd.append('images', '/uploads/ocop-back.webp');
     fd.set('description', 'Cấp năm 2024');
     fd.set('sortOrder', '5');
     await expect(createCertificate(null, fd)).rejects.toThrow();
     const [row] = await db.select().from(certificates).where(eq(certificates.name, 'OCOP 4 sao'));
-    expect(row.image).toBe('/uploads/ocop.webp');
+    expect(row.images).toEqual(['/uploads/ocop.webp', '/uploads/ocop-back.webp']);
     expect(row.issuer).toBe('UBND tỉnh Lâm Đồng');
     expect(row.sortOrder).toBe(5);
 
     const u = new FormData();
     u.set('name', 'OCOP 5 sao');
     u.set('issuer', '');
-    u.set('image', '/uploads/ocop5.webp');
+    u.append('images', '/uploads/ocop5.webp');
     u.set('description', '');
     u.set('sortOrder', '1');
     await expect(updateCertificate(row.id, null, u)).rejects.toThrow();
@@ -621,8 +621,8 @@ describe('certificate actions', () => {
     const { inArray } = await import('drizzle-orm');
 
     const rows = await db.insert(certificates).values([
-      { name: 'C1', image: '/uploads/1.webp' },
-      { name: 'C2', image: '/uploads/2.webp' },
+      { name: 'C1', images: ['/uploads/1.webp'] },
+      { name: 'C2', images: ['/uploads/2.webp'] },
     ]).returning();
     const ids = rows.map((r) => r.id);
 
@@ -642,9 +642,9 @@ describe('certificate actions', () => {
     const { getAllCertificates } = await import('@/lib/data');
 
     const rows = await db.insert(certificates).values([
-      { name: 'Ba', image: '/uploads/3.webp', sortOrder: 30 },
-      { name: 'Mot', image: '/uploads/1.webp', sortOrder: 10 },
-      { name: 'Hai', image: '/uploads/2.webp', sortOrder: 20 },
+      { name: 'Ba', images: ['/uploads/3.webp'], sortOrder: 30 },
+      { name: 'Mot', images: ['/uploads/1.webp'], sortOrder: 10 },
+      { name: 'Hai', images: ['/uploads/2.webp'], sortOrder: 20 },
     ]).returning();
 
     const all = await getAllCertificates();

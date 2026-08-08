@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useActionState } from 'react';
-import ImageUpload from '@/components/admin/ImageUpload';
+import GalleryField from '@/components/admin/GalleryField';
 import type { CertificateFormState } from '@/app/admin/actions/certificates';
 import type { CertificateRow } from '@/db/schema';
 
@@ -16,8 +16,15 @@ export default function CertificateForm({
   const d = defaults ?? {};
   return (
     <form action={formAction} className="space-y-4 bg-white rounded-2xl border border-green-100 p-6">
-      <L label="Ảnh chứng nhận" required hint="Ảnh chụp hoặc bản scan giấy chứng nhận. Nên để ảnh dọc, rõ chữ — khách bấm vào sẽ xem được ảnh lớn.">
-        <ImageUpload name="image" defaultValue={d.image ?? ''} label="" />
+      <L label="Ảnh chứng nhận" required hint="Ảnh chụp hoặc bản scan giấy chứng nhận. Nên để ảnh dọc, rõ chữ. Có thể thêm nhiều ảnh (ví dụ mặt trước/sau, nhiều trang) — khách bấm vào sẽ xem được hết.">
+        <GalleryField
+          name="images"
+          defaultValue={d.images ?? []}
+          max={12}
+          pickerTitle="Chọn ảnh chứng nhận"
+          emptyTitle="Thêm ảnh chứng nhận"
+          emptyHint="Ảnh chụp hoặc bản scan giấy chứng nhận"
+        />
       </L>
       <L label="Tên chứng nhận" required hint="Ví dụ: Chứng nhận OCOP 4 sao">
         <input name="name" defaultValue={d.name ?? ''} required maxLength={160}

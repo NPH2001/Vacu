@@ -10,36 +10,48 @@ import type { CertificateRow } from '@/db/schema';
  * - `grid`: xếp lưới, hiện hết. Hợp với trang Chứng nhận, nơi khách vào đúng để
  *   xem cho đủ — bắt bấm nút mới xem tiếp là vô lý.
  */
+/** Một ảnh của một chứng nhận, đã tách phẳng khỏi `cert.images` — mỗi ảnh là một thẻ riêng. */
+type CertImage = {
+  key: string;
+  cert: CertificateRow;
+  image: string;
+};
+
+function flattenImages(items: CertificateRow[]): CertImage[] {
+  return items.flatMap((c) => c.images.map((image, i) => ({ key: `${c.id}-${i}`, cert: c, image })));
+}
+
 export default function CertificateShowcase({
   items, layout,
 }: {
   items: CertificateRow[];
   layout: 'slider' | 'grid';
 }) {
-  const [open, setOpen] = useState<CertificateRow | null>(null);
-  if (items.length === 0) return null;
+  const [open, setOpen] = useState<CertImage | null>(null);
+  const images = flattenImages(items);
+  if (images.length === 0) return null;
 
   return (
     <>
       {layout === 'grid'
-        ? <Grid items={items} onOpen={setOpen} />
-        : <Slider items={items} onOpen={setOpen} />}
-      {open && <Lightbox cert={open} onClose={() => setOpen(null)} />}
+        ? <Grid items={images} onOpen={setOpen} />
+        : <Slider items={images} onOpen={setOpen} />}
+      {open && <Lightbox item={open} onClose={() => setOpen(null)} />}
     </>
   );
 }
 
-function Grid({ items, onOpen }: { items: CertificateRow[]; onOpen: (c: CertificateRow) => void }) {
+function Grid({ items, onOpen }: { items: CertImage[]; onOpen: (c: CertImage) => void }) {
   return (
     <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-      {items.map((c) => (
-        <li key={c.id}><Card cert={c} onOpen={onOpen} /></li>
+      {items.map((it) => (
+        <li key={it.key}><Card item={it} onOpen={onOpen} /></li>
       ))}
     </ul>
   );
 }
 
-function Slider({ items, onOpen }: { items: CertificateRow[]; onOpen: (c: CertificateRow) => void }) {
+function Slider({ items, onOpen }: { items: CertImage[]; onOpen: (c: CertImage) => void }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -94,10 +106,10 @@ function Slider({ items, onOpen }: { items: CertificateRow[]; onOpen: (c: Certif
         aria-label="Danh sách chứng nhận"
         className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar
                    scroll-px-1 pb-1 rounded-2xl focus-visible:outline-2 focus-visible:outline-green-700">
-        {items.map((c) => (
-          <li key={c.id}
+        {items.map((it) => (
+          <li key={it.key}
             className="snap-start shrink-0 w-[70vw] sm:w-[44vw] md:w-[30%] lg:w-[23%]">
-            <Card cert={c} onOpen={onOpen} />
+            <Card item={it} onOpen={onOpen} />
           </li>
         ))}
       </ul>
@@ -108,7 +120,7 @@ function Slider({ items, onOpen }: { items: CertificateRow[]; onOpen: (c: Certif
           <NavButton side="left" disabled={atStart} onClick={() => scrollByPage(-1)} />
           <NavButton side="right" disabled={atEnd} onClick={() => scrollByPage(1)} />
 
-          <div className="flex justify-center gap-2 mt-5">
+          <div className="flex justify-center gap-1 mt-5">
             {Array.from({ length: pages }, (_, i) => (
               <button
                 key={i}
@@ -116,10 +128,12 @@ function Slider({ items, onOpen }: { items: CertificateRow[]; onOpen: (c: Certif
                 onClick={() => goToPage(i)}
                 aria-label={`Tới nhóm ${i + 1} trên ${pages}`}
                 aria-current={i === page || undefined}
-                className={`h-2 rounded-full transition-all ${
-                  i === page ? 'w-6 bg-green-700' : 'w-2 bg-green-700/25 hover:bg-green-700/50'
-                }`}
-              />
+                className="group inline-flex h-11 min-w-11 items-center justify-center rounded-full"
+              >
+                <span aria-hidden className={`h-2 rounded-full transition-all ${
+                  i === page ? 'w-6 bg-green-700' : 'w-2 bg-green-700/25 group-hover:bg-green-700/50'
+                }`} />
+              </button>
             ))}
           </div>
         </>
@@ -150,19 +164,24 @@ function NavButton({
   );
 }
 
-/** Thẻ chứng nhận: ảnh, TÊN, nơi cấp. Tên là thứ khách quét mắt tìm trước tiên. */
-function Card({ cert, onOpen }: { cert: CertificateRow; onOpen: (c: CertificateRow) => void }) {
+/**
+ * Thẻ chứng nhận: ảnh, TÊN, nơi cấp. Tên là thứ khách quét mắt tìm trước tiên.
+ * Một chứng nhận nhiều ảnh (mặt trước/sau, nhiều trang) là nhiều thẻ riêng —
+ * mỗi ảnh hiện ra ngay, không gộp sau một nhãn "+N ảnh" bắt bấm mới thấy.
+ */
+function Card({ item, onOpen }: { item: CertImage; onOpen: (c: CertImage) => void }) {
+  const { cert, image } = item;
   return (
     <button
       type="button"
-      onClick={() => onOpen(cert)}
+      onClick={() => onOpen(item)}
       aria-label={`Xem lớn: ${cert.name}`}
       className="group w-full h-full text-left">
       <div className="h-full flex flex-col bg-white rounded-2xl border border-green-100 overflow-hidden
         shadow-[0_1px_3px_rgba(20,60,30,0.06)] transition group-hover:shadow-xl group-hover:-translate-y-1">
         <div className="relative bg-stone-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={cert.image} alt={cert.name} loading="lazy"
+          <img src={image} alt={cert.name} loading="lazy"
             className="w-full aspect-[3/4] object-cover object-top" />
           {/* Kính lúp báo cho biết ảnh bấm được — giấy chứng nhận thu nhỏ thì
               không đọc nổi chữ, mà chữ mới là thứ khách muốn xem. */}
@@ -187,7 +206,8 @@ function Card({ cert, onOpen }: { cert: CertificateRow; onOpen: (c: CertificateR
 }
 
 /** Ảnh lớn kèm tên, nơi cấp và mô tả — chữ trên giấy chứng nhận mới là thứ khách muốn đọc. */
-function Lightbox({ cert, onClose }: { cert: CertificateRow; onClose: () => void }) {
+function Lightbox({ item, onClose }: { item: CertImage; onClose: () => void }) {
+  const { cert, image } = item;
   const closeRef = useRef<HTMLButtonElement>(null);
   // Trả tiêu điểm về đúng chỗ đã bấm khi đóng, nếu không người dùng bàn phím
   // bị ném về đầu trang.
@@ -227,9 +247,11 @@ function Lightbox({ cert, onClose }: { cert: CertificateRow; onClose: () => void
             ✕
           </button>
         </div>
-        <div className="p-4">
+        <div className="p-4 max-h-[80vh] overflow-y-auto">
+          {/* Đúng ảnh khách vừa bấm — mỗi ảnh của chứng nhận đã là một thẻ
+              riêng ở ngoài, nên ở đây không cần xếp lại các ảnh còn lại. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={cert.image} alt={cert.name}
+          <img src={image} alt={cert.name}
             className="w-full max-h-[70vh] object-contain rounded-xl bg-stone-50" />
           {cert.description && (
             <p className="text-sm text-green-900/80 mt-4 leading-relaxed wrap-anywhere">{cert.description}</p>

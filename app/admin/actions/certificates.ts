@@ -14,7 +14,7 @@ function parse(fd: FormData) {
   return certificateSchema.safeParse({
     name: fd.get('name'),
     issuer: fd.get('issuer') ?? '',
-    image: fd.get('image'),
+    images: fd.getAll('images').map(String).filter(Boolean),
     description: fd.get('description') ?? '',
     sortOrder: fd.get('sortOrder') || 0,
   });

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { CategoryRow, ProductRow } from '@/db/schema';
+import type { CategoryRow, FarmerRow, ProductRow } from '@/db/schema';
 import { getDescendantIds } from '@/lib/categories';
 import ProductCard from '@/components/ProductCard';
 import CategoryDrawer from '@/components/CategoryDrawer';
@@ -8,7 +8,7 @@ import CategoryIcon from '@/components/CategoryIcon';
 const MAX_INLINE_PILLS = 6;
 
 export default function CategoryListing({
-  topLevel, ancestors, filtered, allProducts, activeCategory, allCategories,
+  topLevel, ancestors, filtered, allProducts, activeCategory, allCategories, farmersById,
   rootTitle = 'Toàn bộ nông sản',
   rootSubtitle = 'Rau củ, trái cây, trứng thịt, gia vị — thu hoạch trực tiếp từ nông trại.',
   badge = 'Chợ nông trại',
@@ -21,6 +21,7 @@ export default function CategoryListing({
   allProducts: ProductRow[];
   activeCategory: CategoryRow | null;
   allCategories: CategoryRow[];
+  farmersById: Map<string, FarmerRow>;
   // Only shown on the root /products view; category pages use the category's
   // own name/description.
   rootTitle?: string;
@@ -122,7 +123,7 @@ export default function CategoryListing({
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-10">
         {activeCategory && (
           <nav aria-label="Đường dẫn" className="text-sm text-green-900/60 mb-6">
             <Link href="/products" className="hover:underline">Tất cả nông sản</Link>
@@ -136,7 +137,7 @@ export default function CategoryListing({
           </nav>
         )}
         {showPillBar && (
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-8">
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-2 md:mb-8 md:pb-4">
             {showAllPill && (
               <Link href="/products" className={pillClass(!activeCategory)}>
                 Tất cả · {allProducts.length}
@@ -166,17 +167,55 @@ export default function CategoryListing({
           </div>
         )}
 
-        {filters}
+        <section
+          aria-label="Thông tin kết quả và bộ lọc"
+          className="mb-6 rounded-[1.5rem] border border-green-100 bg-white/90 p-4 shadow-[0_8px_30px_-24px_rgba(20,83,45,0.45)] md:mb-8 md:p-5"
+        >
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-800/70">
+                Danh mục đang xem
+              </p>
+              <h2 className="mt-1 text-xl font-bold text-green-950 md:text-2xl">
+                {activeCategory?.name ?? rootTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-green-900/70">
+                Giá bán hiển thị theo đúng quy cách, kèm thông tin còn hàng và nơi cung cấp để bạn so sánh nhanh.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:w-fit">
+              <div className="rounded-2xl bg-[linear-gradient(180deg,#f7faf3_0%,#eef7e8_100%)] px-4 py-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-green-800/70">Kết quả</div>
+                <div className="mt-1 text-xl font-bold text-green-950 tabular-nums">{filtered.length}</div>
+              </div>
+              <div className="rounded-2xl bg-[linear-gradient(180deg,#fff9ed_0%,#fff2d8_100%)] px-4 py-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-green-950/70">Danh mục</div>
+                <div className="mt-1 text-xl font-bold text-green-950 tabular-nums">{contextPills.length || 1}</div>
+              </div>
+            </div>
+          </div>
+          {filters}
+        </section>
 
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-green-900/60">
-            {emptyText}{' '}
-            <Link href="/products" className="text-green-700 font-semibold underline">Xem tất cả</Link>
-          </div>
+          <section className="rounded-[1.75rem] border border-dashed border-green-200 bg-[#f7faf3] px-6 py-14 text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-green-800/60">Không có kết quả phù hợp</p>
+            <h2 className="mt-2 text-2xl font-bold text-green-950">Điều chỉnh bộ lọc để xem thêm sản phẩm</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-green-900/70">
+              {emptyText}
+            </p>
+            <Link href="/products" className="mt-6 inline-flex rounded-full bg-green-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700 focus-visible:ring-offset-2">
+              Xem toàn bộ sản phẩm
+            </Link>
+          </section>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((p) => <ProductCard key={p.id} p={p} />)}
-          </div>
+          <section aria-label="Danh sách sản phẩm">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 md:gap-5">
+            {filtered.map((p) => (
+              <ProductCard key={p.id} p={p} farmer={p.farmerId ? farmersById.get(p.farmerId) : null} />
+            ))}
+            </div>
+          </section>
         )}
       </div>
     </div>
@@ -184,7 +223,7 @@ export default function CategoryListing({
 }
 
 function pillClass(active: boolean) {
-  return `shrink-0 px-5 py-2.5 rounded-full text-sm font-bold border transition ${
-    active ? 'bg-green-700 text-white border-green-700' : 'bg-white text-green-900 border-green-200 hover:border-green-400'
+  return `shrink-0 rounded-full border px-4 py-2.5 text-sm font-bold transition md:px-5 ${
+    active ? 'border-green-700 bg-green-700 text-white' : 'bg-white text-green-900 border-green-200 hover:border-green-400'
   }`;
 }

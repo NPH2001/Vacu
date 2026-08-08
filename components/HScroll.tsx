@@ -23,6 +23,7 @@ import { Children } from 'react';
  */
 export default function HScroll({
   children,
+  ariaLabel,
   /** Card width while swiping. Leave the default unless cards are unusually wide. */
   itemClass = 'w-[78vw] max-w-[300px]',
   /** Grid used from `md` up, where there is room for a real grid. */
@@ -30,14 +31,18 @@ export default function HScroll({
   className = '',
 }: {
   children: React.ReactNode;
+  ariaLabel: string;
   itemClass?: string;
   gridClass?: string;
   className?: string;
 }) {
   return (
     <div
+      role="region"
+      aria-label={ariaLabel}
+      tabIndex={0}
       className={
-        'flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 px-4 -mx-4 pb-1 hide-scrollbar ' +
+        'h-scroll-region flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 px-4 -mx-4 pb-1 hide-scrollbar ' +
         // From md the same markup is a grid: overflow-visible stops the scroll
         // container from clipping hover shadows, and the negative margin goes.
         'md:grid md:gap-6 md:overflow-visible md:mx-0 md:px-0 md:pb-0 ' +

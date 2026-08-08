@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MenuNode } from "@/lib/menu";
 import { NestedLinkList } from "./NavDropdown";
 import { useCart } from "./CartProvider";
@@ -11,53 +11,76 @@ import PriorityNav from "./PriorityNav";
 // Component, so every prop is serialized into the RSC payload embedded in the
 // public HTML; handing it the full row would leak smtpPass and other secrets to
 // anyone who views source. Only the fields actually rendered are accepted.
-type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string };
+type NavbarInfo = { logoUrl: string | null; name: string; navbarCta: string; phone: string; hours: string };
 
 export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuNode[] }) {
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { count, setOpen: setCartOpen } = useCart();
 
   // Let keyboard users dismiss the open mobile menu with Escape.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-green-100">
-      <nav className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
-        {/* min-w-0 lets a long site name shrink instead of shoving the cart and
-            CTA off the right edge. */}
-        <Link
-          href="/"
-          onClick={() => setOpen(false)}
-          className="flex items-center gap-2 text-xl md:text-2xl font-bold text-green-800 font-display min-w-0"
-        >
-          {info.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={info.logoUrl} alt={info.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
-          ) : (
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-700 text-white text-lg shrink-0">🌱</span>
-          )}
-          {/* Wraps at spaces like any name; wrap-anywhere only kicks in for a
-              name with no spaces, which would otherwise widen the bar. */}
-          <span className="wrap-anywhere">{info.name}</span>
-        </Link>
+    <header className="sticky top-0 z-50 border-b border-green-100/80 bg-white/95 shadow-[0_8px_30px_-24px_rgba(20,83,45,0.45)] backdrop-blur-xl">
+      <div className="hidden border-b border-green-100 bg-green-950 text-green-50 md:block">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 text-sm">
+          <p className="flex items-center gap-5 text-green-100/85">
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-lime-300" /> Nguồn gốc rõ ràng</span>
+            <span>Đổi trả nếu sản phẩm không đạt</span>
+            <span>{info.hours}</span>
+          </p>
+          <div className="flex items-center gap-5 font-semibold">
+            <Link href="/orders" className="hover:text-lime-200">Tra cứu đơn</Link>
+            <a href={`tel:${info.phone.replace(/\D/g, '')}`} className="hover:text-lime-200">Hotline {info.phone}</a>
+          </div>
+        </div>
+      </div>
 
-        {/* Priority nav: fits as many links as the space allows on one line and
-            folds the rest into a "Thêm ▾" dropdown, so the bar stays one row no
-            matter how many items the admin adds. */}
-        {items.length > 0 && <PriorityNav items={items} />}
+      <nav aria-label="Điều hướng chính" className="mx-auto max-w-7xl px-4">
+        <div className="flex items-center gap-3 py-3 md:gap-5">
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            className="flex min-w-0 shrink-0 items-center gap-2.5 font-display text-2xl font-bold text-green-900 md:text-3xl"
+          >
+            {info.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={info.logoUrl} alt={info.name} className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-green-200" />
+            ) : (
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-800 text-white" aria-hidden>V</span>
+            )}
+            <span className="hidden wrap-anywhere sm:inline">{info.name}</span>
+          </Link>
 
-        <div className="flex items-center gap-2 shrink-0">
+          <form action="/products" method="get" role="search" className="relative hidden min-w-0 flex-1 md:block">
+            <label htmlFor="site-search" className="sr-only">Tìm kiếm thực phẩm</label>
+            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-store-muted">
+              <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" />
+            </svg>
+            <input id="site-search" name="q" type="search" placeholder="Tìm rau củ, trái cây, thịt cá, đặc sản OCOP…" className="h-12 w-full rounded-full border border-green-200 bg-green-50/60 pl-12 pr-28 text-base text-green-950 placeholder:text-store-muted focus:border-green-600 focus:bg-white focus:ring-4 focus:ring-green-600/10" />
+            <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-green-800 px-5 py-2 text-base font-bold text-white transition hover:bg-green-900">Tìm kiếm</button>
+          </form>
+
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 md:gap-2">
+            <Link href="/orders" aria-label="Tra cứu đơn hàng" className="hidden h-11 w-11 items-center justify-center rounded-full text-green-900 transition hover:bg-green-50 sm:flex md:hidden">
+              <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path d="M6 3h12v18H6z" /><path d="M9 8h6M9 12h6M9 16h4" strokeLinecap="round" /></svg>
+            </Link>
           <button
             onClick={() => setCartOpen(true)}
             aria-label="Giỏ hàng"
-            className="relative w-11 h-11 rounded-full hover:bg-green-50 text-green-900 flex items-center justify-center text-xl"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-green-50 text-green-900 transition hover:bg-green-100"
           >
-            🧺
+            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path d="M4 9h16l-1.4 10H5.4L4 9Z" strokeLinejoin="round" /><path d="m8 9 4-6 4 6" strokeLinecap="round" /></svg>
             {count > 0 && (
               // A fixed 20px circle can't hold 3 digits — clamp rather than
               // let the number burst out of its badge.
@@ -72,18 +95,19 @@ export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuN
 
           <Link
             href="/products"
-            className="hidden md:inline-block bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition whitespace-nowrap"
+            className="hidden rounded-full bg-green-800 px-5 py-3 text-base font-bold text-white transition hover:bg-green-900 xl:inline-block"
           >
             {info.navbarCta}
           </Link>
 
           {items.length > 0 && (
             <button
+              ref={menuButtonRef}
               aria-label={open ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={open}
               aria-controls="mobile-nav"
               onClick={() => setOpen(!open)}
-              className="lg:hidden p-2 -mr-2 text-green-900"
+              className="-mr-2 p-2 text-green-900 lg:hidden"
             >
               <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 {open ? (
@@ -101,16 +125,32 @@ export default function Navbar({ info, items }: { info: NavbarInfo; items: MenuN
               </svg>
             </button>
           )}
+          </div>
+        </div>
+
+        <div className="hidden min-h-11 items-center border-t border-green-100/80 lg:flex">
+          {items.length > 0 && <PriorityNav items={items} />}
         </div>
       </nav>
 
       {open && items.length > 0 && (
-        <div id="mobile-nav" className="lg:hidden border-t border-green-100 bg-white">
+        <div id="mobile-nav" className="border-t border-green-100 bg-white lg:hidden">
+          <form action="/products" method="get" role="search" className="relative mx-4 mt-4 md:hidden">
+            <label htmlFor="mobile-site-search" className="sr-only">Tìm kiếm thực phẩm</label>
+            <input id="mobile-site-search" name="q" type="search" placeholder="Bạn muốn mua gì hôm nay?" className="h-12 w-full rounded-full border border-green-200 bg-green-50/60 px-4 pr-12 text-base" />
+            <button type="submit" aria-label="Tìm kiếm" className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-green-800 text-white">
+              <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" strokeLinecap="round" /></svg>
+            </button>
+          </form>
           {/* Xổ hết mọi cấp, thụt lề theo cấp: trong ngăn kéo hẹp trên điện
               thoại, bắt bấm từng cấp để mở tiếp là thêm một rào cản không cần thiết. */}
           <ul className="px-1 py-3">
             <NestedLinkList nodes={items} onNavigate={() => setOpen(false)} />
           </ul>
+          <div className="grid grid-cols-2 gap-2 border-t border-green-100 p-4 text-base font-semibold">
+            <Link href="/orders" onClick={() => setOpen(false)} className="rounded-xl bg-green-50 px-3 py-3 text-center text-green-900">Tra cứu đơn</Link>
+            <a href={`tel:${info.phone.replace(/\D/g, '')}`} className="rounded-xl bg-green-800 px-3 py-3 text-center text-white">Gọi {info.phone}</a>
+          </div>
         </div>
       )}
     </header>

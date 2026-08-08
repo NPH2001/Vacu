@@ -3,11 +3,23 @@
 @theme inline {
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-display: var(--font-display), Georgia, serif;
+  --color-store-muted: var(--store-muted);
 }
 
 :root {
   --background: #f7faf3;
   --foreground: #1a2e1a;
+
+  /* storefront semantic tokens — kept separate from the admin palette */
+  --store-canvas: #f7faf3;
+  --store-surface: #ffffff;
+  --store-ink: #18321f;
+  --store-muted: #667067;
+  --store-brand: #14532d;
+  --store-accent: #e9a23b;
+  --store-line: #dce9d7;
+  --store-radius-control: 12px;
+  --store-radius-card: 20px;
 
   /* admin palette — warm stone neutrals + forest green accent */
   --admin-bg: #f7f6f3;
@@ -28,6 +40,49 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Storefront secondary copy previously mixed theme greens with opacity. That
+   made contrast depend on both the selected theme and the surface underneath.
+   Route all low-emphasis dark text through one fixed semantic token instead. */
+.storefront [class~="text-green-700/70"],
+.storefront [class~="text-green-800/60"],
+.storefront [class~="text-green-800/70"],
+.storefront [class~="text-green-900/40"],
+.storefront [class~="text-green-900/45"],
+.storefront [class~="text-green-900/50"],
+.storefront [class~="text-green-900/55"],
+.storefront [class~="text-green-900/60"],
+.storefront [class~="text-green-900/65"],
+.storefront [class~="text-green-900/70"],
+.storefront [class~="text-green-900/72"] {
+  color: var(--store-muted);
+}
+
+/* Keep horizontally scrollable card tracks from contributing their off-screen
+   children to the document's intrinsic width at 320px. */
+.h-scroll-region {
+  contain: layout inline-size;
+}
+
+html {
+  scroll-padding-top: 9rem;
+}
+
+::selection {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .font-display {

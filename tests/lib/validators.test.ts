@@ -9,6 +9,7 @@ import {
   paymentMethodSchema,
   orderStatusSchema,
   productSchema,
+  productReviewSchema,
 } from '@/lib/validators';
 
 describe('productSchema oldPrice refine', () => {
@@ -23,9 +24,31 @@ describe('productSchema oldPrice refine', () => {
   it('accepts no oldPrice', () => {
     expect(productSchema.safeParse(base).success).toBe(true);
   });
+  it('defaults the single product-article title and trims a supplied one', () => {
+    const defaulted = productSchema.parse(base);
+    expect(defaulted.descriptionTitle).toBe('Mô tả sản phẩm');
+    const titled = productSchema.parse({ ...base, descriptionTitle: '  Cách bảo quản  ' });
+    expect(titled.descriptionTitle).toBe('Cách bảo quản');
+  });
   it('rejects oldPrice <= price (nonsense strikethrough)', () => {
     expect(productSchema.safeParse({ ...base, oldPrice: 30000 }).success).toBe(false);
     expect(productSchema.safeParse({ ...base, oldPrice: 20000 }).success).toBe(false);
+  });
+});
+
+describe('productReviewSchema', () => {
+  const base = { name: 'Chị Lan', content: 'Rau tươi, giao nhanh.', rating: 5, sortOrder: 0 };
+
+  it('accepts a valid review and normalizes an empty optional avatar', () => {
+    const r = productReviewSchema.safeParse({ ...base, avatar: '' });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.avatar).toBeNull();
+  });
+
+  it('rejects blank content and ratings outside the allowed range', () => {
+    expect(productReviewSchema.safeParse({ ...base, content: '   ' }).success).toBe(false);
+    expect(productReviewSchema.safeParse({ ...base, rating: 0 }).success).toBe(false);
+    expect(productReviewSchema.safeParse({ ...base, rating: 6 }).success).toBe(false);
   });
 });
 
