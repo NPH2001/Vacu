@@ -69,6 +69,21 @@ const sectionHeader = {
 const tone = { tone: z.enum(['default', 'muted']).default('default') };
 
 /**
+ * Thẻ và mã QR. Ảnh được lưu ngay trong dữ liệu khối để admin có thể tải lên,
+ * sắp thứ tự ảnh và đặt cả khối ở bất kỳ vị trí nào trong trình dựng trang.
+ * Khác "Bộ ảnh", ảnh ở đây luôn được giữ trọn vẹn (không crop) để mã QR còn
+ * quét được và có thể bấm mở lớn.
+ */
+export const qrCardsBlock = z.object({
+  type: z.literal('qrCards'),
+  title: z.string().max(200).default(''),
+  ...sectionHeader,
+  ...tone,
+  images: z.array(z.string().max(500)).max(24).default([]),
+  layout: z.enum(['slider', 'grid']).default('slider'),
+});
+
+/**
  * Chứng nhận. Nội dung lấy từ bảng `certificates`, khối chỉ quyết định phần
  * khung: tiêu đề, nền, số lượng và cách bày.
  *
@@ -165,7 +180,7 @@ export const faqBlock = z.object({
 });
 
 export const blockSchema = z.discriminatedUnion('type', [
-  heroBlock, richtextBlock, cardsBlock, statsBlock, ctaBlock, galleryBlock, certificatesBlock,
+  heroBlock, richtextBlock, cardsBlock, statsBlock, ctaBlock, galleryBlock, qrCardsBlock, certificatesBlock,
   catalogsBlock, productsBlock, categoriesBlock,
   heroSliderBlock, valuePropsBlock, subBoxBlock, farmersBlock, testimonialsBlock, faqBlock,
 ]);
@@ -188,6 +203,7 @@ export const BLOCK_LABELS: Record<BlockType, { name: string; hint: string; icon:
   stats: { name: 'Dải số liệu', hint: 'Các con số lớn kèm nhãn — ví dụ 120 hộ nông dân, 5 năm.', icon: '◑' },
   cta: { name: 'Kêu gọi hành động', hint: 'Ô màu đậm có nút bấm dẫn sang trang khác.', icon: '➤' },
   gallery: { name: 'Bộ ảnh', hint: 'Nhiều ảnh xếp lưới.', icon: '❏' },
+  qrCards: { name: 'Thẻ và mã QR', hint: 'Tải nhiều ảnh thẻ/mã QR, giữ trọn ảnh và bấm để xem lớn. Có thể bày dạng slider hoặc lưới.', icon: '▦' },
   products: { name: 'Lưới sản phẩm', hint: 'Lấy sản phẩm theo nguồn bạn chọn: nổi bật, theo danh mục, chọn tay, mới nhất, đang giảm giá.', icon: '✿' },
   categories: { name: 'Lưới danh mục', hint: 'Hiện các danh mục — tất cả hoặc chọn tay từng cái.', icon: '❖' },
   heroSlider: { name: 'Ảnh bìa quay vòng', hint: 'Slider trang chủ: lấy từ mục “Slider trang chủ”, tự chuyển ảnh. Không có slide thì dùng ảnh bìa tĩnh trong Cài đặt.', icon: '▤' },
@@ -209,6 +225,7 @@ export function emptyBlock(type: BlockType): Block {
     case 'stats': return { type, title: 'Những con số', items: [{ value: '', label: '' }] };
     case 'cta': return { type, title: '', subtitle: '', label: 'Tìm hiểu thêm →', href: '/' };
     case 'gallery': return { type, title: '', images: [] };
+    case 'qrCards': return { type, title: 'Thẻ Và Mã QR', eyebrow: '', linkLabel: '', linkHref: '', tone: 'default', images: [], layout: 'slider' };
     case 'products': return { type, title: 'Sản phẩm nổi bật', eyebrow: '', linkLabel: '', linkHref: '', tone: 'default', source: 'featured', categoryId: '', productIds: [], limit: 4 };
     case 'categories': return { type, title: 'Danh mục', eyebrow: '', linkLabel: '', linkHref: '', tone: 'default', source: 'all', categoryIds: [], limit: 0 };
     case 'heroSlider': return { type };

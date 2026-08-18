@@ -187,6 +187,7 @@ function summary(b: Block): string {
     case 'stats': return b.title || `${b.items.length} số liệu`;
     case 'cta': return b.title || b.label || 'Chưa có nội dung';
     case 'gallery': return `${b.images.length} ảnh`;
+    case 'qrCards': return `${b.title || 'Thẻ Và Mã QR'} · ${b.images.length} ảnh · ${LAYOUT_LABELS[b.layout]}`;
     case 'products':
       if (b.source === 'category' && !b.categoryId) return `${b.title || 'Sản phẩm'} · ⚠ chưa chọn danh mục`;
       return `${b.title || 'Sản phẩm'} · ${PRODUCT_SOURCE_LABELS[b.source]}${b.source === 'manual' ? ` (${b.productIds.length})` : ` · ${b.limit}`}`;
@@ -312,6 +313,33 @@ function BlockFields({ block, onChange, categoryOptions, productOptions }: {
             emptyTitle="Thêm ảnh vào bộ ảnh"
             emptyHint="Các ảnh sẽ xếp thành lưới trên trang"
           />
+        </div>
+      );
+
+    case 'qrCards':
+      return (
+        <div className="space-y-3">
+          <Text label="Tiêu đề mục" value={block.title} onChange={(v) => onChange({ ...block, title: v })} />
+          <HeaderFields eyebrow={block.eyebrow} linkLabel={block.linkLabel} linkHref={block.linkHref}
+            set={(p) => onChange({ ...block, ...p })} />
+          <ToneField value={block.tone} onChange={(v) => onChange({ ...block, tone: v })} />
+          <Select label="Cách bày ảnh" value={block.layout}
+            onChange={(v) => onChange({ ...block, layout: v as typeof block.layout })}
+            options={[
+              ['slider', 'Slider — vuốt hoặc bấm nút để xem tiếp'],
+              ['grid', 'Lưới — hiện tất cả ảnh'],
+            ]} />
+          <GalleryField
+            value={block.images}
+            onChange={(images) => onChange({ ...block, images })}
+            max={24}
+            pickerTitle="Chọn ảnh thẻ và mã QR"
+            emptyTitle="Tải ảnh thẻ và mã QR"
+            emptyHint="Ảnh sẽ được giữ nguyên tỷ lệ để mã QR không bị cắt"
+          />
+          <p className="text-[11.5px] text-stone-500">
+            Dùng nút ↑ ↓ ở đầu khối để đặt phần này phía trên hoặc phía dưới các phần khác trên trang.
+          </p>
         </div>
       );
 

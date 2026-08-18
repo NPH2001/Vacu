@@ -539,6 +539,26 @@ describe('catalog actions', () => {
     await db.delete(catalogs).where(eq(catalogs.id, row.id));
   });
 
+  it('cảnh báo khi xóa ảnh đang nằm trong khối Thẻ và mã QR', async () => {
+    const { db } = await import('@/db/client');
+    const { pages, pageBlocks } = await import('@/db/schema');
+    const { eq } = await import('drizzle-orm');
+    const { findMediaUsage } = await import('@/lib/media');
+
+    const pageId = 'qr-media-usage';
+    await db.insert(pages).values({ id: pageId, title: 'Trang có mã QR', status: 'published' });
+    await db.insert(pageBlocks).values({
+      pageId,
+      type: 'qrCards',
+      data: { title: 'Thẻ Và Mã QR', images: ['/uploads/qr-in-use.webp'], layout: 'slider' },
+    });
+
+    const usage = await findMediaUsage('/uploads/qr-in-use.webp');
+    expect(usage.some((u) => u.kind === 'Trang' && u.label === 'Trang có mã QR')).toBe(true);
+
+    await db.delete(pages).where(eq(pages.id, pageId));
+  });
+
   it('bulk-deletes; empty short-circuits', async () => {
     const { bulkDeleteCatalogs } = await import('@/app/admin/actions/catalogs');
     const { db } = await import('@/db/client');

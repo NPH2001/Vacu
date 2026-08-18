@@ -256,6 +256,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           ['Dải số liệu', 'Các con số lớn kèm nhãn'],
           ['Kêu gọi hành động', 'Ô màu đậm có nút bấm'],
           ['Bộ ảnh', 'Nhiều ảnh xếp lưới'],
+          ['Thẻ và mã QR', 'Tải nhiều ảnh ngay trong khối; giữ trọn ảnh, bấm xem lớn; bày dạng slider hoặc lưới'],
           ['Lưới sản phẩm', 'Nguồn: nổi bật / theo danh mục / chọn tay / mới nhất / đang giảm giá'],
           ['Lưới danh mục', 'Tất cả hoặc chọn tay từng danh mục'],
           ['Chứng nhận', 'Bày dạng slider có nút trái/phải, hoặc lưới hiện hết. Thẻ có ảnh, tên và nơi cấp; bấm vào xem ảnh lớn'],
@@ -276,6 +277,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
         text: 'Dán được từ Word. Nếu dán vào bị lộn xộn font và màu: bôi đen rồi bấm *Xóa định dạng*.',
       },
       { kind: 'p', text: '*Chứng nhận:* thêm giấy chứng nhận ở mục *Chứng nhận*, rồi đặt khối *Chứng nhận* vào trang chủ hoặc trang bất kỳ. Mỗi thẻ hiện ảnh, tên chứng nhận và nơi cấp; bấm vào xem ảnh lớn kèm mô tả.' },
+      { kind: 'p', text: '*Thẻ và mã QR:* thêm khối này ngay trong Trang chủ hoặc trang bất kỳ, rồi tải/chọn nhiều ảnh từ Thư viện ảnh. Ảnh được giữ nguyên tỷ lệ và có thể bấm xem lớn. Chọn Slider hoặc Lưới; dùng mũi tên lên/xuống ở đầu khối để đặt phần này trên hoặc dưới các phần khác.' },
       {
         kind: 'list',
         items: [

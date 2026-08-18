@@ -4,6 +4,7 @@ import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db/client';
 import {
   media, products, posts, categories, farmers, certificates, catalogs, catalogImages,
+  pages, pageBlocks,
   type MediaRow,
 } from '@/db/schema';
 
@@ -57,7 +58,7 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
   // Escaped for the same reason as the search: an underscore in a path would
   // otherwise match any character and over-report usage.
   const like = `%${escapeLike(url)}%`;
-  const [prodImg, prodBody, postCover, postBody, cats, farmerImgs, certs, catalogPages] = await Promise.all([
+  const [prodImg, prodBody, postCover, postBody, cats, farmerImgs, certs, catalogPages, pageContent] = await Promise.all([
     db.select({ id: products.id, name: products.name }).from(products).where(eq(products.image, url)),
     db.select({ id: products.id, name: products.name }).from(products).where(ilike(products.body, like)),
     db.select({ id: posts.id, title: posts.title }).from(posts).where(eq(posts.coverImage, url)),
@@ -75,6 +76,12 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
     db.select({ id: catalogs.id, name: catalogs.name }).from(catalogImages)
       .innerJoin(catalogs, eq(catalogs.id, catalogImages.catalogId))
       .where(eq(catalogImages.url, url)),
+    // Page-builder images (including Thẻ và mã QR, Bộ ảnh and hero images)
+    // live inside jsonb. Match the serialized block so the media library cannot
+    // delete an image that is still referenced by a page.
+    db.select({ id: pages.id, title: pages.title }).from(pageBlocks)
+      .innerJoin(pages, eq(pages.id, pageBlocks.pageId))
+      .where(sql`${pageBlocks.data}::text ILIKE ${like}`),
   ]);
 
   const usage: MediaUsage[] = [];
@@ -94,6 +101,7 @@ export async function findMediaUsage(url: string): Promise<MediaUsage[]> {
   for (const r of farmerImgs) push('Nông dân', r.name, `/admin/farmers/${r.id}`);
   for (const r of certs) push('Chứng nhận', r.name, `/admin/certificates/${r.id}`);
   for (const r of catalogPages) push('Catalog', r.name, `/admin/catalogs/${r.id}`);
+  for (const r of pageContent) push('Trang', r.title, `/admin/pages/${r.id}`);
   return usage;
 }
 

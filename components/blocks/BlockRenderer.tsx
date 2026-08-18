@@ -15,6 +15,7 @@ import SectionHeader from '@/components/SectionHeader';
 import AnimateOnScroll from '@/components/AnimateOnScroll';
 import CertificateShowcase from '@/components/CertificateShowcase';
 import CatalogShowcase from '@/components/CatalogShowcase';
+import QrCardShowcase from '@/components/QrCardShowcase';
 
 /** Full-bleed section band. `muted` paints the soft green separator background. */
 function Band({
@@ -343,6 +344,20 @@ export default async function BlockRenderer({
               href={block.linkHref || undefined} linkLabel={block.linkLabel} />
           </AnimateOnScroll>
           <CertificateShowcase items={items} layout={block.layout} />
+        </Band>
+      );
+    }
+
+    case 'qrCards': {
+      const images = block.images.filter((src) => src.trim() !== '');
+      if (images.length === 0) return null;
+      return (
+        <Band tone={block.tone}>
+          <AnimateOnScroll>
+            <SectionHeader eyebrow={block.eyebrow} title={block.title}
+              href={block.linkHref || undefined} linkLabel={block.linkLabel} />
+          </AnimateOnScroll>
+          <QrCardShowcase images={images} layout={block.layout} title={block.title} />
         </Band>
       );
     }

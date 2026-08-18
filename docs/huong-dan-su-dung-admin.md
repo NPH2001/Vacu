@@ -204,6 +204,7 @@ Tối đa **40 khối** mỗi trang. Các loại khối:
 | **Dải số liệu** | Các con số lớn kèm nhãn |
 | **Kêu gọi hành động** | Ô màu đậm có nút bấm |
 | **Bộ ảnh** | Nhiều ảnh xếp lưới |
+| **Thẻ và mã QR** | Tải nhiều ảnh trực tiếp trong khối; giữ trọn ảnh, bấm xem lớn; bày dạng slider hoặc lưới |
 | **Lưới sản phẩm** | Nguồn: nổi bật / theo danh mục / chọn tay / mới nhất / đang giảm giá |
 | **Lưới danh mục** | Tất cả hoặc chọn tay |
 | **Chứng nhận** | Slider có nút trái/phải, hoặc lưới hiện hết. Thẻ có ảnh, tên và nơi cấp; bấm vào xem ảnh lớn |
@@ -211,6 +212,15 @@ Tối đa **40 khối** mỗi trang. Các loại khối:
 | **Điểm giá trị** · **Hộp rau tuần** · **Lưới nông dân** · **Cảm nhận** · **Câu hỏi** | Lấy nội dung từ các mục tương ứng trong menu — sửa nội dung ở đó, không sửa trong khối |
 
 **Lưu ý về Trang chủ:** luôn ở trạng thái *đã đăng* và không đổi được đường dẫn. Không xóa được. Muốn thay đổi bố cục thì ẩn/sắp xếp lại các khối.
+
+#### Thẻ và mã QR
+
+1. Mở trang muốn hiển thị (thường là **Nội dung → Trang chủ**) → **+ Thêm khối nội dung** → chọn **Thẻ và mã QR**.
+2. Bấm **Tải ảnh thẻ và mã QR** để tải nhiều ảnh mới hoặc chọn ảnh có sẵn trong Thư viện ảnh. Có thể đổi thứ tự hoặc gỡ từng ảnh ngay trong khối.
+3. Chọn **Slider** nếu muốn phần này gọn và vuốt ngang; chọn **Lưới** nếu muốn hiện tất cả ảnh.
+4. Dùng nút **↑ ↓** ở đầu khối để đặt phần này phía trên hoặc phía dưới “Chứng nhận & Chứng chỉ” hay bất kỳ phần nào khác, rồi bấm **Cập nhật**.
+
+Ảnh thẻ và mã QR luôn được giữ nguyên tỷ lệ, không cắt mép. Khách có thể bấm vào từng ảnh để xem lớn.
 
 **Trang khác** có thêm ô **Xuất bản**: *Nháp* (chỉ mình bạn thấy) hoặc *Đã đăng*. Một số đường dẫn bị giữ cho hệ thống, không đặt được: `admin`, `api`, `products`, `farmers`, `checkout`, `orders`, `contact`, `tin-tuc`, `danh-muc`, `danh-muc-tin-tuc`, `home`, `uploads`.
 
